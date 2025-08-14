@@ -1,0 +1,2 @@
+#https://pypi.org/project/streamlit/
+streamlit==1.12.0
