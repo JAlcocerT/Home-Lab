@@ -1,0 +1,17 @@
+#version: '3'
+services:
+  pigallery2:
+    image: bpatrik/pigallery2:latest
+    container_name: pigallery2
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - "/home/your_rpi_user/Docker/pigallery/config:/app/data/config" # CHANGE ME
+      - "db-data:/app/data/db"
+      - "/home/your_rpi_user/Docker/nextcloud2/html/data/rejsikej/files/Photos:/app/data/images:ro" # CHANGE ME, ':ro' mean read-only
+      - "/home/your_rpi_user/Docker/pigallery/tmp:/app/data/tmp" # CHANGE ME
+    ports:
+      - 81:80
+    restart: "no"
+volumes:
+  db-data:
