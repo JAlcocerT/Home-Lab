@@ -1,0 +1,9 @@
+history:
+
+mqtt:
+  sensor:
+    - name: "Pico W Temperature"
+      state_topic: "pico/temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      value_template: "{{ value | float }}"
