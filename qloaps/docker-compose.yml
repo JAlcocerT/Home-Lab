@@ -1,0 +1,11 @@
+docker run -d \
+   -p 80:80 \
+   -p 3306:3306 \
+   -p 2222:22 \
+   --name qloapp_srv \
+   --restart unless-stopped \
+   -e USER_PASSWORD=qloappsuserpassword \
+   -e MYSQL_ROOT_PASSWORD=myrootpassword \
+   -e MYSQL_DATABASE=qloappsdb \
+   -v qloapps_mysql:/var/lib/mysql \
+   webkul/qloapps_docker:latest
