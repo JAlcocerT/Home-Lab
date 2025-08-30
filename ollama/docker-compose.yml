@@ -1,0 +1,17 @@
+#version: '3'
+services:
+  ollama:
+    image: ollama/ollama:latest #0.1.17
+    container_name: ollama
+    ports:
+      - "11434:11434" #Could also be any free local port like 9999:11434
+    volumes:
+      - ai_ollama_data:/root/.ollama
+
+volumes:
+  ai_ollama_data:
+
+#ollama run orca-mini:3b
+
+#http://localhost:11434/
+#    #network_mode: host      
