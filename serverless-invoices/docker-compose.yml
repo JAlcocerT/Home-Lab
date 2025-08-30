@@ -1,0 +1,17 @@
+#version: "3.8"
+
+services:
+  serverless-invoices:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: serverless-invoices
+    container_name: serverless-invoices
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+#git clone https://github.com/JAlcocerT/serverless-invoices
+# docker compose up -d      # build and start
+# docker compose logs -f
+# docker compose down
