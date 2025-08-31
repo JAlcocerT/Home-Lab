@@ -1,5 +1,7 @@
 # Gitea API 1.24 — Quick Start
 
+> Terminology: “API” is a general term. In this doc it means Gitea’s HTTP REST API (JSON over HTTP). Webhooks are outbound HTTP callbacks from Gitea to your service; they are not requests you send to the API.
+
 Base URL for your instance:
 
 - `http://192.168.1.11:3033/api/v1`
@@ -12,10 +14,12 @@ API vs Webhooks
 
 ## Authentication
 
-- Personal Access Token (recommended)
+Personal Access Token (PAT is the recommended way)
+
   1) In Gitea UI: Settings → Applications → Generate Token
   2) Use header: `Authorization: token YOUR_TOKEN`
-- Alternatives: Basic auth (`-u user:pass`), OAuth2 (if configured)
+
+> Alternatives: Basic auth (`-u user:pass`), OAuth2 (if configured)
 
 Tip: export your token for reuse
 
@@ -29,18 +33,21 @@ export GITEA_TOKEN="<your_token_here>"
 ## Common cURL examples
 
 - Current user
+
 ```bash
 curl -s -H "Authorization: token $GITEA_TOKEN" \
   "$GITEA_BASE/user" | jq
 ```
 
 - List your repositories
+
 ```bash
 curl -s -H "Authorization: token $GITEA_TOKEN" \
   "$GITEA_BASE/user/repos?limit=50&page=1" | jq '.[].full_name'
 ```
 
 - Create a repository
+
 ```bash
 curl -s -X POST \
   -H "Authorization: token $GITEA_TOKEN" \
@@ -50,6 +57,7 @@ curl -s -X POST \
 ```
 
 - Create an issue
+
 ```bash
 OWNER="<owner>"; REPO="<repo>"
 curl -s -X POST \
