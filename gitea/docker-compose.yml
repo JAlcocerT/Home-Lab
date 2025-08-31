@@ -6,16 +6,19 @@ networks:
 
 services:
   gitea-server:
-    image: gitea/gitea:1.14.2
+    image: docker.gitea.com/gitea:1
     container_name: gitea
     environment:
-      - USER_UID=998
-      - USER_GID=100
+      - USER_UID=1000
+      - USER_GID=1000
       - GITEA__database__DB_TYPE=mysql
-      - GITEA__database__HOST=db:3306
+      - GITEA__database__HOST=gitea-db:3306
       - GITEA__database__NAME=gitea
       - GITEA__database__USER=gitea
       - GITEA__database__PASSWD=gitea
+      - GITEA__security__INSTALL_LOCK=true
+      - GITEA__server__DOMAIN=192.168.1.11
+      - GITEA__server__ROOT_URL=http://192.168.1.11:3033/
     restart: always
     networks:
       - gitea
@@ -27,10 +30,11 @@ services:
       - "3033:3000" #UI
       - "2234:22"
     depends_on:
-      - gitea-db
+      gitea-db:
+        condition: service_healthy
  
   gitea-db:
-    image: mysql
+    image: mysql:9.0
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=gitea
@@ -41,3 +45,9 @@ services:
       - gitea
     volumes:
       - /srv/databases/gitea/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

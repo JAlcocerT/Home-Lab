@@ -1,4 +1,7 @@
-
+---
+source_code: https://github.com/deluan/navidrome
+oss_client: https://gitlab.com/ultrasonic/ultrasonic
+---
 
 ---
 
