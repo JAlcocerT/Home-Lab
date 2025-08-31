@@ -7,9 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, EmailStr, Field
 import httpx
-
-GITEA_BASE = os.getenv("GITEA_BASE", "http://localhost:3000").rstrip("/")
-GITEA_TOKEN = os.getenv("GITEA_TOKEN", "")
+from dotenv import load_dotenv
 
 app = FastAPI(title="Gitea User Creator")
 
@@ -21,12 +19,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Resolve static directory next to this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Load .env from project root (same directory as this file) BEFORE reading envs
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# Read env after loading .env
+GITEA_BASE = os.getenv("GITEA_BASE", "http://localhost:3000").rstrip("/")
+GITEA_TOKEN = os.getenv("GITEA_TOKEN", "")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
 # Serve static UI at /static and index at /
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 async def index():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
 class CreateUserIn(BaseModel):
@@ -74,7 +82,6 @@ async def create_user(payload: CreateUserIn):
             raise HTTPException(status_code=502, detail=f"Failed to reach Gitea: {e}")
 
     if resp.status_code >= 400:
-        # Bubble up Gitea error for transparency
         try:
             detail = resp.json()
         except Exception:

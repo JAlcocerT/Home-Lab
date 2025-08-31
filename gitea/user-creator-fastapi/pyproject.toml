@@ -1,0 +1,17 @@
+[project]
+name = "gitea-user-creator"
+version = "0.1.0"
+description = "Minimal FastAPI service + static page to create Gitea users via Gitea admin API"
+requires-python = ">=3.11"
+readme = "readme.md"
+
+dependencies = [
+  "fastapi==0.111.0",
+  "uvicorn[standard]==0.30.1",
+  "httpx==0.27.0",
+  "pydantic==2.8.2",
+  "jinja2==3.1.4",
+]
+
+[tool.uv]
+managed = true
