@@ -8,6 +8,7 @@ uv lock
 
 ```sh
 uv run uvicorn main:app --host 0.0.0.0 --port 8055
+#curl -sS http://192.168.1.11:8055/health
 ```
 
 See that the user is created in Gitea
@@ -66,32 +67,52 @@ Yes. As a Gitea admin you can create repo webhooks on behalf of a user using the
   - If your GITEA_BASE does NOT include /api/v1: API="$GITEA_BASE/api/v1"
   - If it already includes /api/v1: API="$GITEA_BASE"
 
-- Create a webhook on the user’s repository:
+- Create a webhook on the user’s repository via CURL:
 
 ```bash
-USER="yosua"
-OWNER="yosua"                   # repo owner (for personal repo this equals the username)
+USER="yosua"            # sudo target (repo owner)
+OWNER="yosua"
 REPO="astro-payroll-solution-theme"
 WEBHOOK_URL="http://192.168.1.11:8055/webhook"
 WEBHOOK_SECRET="change_me"
 
-API="${GITEA_BASE%/}/api/v1"   # adjust if your GITEA_BASE already has /api/v1
-
 curl -sS -X POST \
   -H "Authorization: token $GITEA_TOKEN" \
+  -H "Sudo: $USER" \
   -H "Content-Type: application/json" \
   -d "{
     \"type\": \"gitea\",
-    \"config\": {
-      \"url\": \"${WEBHOOK_URL}\",
-      \"content_type\": \"json\",
-      \"secret\": \"${WEBHOOK_SECRET}\"
-    },
+    \"config\": { \"url\": \"${WEBHOOK_URL}\", \"content_type\": \"json\", \"secret\": \"${WEBHOOK_SECRET}\" },
     \"events\": [\"push\"],
     \"active\": true
   }" \
-  "$API/repos/$OWNER/$REPO/hooks?sudo=$USER" | jq '{id,active,config:{url: .config.url}}'
+  "$API/repos/$OWNER/$REPO/hooks" | jq '{id,active,config:{url: .config.url}}'
 ```
+
+See that the **webhook is created**:
+
+```sh
+curl -sS -H "Authorization: token $GITEA_TOKEN" -H "Sudo: $USER" \
+  "$API/repos/$OWNER/$REPO/hooks" | jq .
+```
+
+Test the webhook via CLI:
+
+```sh
+USER="yosua"
+OWNER="yosua"
+REPO="astro-payroll-solution-theme"
+HOOK_ID=1
+API="${GITEA_BASE%/}/api/v1"
+
+curl -sS -X POST \
+  -H "Authorization: token $GITEA_TOKEN" \
+  -H "Sudo: $USER" \
+  "$API/repos/$OWNER/$REPO/hooks/$HOOK_ID/tests" \
+  -o /dev/null -w '%{http_code}\n'
+```
+
+Find the repo local path: `/srv/confs/gitea` + `/git/repositories/yosua/astro-payroll-solution-theme.git`
 
 # Useful follow-ups
 

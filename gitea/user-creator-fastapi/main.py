@@ -13,6 +13,7 @@ import hashlib
 import json
 import asyncio
 import subprocess
+import logging
 
 app = FastAPI(title="Gitea User Creator")
 
@@ -40,6 +41,10 @@ try:
 except Exception:
     REPO_MAP = {}
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# Basic logging setup
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 # Serve static UI at /static and index at /
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -244,6 +249,22 @@ def verify_signature(sig_header: str, body: bytes) -> bool:
         return False
 
 
+def _run_cmd(cmd: list[str], cwd: Optional[str] = None) -> int:
+    """Run a command, log stdout/stderr, and return exit code."""
+    try:
+        logger.info("Running: %s (cwd=%s)", " ".join(cmd), cwd or "")
+        res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+        if res.stdout:
+            logger.info("stdout:\n%s", res.stdout.strip()[:4000])
+        if res.stderr:
+            logger.info("stderr:\n%s", res.stderr.strip()[:4000])
+        logger.info("exit code: %s", res.returncode)
+        return res.returncode
+    except Exception as e:
+        logger.exception("Command failed to start: %s", e)
+        return 1
+
+
 async def run_build(repo_full_name: str, branch: str):
     # Determine working directory
     workdir = REPO_MAP.get(repo_full_name)
@@ -255,19 +276,22 @@ async def run_build(repo_full_name: str, branch: str):
     # If directory doesn't contain a .git, try to clone
     if not os.path.isdir(os.path.join(workdir, ".git")):
         clone_url = f"{GITEA_BASE.replace('/api/v1','')}/{repo_full_name}.git"
-        cmd = ["git", "clone", "--branch", branch, clone_url, workdir]
-        subprocess.run(cmd, check=False)
+        logger.info("Cloning repo %s into %s (branch=%s)", clone_url, workdir, branch)
+        _run_cmd(["git", "clone", "--branch", branch, clone_url, workdir])
 
     # Fetch latest and checkout branch
-    cmds = [
+    logger.info("Updating and building %s at %s (branch=%s)", repo_full_name, workdir, branch)
+    steps = [
         ["git", "-C", workdir, "fetch", "--all", "--prune"],
         ["git", "-C", workdir, "checkout", branch],
         ["git", "-C", workdir, "pull", "--ff-only"],
         ["bash", "-lc", "npm ci"],
         ["bash", "-lc", "npm run build"],
     ]
-    for c in cmds:
-        subprocess.run(c, cwd=workdir, check=False)
+    for step in steps:
+        code = _run_cmd(step, cwd=workdir)
+        if code != 0:
+            logger.warning("Step failed (exit=%s), continuing: %s", code, " ".join(step))
 
 
 @app.post("/webhook")
@@ -285,6 +309,7 @@ async def webhook(request: Request):
         raise HTTPException(status_code=400, detail="invalid json payload")
 
     if event != "push":
+        logger.info("Webhook received non-push event: %s", event)
         return {"ok": True, "ignored": event}
 
     repo = (payload.get("repository") or {}).get("full_name")
@@ -292,8 +317,10 @@ async def webhook(request: Request):
     branch = ref.split("/")[-1] if ref else "main"
 
     if not repo:
+        logger.info("Webhook push missing repo info; ignoring")
         return {"ok": True, "ignored": "no repo"}
 
     # Kick off build in background; return quickly
+    logger.info("Webhook push queued: repo=%s branch=%s", repo, branch)
     asyncio.create_task(run_build(repo, branch))
     return {"ok": True, "repo": repo, "branch": branch, "queued": True}
