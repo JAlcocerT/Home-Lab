@@ -11,6 +11,15 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8055
 #curl -sS http://192.168.1.11:8055/health
 ```
 
+```sh
+sudo docker compose up -d
+docker network inspect gitea_gitea | jq '.[0].Containers' #containers under the same network
+#docker network connect gitea_gitea user-creator-fastapi
+
+#docker exec -it gitea sh
+#docker compose exec gitea sh -lc 'curl -sS -v http://user-creator-fastapi:8055/health'
+```
+
 See that the user is created in Gitea
 
 ```sh

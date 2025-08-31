@@ -52,24 +52,24 @@ services:
       retries: 10
       start_period: 10s
 
-  # user-creator-fastapi:
-  #   build:
-  #     context: ./user-creator-fastapi
-  #   container_name: user-creator-fastapi
-  #   restart: always
-  #   networks:
-  #     - gitea
-  #   env_file:
-  #     - ./user-creator-fastapi/.env
-  #   environment:
-  #     - PORT=8055
-  #     # Ensure build root is shared between host and container
-  #     - BUILD_ROOT=/srv/builds
-  #   volumes:
-  #     - /srv/builds:/srv/builds
-  #     # Optionally mount source for live-editing instead of baked image
-  #     # - ./user-creator-fastapi:/app:ro
-  #   ports:
-  #     - "8055:8055"
-  #   depends_on:
-  #     - gitea-server
+  user-creator-fastapi:
+    build:
+      context: ./user-creator-fastapi
+    container_name: user-creator-fastapi
+    restart: always
+    networks:
+      - gitea
+    env_file:
+      - ./user-creator-fastapi/.env
+    environment:
+      - PORT=8055
+      # Ensure build root is shared between host and container
+      - BUILD_ROOT=/srv/builds
+    volumes:
+      - /srv/builds:/srv/builds
+      # Optionally mount source for live-editing instead of baked image
+      # - ./user-creator-fastapi:/app:ro
+    ports:
+      - "8055:8055"
+    depends_on:
+      - gitea-server
