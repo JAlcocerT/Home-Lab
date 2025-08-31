@@ -1,0 +1,23 @@
+#version: '3'
+
+services:
+  gonic:
+    image: sentriz/gonic:latest
+    container_name: gonic
+    user: "1000:1000" # You can adjust this to your user's UID and GID for permissions
+    ports:
+      - "4747:4747"
+    environment:
+      # This is the path to your music collection inside the container
+      - GONIC_MUSIC_PATH=/music
+      # Gonic will store its database and cache here
+      - GONIC_DB_PATH=/data/gonic.db
+      - GONIC_CACHE_PATH=/data/cache
+      # Optional: listen on all interfaces.
+      - GONIC_LISTEN_ADDR=0.0.0.0:4747
+    volumes:
+      # This is the directory for Gonic's data (database and cache) on your host machine
+      - /path/to/gonic/data:/data
+      # This is the directory with your music files on your host machine
+      - /path/to/your/music:/music:ro
+    restart: unless-stopped
