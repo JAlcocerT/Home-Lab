@@ -1,0 +1,19 @@
+#version: '3'
+
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    user: "1000:1000" # You can adjust this to your user's UID and GID for permissions
+    ports:
+      - "4533:4533"
+    environment:
+      # Optional: set timezone to your local one. Example: "Europe/Warsaw"
+      - TZ=Europe/Warsaw
+      - ND_SCANINTERVAL=1h # Scan for new music every hour
+    volumes:
+      # This is the directory where Navidrome will store its database and settings
+      - /home/jalcocert/Home-Lab/navidrome/data:/data
+      # This is the directory where your music files are located
+      - /home/jalcocert/Home-Lab/navidrome/music:/music:ro
+    restart: unless-stopped
