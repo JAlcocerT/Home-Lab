@@ -4,6 +4,12 @@ Base URL for your instance:
 
 - `http://192.168.1.11:3033/api/v1`
 
+API vs Webhooks
+
+ - API calls (your curls): you call Gitea’s REST endpoints to read data (GET) or change state (POST/PUT/PATCH/DELETE) using an auth token.
+ - Webhooks: Gitea calls your HTTP endpoint when events occur (push, issues, PRs, releases). You typically verify the HMAC signature, then optionally call the API to act.
+ - Together: Use the API to configure webhooks; on webhook receipt, use IDs from the payload to fetch more details or perform actions via the API.
+
 ## Authentication
 
 - Personal Access Token (recommended)
