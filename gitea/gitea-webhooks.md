@@ -159,3 +159,67 @@ curl -s -X POST \
 
 - `gitea/gitea-api.md` for API calls you might make from your webhook handler.
 - Official docs: https://docs.gitea.com/usage/webhooks
+
+## Practical Webhook Example with FastAPI
+
+This repo includes a minimal FastAPI-based webhook listener that validates Gitea signatures and triggers an npm build on push events.
+
+- Location: `gitea/user-creator-fastapi/main.py`
+- Endpoint: `POST /webhook`
+- Env vars (set in `gitea/user-creator-fastapi/.env`):
+  - `WEBHOOK_SECRET`: shared secret for HMAC verification
+  - `BUILD_ROOT`: base directory where repos will be cloned/built
+  - `REPO_MAP`: optional JSON mapping of `"owner/repo"` to absolute build paths
+
+### What the handler does
+
+1) Reads headers `X-Gitea-Event`, `X-Gitea-Delivery`, `X-Gitea-Signature` and the JSON body.
+2) Verifies `X-Gitea-Signature` as `hex(hmac_sha256(WEBHOOK_SECRET, raw_body))` using constant-time compare.
+3) If event is `push`, extracts `repository.full_name` (e.g., `owner/repo`) and branch from `ref`.
+4) Queues a background build task that:
+   - Ensures repo exists under `BUILD_ROOT/owner/repo` (clones if missing).
+   - Checks out the pushed branch and pulls latest.
+   - Runs `npm ci` and then `npm run build` in that directory.
+
+See functions `verify_signature()` and `run_build()` in `main.py`.
+
+### Configure the webhook in Gitea
+
+In the repository Settings → Webhooks:
+
+- URL: `http://<host>:<port>/webhook` (e.g., `http://localhost:8055/webhook`)
+- Content type: `application/json`
+- Secret: the same value as `WEBHOOK_SECRET`
+- Events: at minimum enable Push events
+
+Keep your handler fast: it returns immediately after queuing the build.
+
+### Testing locally (without Gitea)
+
+Compute the signature over the exact raw JSON you will POST.
+
+```bash
+BODY='{"ref":"refs/heads/main","repository":{"full_name":"owner/repo"}}'
+SIG=$(python - <<'PY'
+import hmac, hashlib, os
+secret=os.environ.get('WEBHOOK_SECRET','change_me').encode()
+body=os.environ['BODY'].encode()
+print(hmac.new(secret, body, hashlib.sha256).hexdigest())
+PY
+)
+
+curl -sS -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Gitea-Event: push" \
+  -H "X-Gitea-Signature: $SIG" \
+  --data "$BODY" \
+  http://localhost:8055/webhook | jq
+```
+
+If verification passes, the response includes `{ "queued": true }` and the background job will run the git/npm steps.
+
+### Notes and hardening
+
+- Ensure Node and npm are installed on the machine running the webhook service.
+- For private repos, configure credentials for `git clone` (e.g., tokenized HTTPS URL or deploy keys). The current example uses unauthenticated HTTP clone.
+- Restrict access to the webhook endpoint (IP allowlist/Gitea only), and always verify `X-Gitea-Signature`.

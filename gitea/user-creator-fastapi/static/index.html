@@ -62,6 +62,32 @@
     </form>
   </div>
 
+  <div class="card">
+    <h2>Import public repo (GitHub, etc.)</h2>
+    <p class="note">Uses the signed-in username from the form above. Ensure the repo URL is public.</p>
+    <form id="importForm">
+      <label>
+        New repo name in Gitea
+        <input type="text" name="repo_name" placeholder="my-imported-repo" required />
+      </label>
+      <label>
+        Source clone URL (e.g., https://github.com/org/repo.git)
+        <input type="text" name="clone_url" placeholder="https://github.com/org/repo.git" required />
+      </label>
+      <label class="row">
+        <input type="checkbox" name="private" /> Make repository private
+      </label>
+      <label>
+        Description (optional)
+        <input type="text" name="description" />
+      </label>
+      <div class="actions">
+        <button type="submit">Import into my Gitea account</button>
+      </div>
+    </form>
+    <div id="importResult"></div>
+  </div>
+
   <section id="result" style="margin-top: 1rem"></section>
   <section id="repos" style="margin-top: 1rem"></section>
 
@@ -70,6 +96,8 @@
     const result = document.getElementById('result');
     const loginForm = document.getElementById('loginForm');
     const reposEl = document.getElementById('repos');
+    const importForm = document.getElementById('importForm');
+    const importResult = document.getElementById('importResult');
 
     function setLoading(yes) {
       form.querySelector('button').disabled = yes;
@@ -140,6 +168,43 @@
         reposEl.innerHTML = `<h3>Owned repositories for ${payload.username}</h3><ul>${list}</ul>`;
       } catch (err) {
         reposEl.innerHTML = `<p class="error">Network error</p><pre>${String(err)}</pre>`;
+      }
+    });
+
+    importForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      importResult.innerHTML = '';
+      const user = (loginForm.username.value || '').trim();
+      if (!user) {
+        importResult.innerHTML = '<p class="error">Please sign in above first so we know which Gitea user to import into.</p>';
+        return;
+      }
+      const fd = new FormData(importForm);
+      const data = {
+        username: user,
+        repo_name: fd.get('repo_name').trim(),
+        clone_url: fd.get('clone_url').trim(),
+        private: fd.get('private') === 'on',
+        description: (fd.get('description') || '').trim() || null,
+      };
+      try {
+        const resp = await fetch('/api/import_public_repo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const text = await resp.text();
+        let payload;
+        try { payload = JSON.parse(text); } catch (_) { payload = { raw: text }; }
+        if (resp.ok) {
+          importResult.innerHTML = `<p class="success">Import queued/created.</p><pre>${JSON.stringify(payload, null, 2)}</pre>`;
+          // Refresh repo list
+          loginForm.dispatchEvent(new Event('submit'));
+        } else {
+          importResult.innerHTML = `<p class="error">Error ${resp.status}</p><pre>${JSON.stringify(payload, null, 2)}</pre>`;
+        }
+      } catch (err) {
+        importResult.innerHTML = `<p class="error">Network error</p><pre>${String(err)}</pre>`;
       }
     });
   </script>

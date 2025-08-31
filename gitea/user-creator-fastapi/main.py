@@ -1,13 +1,18 @@
 import os
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, EmailStr, Field
 import httpx
 from dotenv import load_dotenv
+import hmac
+import hashlib
+import json
+import asyncio
+import subprocess
 
 app = FastAPI(title="Gitea User Creator")
 
@@ -27,6 +32,13 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # Read env after loading .env
 GITEA_BASE = os.getenv("GITEA_BASE", "http://localhost:3000").rstrip("/")
 GITEA_TOKEN = os.getenv("GITEA_TOKEN", "")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+BUILD_ROOT = os.getenv("BUILD_ROOT", "/srv/builds")
+REPO_MAP = {}
+try:
+    REPO_MAP = json.loads(os.getenv("REPO_MAP", "{}"))
+except Exception:
+    REPO_MAP = {}
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 # Serve static UI at /static and index at /
@@ -114,6 +126,20 @@ class ReposOut(BaseModel):
     repos: list[Repo]
 
 
+class ImportRepoIn(BaseModel):
+    username: str = Field(min_length=1, description="Target Gitea username (owner)")
+    repo_name: str = Field(min_length=1, description="New repo name in Gitea")
+    clone_url: str = Field(min_length=1, description="Public Git URL to import (e.g., https://github.com/org/repo.git)")
+    private: bool = False
+    description: Optional[str] = None
+
+
+class ImportRepoOut(BaseModel):
+    full_name: str
+    html_url: Optional[str] = None
+    private: Optional[bool] = None
+
+
 @app.post("/api/login_and_repos", response_model=ReposOut)
 async def login_and_repos(payload: LoginIn):
     # Use Basic Auth with the user's credentials to fetch their owned repos
@@ -155,3 +181,119 @@ async def create_user_and_repos(payload: CreateUserIn):
     created = await create_user(payload)
     repos = await login_and_repos(LoginIn(username=created.username, password=payload.password))
     return {"created": created, "repos": repos}
+
+
+@app.post("/api/import_public_repo", response_model=ImportRepoOut)
+async def import_public_repo(payload: ImportRepoIn):
+    """
+    Import (migrate) a public Git repository (e.g., from GitHub) into a user's
+    Gitea account by calling Gitea's migrate API with admin token + sudo.
+    """
+    if not GITEA_TOKEN:
+        raise HTTPException(status_code=500, detail="GITEA_TOKEN is not configured on the server")
+
+    url = f"{GITEA_BASE}/api/v1/repos/migrate?sudo={payload.username}"
+    headers = {"Authorization": f"token {GITEA_TOKEN}", "Content-Type": "application/json"}
+
+    data = {
+        "clone_addr": payload.clone_url,
+        "repo_name": payload.repo_name,
+        "repo_owner": payload.username,
+        "description": payload.description or "",
+        "private": payload.private,
+        # common migrate toggles (safe defaults)
+        "mirror": False,
+        "wiki": True,
+        "issues": True,
+        "labels": True,
+        "pull_requests": True,
+        "releases": True,
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            resp = await client.post(url, headers=headers, json=data)
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Failed to reach Gitea: {e}")
+
+    if resp.status_code >= 400:
+        try:
+            detail = resp.json()
+        except Exception:
+            detail = {"message": resp.text}
+        raise HTTPException(status_code=resp.status_code, detail=detail)
+
+    j = resp.json() or {}
+    return ImportRepoOut(
+        full_name=j.get("full_name") or f"{payload.username}/{payload.repo_name}",
+        html_url=j.get("html_url"),
+        private=j.get("private"),
+    )
+
+
+def verify_signature(sig_header: str, body: bytes) -> bool:
+    if not WEBHOOK_SECRET:
+        # If no secret configured, accept nothing (safer). You can relax if needed.
+        return False
+    if not sig_header:
+        return False
+    expected = hmac.new(WEBHOOK_SECRET.encode("utf-8"), body, hashlib.sha256).hexdigest()
+    try:
+        return hmac.compare_digest(expected, sig_header)
+    except Exception:
+        return False
+
+
+async def run_build(repo_full_name: str, branch: str):
+    # Determine working directory
+    workdir = REPO_MAP.get(repo_full_name)
+    if not workdir:
+        # default to BUILD_ROOT/owner/repo
+        workdir = os.path.join(BUILD_ROOT, *repo_full_name.split("/"))
+    os.makedirs(workdir, exist_ok=True)
+
+    # If directory doesn't contain a .git, try to clone
+    if not os.path.isdir(os.path.join(workdir, ".git")):
+        clone_url = f"{GITEA_BASE.replace('/api/v1','')}/{repo_full_name}.git"
+        cmd = ["git", "clone", "--branch", branch, clone_url, workdir]
+        subprocess.run(cmd, check=False)
+
+    # Fetch latest and checkout branch
+    cmds = [
+        ["git", "-C", workdir, "fetch", "--all", "--prune"],
+        ["git", "-C", workdir, "checkout", branch],
+        ["git", "-C", workdir, "pull", "--ff-only"],
+        ["bash", "-lc", "npm ci"],
+        ["bash", "-lc", "npm run build"],
+    ]
+    for c in cmds:
+        subprocess.run(c, cwd=workdir, check=False)
+
+
+@app.post("/webhook")
+async def webhook(request: Request):
+    sig = request.headers.get("X-Gitea-Signature")
+    event = request.headers.get("X-Gitea-Event")
+    body = await request.body()
+
+    if not verify_signature(sig, body):
+        raise HTTPException(status_code=401, detail="invalid signature")
+
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid json payload")
+
+    if event != "push":
+        return {"ok": True, "ignored": event}
+
+    repo = (payload.get("repository") or {}).get("full_name")
+    ref = payload.get("ref", "")  # e.g., refs/heads/main
+    branch = ref.split("/")[-1] if ref else "main"
+
+    if not repo:
+        return {"ok": True, "ignored": "no repo"}
+
+    # Kick off build in background; return quickly
+    asyncio.create_task(run_build(repo, branch))
+    return {"ok": True, "repo": repo, "branch": branch, "queued": True}
