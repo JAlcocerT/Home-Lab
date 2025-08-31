@@ -95,3 +95,63 @@ async def create_user(payload: CreateUserIn):
         email=j.get("email"),
         full_name=j.get("full_name"),
     )
+
+
+class LoginIn(BaseModel):
+    username: str
+    password: str
+
+
+class Repo(BaseModel):
+    name: str
+    full_name: Optional[str] = None
+    private: Optional[bool] = None
+    html_url: Optional[str] = None
+
+
+class ReposOut(BaseModel):
+    username: str
+    repos: list[Repo]
+
+
+@app.post("/api/login_and_repos", response_model=ReposOut)
+async def login_and_repos(payload: LoginIn):
+    # Use Basic Auth with the user's credentials to fetch their owned repos
+    auth = (payload.username, payload.password)
+    url = f"{GITEA_BASE}/api/v1/user/repos"
+    params = {"limit": 100, "page": 1, "type": "owner", "sort": "updated", "direction": "desc"}
+
+    async with httpx.AsyncClient(timeout=15, auth=auth) as client:
+        try:
+            resp = await client.get(url, params=params)
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Failed to reach Gitea: {e}")
+
+    if resp.status_code == 401:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if resp.status_code >= 400:
+        try:
+            detail = resp.json()
+        except Exception:
+            detail = {"message": resp.text}
+        raise HTTPException(status_code=resp.status_code, detail=detail)
+
+    items = resp.json() or []
+    repos = [
+        Repo(
+            name=i.get("name"),
+            full_name=i.get("full_name"),
+            private=i.get("private"),
+            html_url=i.get("html_url"),
+        )
+        for i in items
+    ]
+    return ReposOut(username=payload.username, repos=repos)
+
+
+@app.post("/api/create_user_and_repos")
+async def create_user_and_repos(payload: CreateUserIn):
+    # Create user using admin token, then list repos using their credentials
+    created = await create_user(payload)
+    repos = await login_and_repos(LoginIn(username=created.username, password=payload.password))
+    return {"created": created, "repos": repos}

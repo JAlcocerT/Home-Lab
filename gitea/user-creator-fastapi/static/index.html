@@ -18,41 +18,58 @@
     pre { background: #00000011; padding: .75rem; border-radius: 6px; overflow: auto; }
     .success { color: #16a34a; }
     .error { color: #dc2626; }
+    .card { border: 1px solid #9993; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .actions { display: flex; gap: .5rem; }
   </style>
 </head>
 <body>
   <h1>Gitea User Creator</h1>
-  <p class="note">This page calls the FastAPI backend at <code>/api/create_user</code> which talks to the Gitea Admin API. Ensure the server has GITEA_BASE and GITEA_TOKEN configured.</p>
+  <p class="note">This page calls the FastAPI backend at <code>/api/*</code> which talks to the Gitea API. Ensure the server has GITEA_BASE and GITEA_TOKEN configured.</p>
 
-  <form id="userForm">
-    <label>
-      Username
-      <input type="text" name="username" required />
-    </label>
-    <label>
-      Email
-      <input type="email" name="email" required />
-    </label>
-    <label>
-      Password
-      <input type="password" name="password" minlength="6" required />
-    </label>
-    <label>
-      Full name (optional)
-      <input type="text" name="full_name" />
-    </label>
-    <div class="row">
-      <label class="row"><input type="checkbox" name="must_change_password" /> Must change password</label>
-      <label class="row"><input type="checkbox" name="send_notify" /> Send notification</label>
-    </div>
-    <button type="submit">Create user</button>
-  </form>
+  <div class="card">
+    <h2>Create user</h2>
+    <form id="userForm">
+      <label>
+        Username
+        <input type="text" name="username" required />
+      </label>
+      <label>
+        Email
+        <input type="email" name="email" required />
+      </label>
+      <label>
+        Password
+        <input type="password" name="password" minlength="6" required />
+      </label>
+      <label>
+        Full name (optional)
+        <input type="text" name="full_name" />
+      </label>
+      <div class="row">
+        <label class="row"><input type="checkbox" name="must_change_password" /> Must change password</label>
+        <label class="row"><input type="checkbox" name="send_notify" /> Send notification</label>
+      </div>
+      <button type="submit">Create user</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Sign in and list owned repos</h2>
+    <form id="loginForm" class="row">
+      <input type="text" name="username" placeholder="username" required />
+      <input type="password" name="password" placeholder="password" required />
+      <button type="submit">List my repos</button>
+    </form>
+  </div>
 
   <section id="result" style="margin-top: 1rem"></section>
+  <section id="repos" style="margin-top: 1rem"></section>
 
   <script>
     const form = document.getElementById('userForm');
     const result = document.getElementById('result');
+    const loginForm = document.getElementById('loginForm');
+    const reposEl = document.getElementById('repos');
 
     function setLoading(yes) {
       form.querySelector('button').disabled = yes;
@@ -83,6 +100,9 @@
         if (resp.ok) {
           result.innerHTML = `<p class="success">User created successfully.</p><pre>${JSON.stringify(content, null, 2)}</pre>`;
           form.reset();
+          // Pre-fill login form with created user
+          loginForm.username.value = content.username || data.username;
+          loginForm.password.value = data.password;
         } else {
           result.innerHTML = `<p class="error">Error ${resp.status}</p><pre>${JSON.stringify(content, null, 2)}</pre>`;
         }
@@ -90,6 +110,36 @@
         result.innerHTML = `<p class="error">Network error</p><pre>${String(err)}</pre>`;
       } finally {
         setLoading(false);
+      }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(loginForm);
+      const data = {
+        username: fd.get('username').trim(),
+        password: fd.get('password')
+      };
+      reposEl.textContent = 'Loading repos...';
+      try {
+        const resp = await fetch('/api/login_and_repos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const payload = await resp.json();
+        if (!resp.ok) {
+          reposEl.innerHTML = `<p class="error">${payload.detail || 'Failed to fetch repos'}</p>`;
+          return;
+        }
+        if (!payload.repos || payload.repos.length === 0) {
+          reposEl.innerHTML = `<p>No owned repos found for <strong>${payload.username}</strong>.</p>`;
+          return;
+        }
+        const list = payload.repos.map(r => `<li>${r.private ? '🔒' : '🌐'} <a href="${r.html_url}" target="_blank" rel="noopener noreferrer">${r.full_name || r.name}</a></li>`).join('');
+        reposEl.innerHTML = `<h3>Owned repositories for ${payload.username}</h3><ul>${list}</ul>`;
+      } catch (err) {
+        reposEl.innerHTML = `<p class="error">Network error</p><pre>${String(err)}</pre>`;
       }
     });
   </script>
