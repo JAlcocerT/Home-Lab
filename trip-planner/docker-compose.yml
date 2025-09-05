@@ -1,0 +1,7 @@
+services:
+  tripplanner:
+    image: ghcr.io/jalcocert/py_trip_planner #trip_planner
+    container_name: tripplanner
+    ports:
+      - 8051:8050
+    restart: unless-stopped
