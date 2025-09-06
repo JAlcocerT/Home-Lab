@@ -45,6 +45,8 @@ const admin = new GhostAdminAPI({
     const status = fm.status || 'draft'; // draft | published | scheduled
     const custom_excerpt = fm.excerpt || fm.custom_excerpt || undefined;
     let feature_image = fm.feature_image || undefined; // URL or set after upload
+    const feature_image_alt = fm.feature_image_alt || undefined;
+    const feature_image_caption = fm.feature_image_caption || undefined;
     const published_at = fm.published_at || undefined; // ISO string if scheduled/published
 
     // Tags: can be array or comma-separated string
@@ -63,8 +65,12 @@ const admin = new GhostAdminAPI({
         : path.resolve(path.dirname(mdPath), feature_image_path);
       if (fs.existsSync(absImg)) {
         try {
-          const upload = await admin.images.upload({ file: fs.createReadStream(absImg) });
+          // Pass a file path; the Admin SDK will handle creating the stream/form-data
+          const upload = await admin.images.upload({ file: absImg });
           feature_image = upload && upload.url ? upload.url : feature_image;
+          if (feature_image) {
+            console.log('Uploaded feature image ->', feature_image);
+          }
           if (!feature_image) {
             console.warn('Image upload returned no URL; leaving feature_image unset.');
           }
@@ -83,6 +89,8 @@ const admin = new GhostAdminAPI({
       ...(slug ? { slug } : {}),
       ...(custom_excerpt ? { custom_excerpt } : {}),
       ...(feature_image ? { feature_image } : {}),
+      ...(feature_image_alt ? { feature_image_alt } : {}),
+      ...(feature_image_caption ? { feature_image_caption } : {}),
       ...(published_at ? { published_at } : {}),
       ...(tags ? { tags } : {})
     };
