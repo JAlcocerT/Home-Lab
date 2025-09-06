@@ -11,7 +11,7 @@ services:
       database__connection__user: ${MYSQL_USER}
       database__connection__password: ${MYSQL_PASSWORD}
       database__connection__database: ${MYSQL_DATABASE}
-      url: http://192.168.1.11:8018
+      url: http://192.168.1.8:8018
     ports:
       - 8018:2368
     volumes:
