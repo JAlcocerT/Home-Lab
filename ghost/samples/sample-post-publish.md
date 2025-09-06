@@ -3,7 +3,7 @@
 title: "Hello from Markdown with an image"
 
 # Optional
-slug: hello-from-markdownnn
+slug: hello-from-markdown-with-image
 status: published # draft | published | scheduled
 excerpt: "Short summary of this post"
 # Provide a LOCAL image path to upload and set as feature image
@@ -40,3 +40,6 @@ Feel free to edit this file and re-run the creator script.
 | Image upload    | Yes       | Uses `feature_image_path` local file       |
 | HTML rendering  | Yes       | Markdown converted to HTML via `marked`    |
 | Publish status  | Yes       | Set `status: published` or `draft`         |
+
+
+[![Star History Chart](https://api.star-history.com/svg?repos=langchain-ai/langchain,deepset-ai/haystack,Sinaptik-AI/pandas-ai,pydantic/pydantic-ai&,type=Date)](https://star-history.com/langchain-ai/langchain&deepset-ai/haystack&Sinaptik-AI/pandas-ai&pydantic/pydantic-ai&Date)
