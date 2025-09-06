@@ -1,0 +1,16 @@
+#version: "3.7"
+services:
+  grist:
+    image: gristlabs/grist:latest
+    container_name: grist
+    ports:
+      - "8484:8484"
+    volumes:
+      - grist-volume:/persist
+      #- ./grist-data:/persist      
+    environment:
+      #- GRIST_SESSION_SECRET=a-very-long-secret-key-that-is-unique
+      - GRIST_SESSION_SECRET=${GRIST_SESSION_SECRET}      
+      - GRIST_SERVE_GRIST_CORE=true
+volumes:
+  grist-volume:
