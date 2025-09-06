@@ -1,23 +1,51 @@
-#version: '3.1'
+#version: '3.8'
+
 services:
-
-  wordpress:
-    image: wordpress:php7.4-apache #wordpress:php7.1-apache
+  wordpress-app:
+    image: wordpress:6.5-apache
+    container_name: wordpress_app
+    restart: always
     ports:
-      - 8082:80
+      - "8082:80"
     environment:
-      WORDPRESS_DB_HOST: mysql
-      WORDPRESS_DB_USER: root
-      WORDPRESS_DB_PASSWORD: root
-      WORDPRESS_DB_NAME: wordpress
-    links:
-      - mysql:mysql
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WP_HOME: ${WP_HOME}
+      WP_SITEURL: ${WP_SITEURL}
+    volumes:
+      - wp-data:/var/www/html
+    depends_on:
+      wp-db:
+        condition: service_healthy
+    networks:
+      - wp-network
 
-  mysql:
-    image: mysql:8.0.13
+  wp-db:
+    image: mysql:8.0
+    container_name: wordpress_db
+    restart: always
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_DATABASE: wordpress
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
-      - ~/Docker/wordpress/mysql-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wp-network
+
+networks:
+  wp-network:
+    driver: bridge
+
+volumes:
+  wp-data:
+  db-data:
