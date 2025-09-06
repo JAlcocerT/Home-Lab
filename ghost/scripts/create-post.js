@@ -38,7 +38,14 @@ const admin = new GhostAdminAPI({
 
     // Required fields
     const title = fm.title || 'Untitled Post';
-    const html = marked.parse(md);
+    let html = marked.parse(md);
+    const htmlLen = (html || '').length;
+    if (!htmlLen) {
+      console.warn('Markdown converted to empty HTML, applying fallback.');
+      const safe = (md || '').trim();
+      html = safe ? `<p>${safe.replace(/\n\n+/g, '</p><p>')}</p>` : '<p></p>';
+    }
+    console.log('HTML length:', html.length);
 
     // Optional fields
     const slug = fm.slug || undefined;
@@ -95,7 +102,7 @@ const admin = new GhostAdminAPI({
       ...(tags ? { tags } : {})
     };
 
-    const created = await admin.posts.add(postPayload);
+    const created = await admin.posts.add(postPayload, { source: 'html' });
     console.log('Created post:', { id: created.id, slug: created.slug, status: created.status, url: created.url });
   } catch (e) {
     console.error('Failed to create post:', e.message);

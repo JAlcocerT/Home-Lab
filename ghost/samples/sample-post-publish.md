@@ -3,7 +3,7 @@
 title: "Hello from Markdown with an image"
 
 # Optional
-slug: hello-from-markdown
+slug: hello-from-markdownnn
 status: published # draft | published | scheduled
 excerpt: "Short summary of this post"
 # Provide a LOCAL image path to upload and set as feature image
@@ -20,7 +20,9 @@ feature_image_caption: "Our brand logo uploaded via the Admin API SDK"
 #   - release
 ---
 
-# Hello from Markdown and the Ghost Admin API SDK
+How can this be so cool?
+
+## Hello from Markdown and the Ghost Admin API SDK
 
 This post was authored in Markdown and created via the Ghost Admin API SDK.
 
