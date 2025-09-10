@@ -33,7 +33,7 @@ services:
     # ports:
     #   - 5000:5000
     networks:
-      - cloudflare_tunnel    
+      - cloudflared_tunnel    
     #  - proxy
       - postiz-network
     # labels:
@@ -106,6 +106,5 @@ networks:
     external: true
   postiz-network:
     external: false
-
-# cloudflare_tunnel:
-  #   external: true
+  cloudflared_tunnel:
+    external: true
