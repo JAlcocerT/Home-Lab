@@ -11,7 +11,7 @@ services:
       MAIN_URL: "https://postiz.${DOMAIN}"
       FRONTEND_URL: "https://postiz.${DOMAIN}"
       NEXT_PUBLIC_BACKEND_URL: "https://postiz.${DOMAIN}/api"
-      JWT_SECRET: "sdfjhkj34sdkfhsdkfhsdkjfhsdf"
+      JWT_SECRET: ${JWT_SECRET}
  
       # These defaults are probably fine, but if you change your user/password, update it in the
       # postiz-postgres or postiz-redis services below.
@@ -30,8 +30,8 @@ services:
       # if you prefer volumes
       # - postiz-config:/config/
       # - postiz-uploads:/uploads/
-    # ports:
-    #   - 5000:5000
+    ports:
+      - 5000:5000
     networks:
       - cloudflared_tunnel    
     #  - proxy
