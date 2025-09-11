@@ -1,0 +1,14 @@
+services:
+  uptimekuma-service:
+    container_name: uptimekuma
+    image: 'louislam/uptime-kuma:1'
+    ports:
+      - '3001:3001'
+    volumes:
+      - /home/jalcocert/DOCKER/uptime-kuma/data:/app/data
+    restart: unless-stopped
+    #networks: ["nginx_default"]
+
+# networks:
+#     nginx_default:
+#         external: true         
