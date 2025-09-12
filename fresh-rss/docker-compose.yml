@@ -1,0 +1,22 @@
+
+services:
+  freshrss:
+    image: lscr.io/linuxserver/freshrss:latest
+    container_name: freshrss
+    environment:
+      - PUID=1000  # Find your UID: `id your_user_name`
+      - PGID=1000  # Find your GID: `id your_user_name`
+      - TZ=Europe/Rome  # Set your timezone
+    volumes:
+      - ~/Docker/freshrss/config:/config  # Persistent storage for configuration
+    ports: # If you are not using a reverse proxy
+      - 8200:80 # Maps container port 80 to host port 8200. Change it if you want
+    # expose: # If you are using a reverse proxy
+    #   - "80"
+    restart: unless-stopped
+#     networks:
+#       - nginx_default # If you are using a reverse proxy, like Nginx Proxy Manager
+
+# networks:
+#   nginx_default:
+#     external: true # If you have a reverse proxy network
