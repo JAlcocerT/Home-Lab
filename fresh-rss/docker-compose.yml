@@ -16,7 +16,11 @@ services:
     restart: unless-stopped
 #     networks:
 #       - nginx_default # If you are using a reverse proxy, like Nginx Proxy Manager
+#       - cloudflared_tunnel
 
 # networks:
 #   nginx_default:
+#     external: true # If you have a reverse proxy network
+
+#   cloudflared_tunnel:
 #     external: true # If you have a reverse proxy network
