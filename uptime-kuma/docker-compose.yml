@@ -7,8 +7,10 @@ services:
     volumes:
       - /home/jalcocert/DOCKER/uptime-kuma/data:/app/data
     restart: unless-stopped
-    #networks: ["nginx_default"]
+    #networks: ["nginx_default","cloudflared_tunnel"]
 
 # networks:
 #     nginx_default:
-#         external: true         
+#         external: true 
+    # cloudflared_tunnel:
+    #   external: true
