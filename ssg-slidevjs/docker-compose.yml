@@ -1,0 +1,14 @@
+services:
+  slidev:
+    container_name: slidev-container
+    build:
+      context: ./slidev-sample
+      dockerfile: Dockerfile
+    ports:
+      - "3033:3030"
+    volumes:
+      - ./slidev-sample:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npx slidev --port 3030 --remote --bind 0.0.0.0
