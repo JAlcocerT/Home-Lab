@@ -1,0 +1,26 @@
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    container_name: nginx    
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port - UI
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+    volumes:
+      - /home/Docker/Nginx/data:/data
+      - /home/Docker/Nginx/letsencrypt:/etc/letsencrypt
+#     volumes:
+#       - nginx_data:/data #  - ~/Docker/Nginx/data:/data
+#       - nginx_letsencrypt:/etc/letsencrypt #  - ~/Docker/Nginx/letsencrypt:/etc/letsencrypt    
+
+# volumes:
+#   nginx_data:
+#   nginx_letsencrypt:      
+
+networks:
+  nginx_default:
+    name: nginx_default      

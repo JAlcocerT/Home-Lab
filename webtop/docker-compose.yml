@@ -21,9 +21,9 @@ services:
       - /dev/dri:/dev/dri #optional
     shm_size: "2gb" #optional
     restart: unless-stopped
-    networks:  #optional
-      nginx_nginx_network:       #optional
+#     networks:  #optional
+#       nginx_nginx_network:       #optional
 
-networks:  #optional
-  nginx_nginx_network:  #optional
-    external: true         #optional
+# networks:  #optional
+#   nginx_nginx_network:  #optional
+#     external: true         #optional
