@@ -1,0 +1,14 @@
+services:
+  firefox:
+    image: ghcr.io/linuxserver/firefox
+    container_name: firefox
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/pi/Docker/Firefox/config:/config
+    ports:
+      - 3000:3000
+    shm_size: "1gb"
+    restart: unless-stopped
