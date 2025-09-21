@@ -1,0 +1,73 @@
+{
+  "name": "formbricks",
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "responseFinished"
+        ],
+        "surveyIds": [
+          "cmdxm7avj0zgjw001z2q5qtp0"
+        ]
+      },
+      "type": "@formbricks/n8n-nodes-formbricks.formbricks",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a3ded63f-f423-4ca3-8887-ad378e46dbac",
+      "name": "Formbricks",
+      "webhookId": "fc0cb003-2d87-436f-840f-3dd61ead9ece",
+      "credentials": {
+        "formbricksApi": {
+          "id": "ZXX3rBzZe0mrWRux",
+          "name": "Formbricks account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/7edd5c06-e1ea-43d1-8d4b-52eebfaafdcb",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "json": "{{ $json.response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "a45901b8-3ab6-4f5a-ba4d-deeb3e5a560d",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Formbricks": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2cd9dd30-3e33-4e3c-aa5f-37d7f1d795ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99294ba5aa4a1e31dcf670520a55269e70d1fb0e120c377374bb3ca46a86eeb2"
+  },
+  "id": "rJ6oE0pXjAWB5kJH",
+  "tags": []
+}

@@ -16,6 +16,9 @@ services:
       - NODE_FUNCTION_ALLOW_EXTERNAL=axios,qs
       - N8N_SECURE_COOKIE=False
       - N8N_CHAT_ENABLED=True
+      # - N8N_HOST=n8n.jalcocertech.com #important for proper OAuth Redirect URL
+      # - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.jalcocertech.com/ #important to avoid :5678 in your webhook urls
     depends_on:
       - db
     restart: unless-stopped
