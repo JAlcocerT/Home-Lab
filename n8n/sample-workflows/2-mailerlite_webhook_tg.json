@@ -1,0 +1,68 @@
+{
+  "name": "mailerlite-webhook-tg",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f628ebe0-4012-4142-b411-703a3796e93d",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "48b576df-30cf-4f29-b6f3-600f2537ba60",
+      "name": "Webhook",
+      "webhookId": "f628ebe0-4012-4142-b411-703a3796e93d"
+    },
+    {
+      "parameters": {
+        "chatId": "790416672",
+        "text": "=A new subscriber has joined!\n\nName: {{ $json.body.fields.name }}\nEmail: {{ $json.body.email }}\n\nSource: {{ $json.body.source }}\nStatus: {{ $json.body.status }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "73745897-e434-4d75-9541-1e9b750b4df3",
+      "name": "Send a text message",
+      "webhookId": "245d4730-c5ea-4bab-9212-953ec24cb7c8",
+      "credentials": {
+        "telegramApi": {
+          "id": "kVEfZaBGLXhYjqxI",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2ca1d2cb-150e-4567-b631-1f315bebbf5e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99294ba5aa4a1e31dcf670520a55269e70d1fb0e120c377374bb3ca46a86eeb2"
+  },
+  "id": "0o9t8kwxbthA439g",
+  "tags": []
+}
