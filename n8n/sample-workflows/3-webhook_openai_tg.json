@@ -1,0 +1,111 @@
+{
+  "name": "webhook-openai-tg",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a1b92538-1bab-42ec-a865-a5cc01afe51b",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9a0856a3-bca6-4288-8aba-ab0466dce673",
+      "name": "Webhook",
+      "webhookId": "a1b92538-1bab-42ec-a865-a5cc01afe51b"
+    },
+    {
+      "parameters": {
+        "chatId": "790416672",
+        "text": "=New subscriber alert!\n\nName: {{ $node[\"Webhook\"].json.body.body.fields.name }}\nEmail: {{ $node[\"Webhook\"].json.body.body.email }}\n\nAI Fact: {{ $json.message.content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "79a1a6c4-17d5-4c85-84b8-3846beceb5bb",
+      "name": "Send a text message",
+      "webhookId": "d6fc7065-e3ee-4278-abcc-aa0e5c087b2f",
+      "credentials": {
+        "telegramApi": {
+          "id": "kVEfZaBGLXhYjqxI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-NANO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tell me a fun fact about the name '{{ $json.body.body.fields.name }}' in a single sentence.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        0
+      ],
+      "id": "1334c682-c885-4d54-aee0-332a3208d572",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZhvRhCarmFYbzw5b",
+          "name": "OpenAi account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "669538d3-48b3-472a-9f50-8ed13fb0e813",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99294ba5aa4a1e31dcf670520a55269e70d1fb0e120c377374bb3ca46a86eeb2"
+  },
+  "id": "INMlEuSBgzddyXIk",
+  "tags": []
+}
