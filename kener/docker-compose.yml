@@ -1,0 +1,18 @@
+
+services:
+  kener:
+    image: rajnandan1/kener:latest
+    container_name: kener
+    ports:
+      - "5173:3000"
+    environment:
+      KENER_SECRET_KEY: "generate_a_secure_random_string_here"
+      ORIGIN: "http://192.168.1.11:5173"  # Match your public URL
+      NODE_ENV: "production"
+    volumes:
+      - kener_data:/app/database
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  kener_data:
