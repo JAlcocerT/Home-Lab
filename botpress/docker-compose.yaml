@@ -1,10 +1,23 @@
+version: '3.8'
+
 services:
   botpress:
     image: botpress/server:latest
+    container_name: botpress
     ports:
       - "3051:3000"
     environment:
       - BP_PRODUCTION=true
     volumes:
-      - ./botpress_data:/workspace
+      #- ./botpress_data:/workspace    
+      - botpress_data:/workspace
     restart: unless-stopped
+    networks:
+      - cloudflared_tunnel
+
+networks:
+  cloudflared_tunnel:
+    external: true
+
+volumes:
+  botpress_data:

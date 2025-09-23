@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  app:
+    image: invoiceninja/invoiceninja:latest
+    container_name: invoiceninja
+    restart: unless-stopped
+    environment:
+      # Application Settings
+      APP_URL: https://invoiceninja.yourdomain.com
+      APP_KEY: base64:generate_a_secure_key_here
+      APP_DEBUG: "false"
+      REQUIRE_HTTPS: "true"
+      
+      # Database Configuration
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: invoiceninja
+      DB_USERNAME: invoiceninja
+      DB_PASSWORD: your_secure_db_password
+      
+      # Mail Configuration (using log driver for testing)
+      MAIL_MAILER: log
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: null
+      MAIL_PASSWORD: null
+      MAIL_ENCRYPTION: null
+      MAIL_FROM_ADDRESS: invoiceninja@yourdomain.com
+      MAIL_FROM_NAME: "Invoice Ninja"
+      
+      # Session & Cache
+      SESSION_DRIVER: database
+      CACHE_DRIVER: file
+      QUEUE_CONNECTION: sync
+      
+      # Other Settings
+      FILESYSTEM_DISK: local
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: error
+    
+    volumes:
+      - app_storage:/var/www/app/storage/
+      - app_public:/var/www/app/public/
+    
+    depends_on:
+      - db
+    
+    ports:
+      - "8003:80"
+    
+    networks:
+      - cloudflared_tunnel
+
+  db:
+    image: mysql:8.0
+    container_name: invoiceninja_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: invoiceninja
+      MYSQL_USER: invoiceninja
+      MYSQL_PASSWORD: your_secure_db_password
+      MYSQL_ROOT_PASSWORD: your_secure_root_password
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - db_data:/var/lib/mysql
+    
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      timeout: 5s
+      retries: 10
+    
+    networks:
+      - cloudflared_tunnel
+
+networks:
+  cloudflared_tunnel:
+    external: true
+
+volumes:
+  app_storage:
+  app_public:
+  db_data:

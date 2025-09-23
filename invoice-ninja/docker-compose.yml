@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    image: invoiceninja/invoiceninja:latest
+    container_name: invoiceninja
+    restart: unless-stopped
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:8003}
+      APP_KEY: ${APP_KEY:-}
+      DB_HOST: db
+      DB_DATABASE: ${DB_DATABASE:-invoiceninja}
+      DB_USERNAME: ${DB_USERNAME:-invoiceninja}
+      DB_PASSWORD: ${DB_PASSWORD:-invoiceninja}
+      MAIL_MAILER: log
+      APP_DEBUG: ${APP_DEBUG:-false}
+      REQUIRE_HTTPS: ${REQUIRE_HTTPS:-false}
+    volumes:
+      - app_storage:/var/www/app/storage/
+      - app_public:/var/www/app/public/
+    depends_on:
+      - db
+    ports:
+      - "8003:80"
+    networks:
+      - cloudflared_tunnel
+
+  db:
+    image: mysql:8.0
+    container_name: invoiceninja_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-invoiceninja}
+      MYSQL_USER: ${DB_USERNAME:-invoiceninja}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-invoiceninja}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-your_secure_root_password}
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - cloudflared_tunnel
+
+networks:
+  cloudflared_tunnel:
+    external: true
+
+volumes:
+  app_storage:
+  app_public:
+  db_data:

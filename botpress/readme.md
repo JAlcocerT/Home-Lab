@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/chartdb/chartdb
+official_docs: https://botpress.com/docs
 ---
 
-```sh
-docker run -e OPENAI_API_KEY=<YOUR_OPEN_AI_KEY> -p 8060:80 ghcr.io/chartdb/chartdb:latest
-```
+
+https://github.com/botpress/v12
