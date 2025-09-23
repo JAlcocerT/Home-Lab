@@ -1,5 +1,11 @@
 version: '3.8'
 
+networks:
+  internaltypebot:
+    driver: bridge
+  cloudflared_tunnel:
+    external: true
+
 services:
   typebot-db:
     image: postgres:16
@@ -15,6 +21,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internaltypebot
 
   typebot-builder:
     image: baptistearno/typebot-builder:latest
@@ -23,14 +31,18 @@ services:
       typebot-db:
         condition: service_healthy
     environment:
-      - ENCRYPTION_SECRET=your_encryption_secret_here
+      - ENCRYPTION_SECRET=your_encryption_secret_here #openssl rand -base64 24 | tr -d '\n' ; echo
       - DATABASE_URL=postgresql://postgres:typebot@typebot-db:5432/typebot
       - NEXTAUTH_URL=http://localhost:3000
       - NEXT_PUBLIC_VIEWER_URL=http://localhost:3000
       - NEXTAUTH_SECRET=your_nextauth_secret_here
+      - GITHUB_CLIENT_ID=your_github_client_id #https://docs.typebot.io/self-hosting/configuration#github-auth
+      - GITHUB_CLIENT_SECRET=your_github_client_secret
       # Add any other required environment variables here
     ports:
-      - "3000:3000"
+      - "3010:3000"
+    networks:
+      - internaltypebot
 
   typebot-viewer:
     image: baptistearno/typebot-viewer:latest
@@ -46,7 +58,10 @@ services:
       - NEXTAUTH_SECRET=your_nextauth_secret_here
       # Add any other required environment variables here
     ports:
-      - "3001:3000"
+      - "3052:3000"
+    networks:
+      - internaltypebot
+      - cloudflared_tunnel
 
 volumes:
   db_data:
