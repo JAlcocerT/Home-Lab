@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  typebot-db:
+    image: postgres:16
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=typebot
+      - POSTGRES_PASSWORD=typebot
+      - POSTGRES_USER=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    restart: always
+    depends_on:
+      typebot-db:
+        condition: service_healthy
+    environment:
+      - ENCRYPTION_SECRET=your_encryption_secret_here
+      - DATABASE_URL=postgresql://postgres:typebot@typebot-db:5432/typebot
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your_nextauth_secret_here
+      # Add any other required environment variables here
+    ports:
+      - "3000:3000"
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    restart: always
+    depends_on:
+      typebot-db:
+        condition: service_healthy
+    environment:
+      - ENCRYPTION_SECRET=your_encryption_secret_here
+      - DATABASE_URL=postgresql://postgres:typebot@typebot-db:5432/typebot
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXT_PUBLIC_VIEWER_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your_nextauth_secret_here
+      # Add any other required environment variables here
+    ports:
+      - "3001:3000"
+
+volumes:
+  db_data:

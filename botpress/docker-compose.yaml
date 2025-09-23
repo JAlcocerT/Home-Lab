@@ -1,0 +1,10 @@
+services:
+  botpress:
+    image: botpress/server:latest
+    ports:
+      - "3051:3000"
+    environment:
+      - BP_PRODUCTION=true
+    volumes:
+      - ./botpress_data:/workspace
+    restart: unless-stopped
