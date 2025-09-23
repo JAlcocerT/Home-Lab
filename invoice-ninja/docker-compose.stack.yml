@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       # Application Settings
-      APP_URL: https://invoiceninja.yourdomain.com
+      APP_URL: https://invoice.jalcocertech.com/ #changethis
       APP_KEY: base64:generate_a_secure_key_here
       APP_DEBUG: "false"
       REQUIRE_HTTPS: "true"
@@ -51,6 +51,7 @@ services:
       - "8003:80"
     
     networks:
+      - internal_network
       - cloudflared_tunnel
 
   db:
@@ -72,9 +73,11 @@ services:
       retries: 10
     
     networks:
-      - cloudflared_tunnel
+      - internal_network
 
 networks:
+  internal_network:
+    driver: bridge
   cloudflared_tunnel:
     external: true
 

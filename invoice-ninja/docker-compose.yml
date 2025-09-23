@@ -23,6 +23,7 @@ services:
     ports:
       - "8003:80"
     networks:
+      - internal_network
       - cloudflared_tunnel
 
   db:
@@ -38,9 +39,11 @@ services:
       - db_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
     networks:
-      - cloudflared_tunnel
+      - internal_network
 
 networks:
+  internal_network:
+    driver: bridge
   cloudflared_tunnel:
     external: true
 
