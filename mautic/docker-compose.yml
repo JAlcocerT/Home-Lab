@@ -1,0 +1,41 @@
+
+services:
+  mautic:
+    image: mautic/mautic:5-apache
+    container_name: mautic
+    ports:
+      - "8059:80"
+    environment:
+      - MAUTIC_DB_HOST=db
+      - MAUTIC_DB_USER=mauticuser
+      - MAUTIC_DB_PASSWORD=your_secure_password
+      - MAUTIC_DB_NAME=mauticdb
+      - MAUTIC_RUN_CRON_JOBS=true
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - mautic_data:/var/www/html
+
+  db:
+    image: mysql:8
+    container_name: mautic-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_root_password
+      - MYSQL_DATABASE=mauticdb
+      - MYSQL_USER=mauticuser
+      - MYSQL_PASSWORD=your_secure_password
+      - MYSQL_USER_HOST=%
+    volumes:
+      - mautic_db_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mautic_data:
+  mautic_db_data:
