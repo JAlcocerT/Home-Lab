@@ -1,0 +1,126 @@
+{
+  "name": "openai-github",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "10d03dd8-4a6a-4581-8b33-30ff7de087ee",
+      "name": "Hello",
+      "notes": "dawda"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-NANO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=can you create a 50 word markdown post about rainny weather?\n\n"
+            },
+            {
+              "content": "You write markdown posts.\n\nRemember that I need a frontmatter\n\nCreate proper lenght sentences.\n\nAvoid outputing ```markdown and ``` in the end of the message",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        0
+      ],
+      "id": "66408629-4148-47c3-8413-2ede30260586",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZhvRhCarmFYbzw5b",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "JAlcocerT",
+          "mode": "list",
+          "cachedResultName": "JAlcocerT",
+          "cachedResultUrl": "https://github.com/JAlcocerT"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "morita-web",
+          "mode": "list",
+          "cachedResultName": "morita-web",
+          "cachedResultUrl": "https://github.com/JAlcocerT/morita-web"
+        },
+        "filePath": "src/content/sample-post2.md",
+        "fileContent": "={{ $json.message.content }}",
+        "commitMessage": "=New Post: n8n created as per openai-github workflow - {{ new Date().toISOString() }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        0
+      ],
+      "id": "5d594692-a12c-4a01-8393-90bd443f73d1",
+      "name": "Create a file",
+      "webhookId": "417f9961-3b61-4e49-abf0-7a67d36ff9a1",
+      "credentials": {
+        "githubApi": {
+          "id": "WJXYkvCPQUWtWPEU",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Hello": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fd408591-5100-43f9-9a19-1051aeff2c7d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99294ba5aa4a1e31dcf670520a55269e70d1fb0e120c377374bb3ca46a86eeb2"
+  },
+  "id": "pmJ5tgF5VlZXZd5Z",
+  "tags": []
+}
