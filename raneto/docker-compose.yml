@@ -1,0 +1,17 @@
+services:
+  raneto:
+    image: gilbitron/raneto:latest
+    container_name: raneto
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./content:/var/www/raneto/content
+      - ./config.js:/var/www/raneto/config.js
+    environment:
+      - NODE_ENV=production
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
