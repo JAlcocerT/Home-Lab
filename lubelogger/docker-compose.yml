@@ -1,0 +1,73 @@
+services:
+
+  app:
+    image: ghcr.io/hargata/lubelogger:latest
+    container_name: lubeloggerapp
+    restart: unless-stopped
+    environment:
+      - LC_ALL=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      # - MailConfig__EmailServer=smtp.gmail.com
+      # - MailConfig__EmailFrom=you@yourdomain.com
+      # - MailConfig__UseSSL=true
+      # - MailConfig__Port=587
+      # - MailConfig__Username=you@yourdomain.com
+      # - MailConfig__Password=Y0uR53cUreP@s5w0Rd
+      - LOGGING__LOGLEVEL__DEFAULT=Error
+      - POSTGRES_CONNECTION=Host=postgres;Username=lubelogger;Password=lubepass;Database=lubelogger;
+    volumes:
+      - config:/App/config
+      - data:/App/data
+      - translations:/App/wwwroot/translations
+      - documents:/App/wwwroot/documents
+      - images:/App/wwwroot/images
+      - temp:/App/wwwroot/temp
+      - log:/App/log
+      - keys:/root/.aspnet/DataProtection-Keys
+    ports:
+      - 8280:8080
+    #env_file:
+      # - .env
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14
+    container_name: lubeloggerdb
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=lubelogger
+      - POSTGRES_PASSWORD=lubepass
+      - POSTGRES_DB=lubelogger
+    # env_file:
+    #   - .env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=you@yourdomain.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    ports:
+      - "8888:80"
+    # env_file:
+    #   - .env
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+
+volumes:
+  config:
+  data:
+  translations:
+  documents:
+  images:
+  temp:
+  log:
+  keys:
+  postgres:
+  pgadmin-data:
