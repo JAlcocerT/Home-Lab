@@ -1,0 +1,30 @@
+services:
+  silverbullet:
+    image: ghcr.io/silverbulletmd/silverbullet:latest
+    container_name: silverbullet
+    restart: unless-stopped
+    environment:
+      # Uncomment and set if you want built-in auth (see SilverBullet docs)
+      - SB_USER=admin:change-me
+    volumes:
+      - ./data:/space
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-proxy"
+      - "traefik.http.routers.silverbullet.entrypoints=http"
+      - "traefik.http.routers.silverbullet.rule=Host(`silverbullet.casa.jalcocertech.com`)"
+      - "traefik.http.middlewares.silverbullet-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.silverbullet.middlewares=silverbullet-https-redirect"
+      - "traefik.http.routers.silverbullet-secure.entrypoints=https"
+      - "traefik.http.routers.silverbullet-secure.rule=Host(`silverbullet.casa.jalcocertech.com`)"
+      - "traefik.http.routers.silverbullet-secure.tls=true"
+      - "traefik.http.routers.silverbullet-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.silverbullet-secure.service=silverbullet"
+      - "traefik.http.services.silverbullet.loadbalancer.server.port=3000"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
+    name: traefik_traefik-proxy

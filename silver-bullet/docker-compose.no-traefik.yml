@@ -1,0 +1,14 @@
+services:
+  silverbullet-standalone:
+    image: ghcr.io/silverbulletmd/silverbullet:latest
+    container_name: silverbullet-standalone
+    restart: unless-stopped
+    environment:
+      # Optional built-in auth (highly recommended if exposing beyond LAN)
+      - SB_USER=admin:change-me
+    volumes:
+      - ./data:/space
+    ports:
+      # HostPort:ContainerPort
+      - "3000:3000"
+    # No Traefik labels or networks here; direct access via http://HOST:3000

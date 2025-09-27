@@ -28,8 +28,22 @@ http:
         - https-redirectscheme
       tls: {}
       service: portainer
+    silverbullet:
+      entryPoints:
+        - "https"
+      rule: "Host(`silverbullet.casa.jalcocertech.com`)"
+      middlewares:
+        - default-security-headers
+        - https-redirectscheme
+      tls: {}
+      service: silverbullet      
 
   services:
+    silverbullet:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.1.106:3000"
+        passHostHeader: true  
     portainer:
       loadBalancer:
         servers:
