@@ -1,6 +1,13 @@
 .env
 .venv/
 
+acme.json
+traefik.yaml
+#acme.json
+#config.yaml
+cf-token
+logs/
+
 __pycache__
 
 node_modules/
