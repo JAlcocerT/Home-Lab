@@ -1,0 +1,38 @@
+#docker compose -f docker-compose.traefik.yml up -d
+
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    # ports:
+    #   - "8096:8096"
+    volumes:
+      - "~/Docker/Jellyfin:/config"
+      #- "/media/pi/Nowy:/data/tvshows"
+      - "/media/casa/Datos_copia_2/PerriChico:/data/tvshows"
+      - "/home/Downloads:/data/movies"
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.jellyfin.entrypoints=http"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.jellyfin-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.jellyfin.middlewares=jellyfin-https-redirect"
+      - "traefik.http.routers.jellyfin-secure.entrypoints=https"
+      - "traefik.http.routers.jellyfin-secure.rule=Host(`jellyfin.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.jellyfin-secure.tls=true"
+      - "traefik.http.routers.jellyfin.tls.certresolver=cloudflare"
+      - "traefik.http.routers.jellyfin.service=jellyfin"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      #- "traefik.http.routers.tripplanner-secure.middlewares=tinyauth"
+networks:
+ traefik_traefik-proxy:
+    external: true        

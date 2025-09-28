@@ -1,0 +1,38 @@
+##docker compose -f docker-compose.traefik.yml up -d
+
+
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - homarr_appdata:/appdata # Mount the named volume
+    environment: #can be generated with `openssl rand -hex 32`
+      - SECRET_ENCRYPTION_KEY=your_64_character_hex_string # Replace with your secret key 
+    # ports:
+    #   - '7575:7575'
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.homarr.entrypoints=http"
+      - "traefik.http.routers.homarr.rule=Host(`homarr.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.homarr-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.homarr.middlewares=homarr-https-redirect"
+      - "traefik.http.routers.homarr-secure.entrypoints=https"
+      - "traefik.http.routers.homarr-secure.rule=Host(`homarr.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.homarr-secure.tls=true"
+      - "traefik.http.routers.homarr.tls.certresolver=cloudflare"
+      - "traefik.http.routers.homarr.service=homarr"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      #- "traefik.http.routers.tripplanner-secure.middlewares=tinyauth"
+networks:
+ traefik_traefik-proxy:
+    external: true              
+
+volumes:
+  homarr_appdata: # Define the named volume

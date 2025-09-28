@@ -41,14 +41,6 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_HOST=nextcloud-db
       - NEXTCLOUD_TRUSTED_DOMAINS=https://nextcloud.jalcocertech.com http://192.168.1.11:8035
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.docker.network=proxy"
-    #   - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.jalcocertech.com`)"
-    #   - "traefik.http.routers.nextcloud.entrypoints=https"
-    #   - "traefik.http.routers.nextcloud.tls=true"
-    #   - "traefik.http.routers.nextcloud.tls.certresolver=cloudflare"
-    #   - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
     networks:
       - nc_network
       - proxy      

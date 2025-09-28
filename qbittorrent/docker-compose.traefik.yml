@@ -1,0 +1,41 @@
+#docker compose -f docker-compose.traefik.yml up -d
+
+services:
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - WEBUI_PORT=6011
+    volumes:
+      - /home/Docker/qbittorrent/config:/config
+      - /home/Downloads:/downloads
+    #network_mode: "container:your_gluetun_container_name" #change gluetun to your VPN container name   
+    #network_mode: "service:your_gluetun_service_name" #change gluetun to your VPN service name  
+    # ports: #you wont need the ports in this configuration file, you will need to include them in the Gluetun container
+    #   - 6081:6881
+    #   - 6081:6881/udp
+    #   - 6011:6011  
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.qbittorrent.entrypoints=http"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.qbittorrent-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.qbittorrent.middlewares=qbittorrent-https-redirect"
+      - "traefik.http.routers.qbittorrent-secure.entrypoints=https"
+      - "traefik.http.routers.qbittorrent-secure.rule=Host(`qbittorrent.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.qbittorrent-secure.tls=true"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=cloudflare"
+      - "traefik.http.routers.qbittorrent.service=qbittorrent"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=6011"
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      #- "traefik.http.routers.tripplanner-secure.middlewares=tinyauth"
+networks:
+ traefik_traefik-proxy:
+    external: true    
