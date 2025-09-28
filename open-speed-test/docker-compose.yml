@@ -1,0 +1,9 @@
+#version: '3'
+services:
+  openspeedtest:
+    image: openspeedtest/latest
+    container_name: openspeedtest
+    ports:
+      - "6040:3000"
+      - "6041:3001"
+    restart: unless-stopped

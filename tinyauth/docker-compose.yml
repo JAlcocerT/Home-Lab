@@ -34,12 +34,12 @@ services:
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
 
   # Example protected service
-  nginx:
-    container_name: nginx
-    image: nginx:latest
+  openspeedtest:
+    container_name: openspeedtest
+    image: openspeedtest/latest
     labels:
       - traefik.enable=true
-      - traefik.http.routers.nginx.rule=Host(`gibme.duckdns.org`)
+      - traefik.http.routers.nginx.rule=Host(`speedtest.casa.jalcocertech.com`)
       - traefik.http.routers.nginx.entrypoints=websecure
       - traefik.http.routers.nginx.tls.certresolver=myresolver
       - traefik.http.services.nginx.loadbalancer.server.port=80
@@ -55,7 +55,7 @@ services:
       - ./tinyauth.env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.tinyauth.rule=Host(`auth.gibme.duckdns.org`)
+      - traefik.http.routers.tinyauth.rule=Host(`auth.casa.jalcocertech.com`)
       - traefik.http.routers.tinyauth.entrypoints=websecure
       - traefik.http.routers.tinyauth.tls.certresolver=myresolver
       - traefik.http.services.tinyauth.loadbalancer.server.port=3000

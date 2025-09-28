@@ -1,0 +1,16 @@
+services:
+    speedtest-tracker:
+        image: lscr.io/linuxserver/speedtest-tracker:latest
+        restart: unless-stopped
+        container_name: speedtest-tracker
+        ports:
+            - 8089:80
+            - 8443:443
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - APP_KEY= #echo "base64:$(openssl rand -base64 32)"
+            - DB_CONNECTION=sqlite
+        volumes:
+            - /home/casa/Docker/speedtesttracker/data:/config
+            - /home/casa/Docker/speedtesttracker/ssl-keys:/config/keys
