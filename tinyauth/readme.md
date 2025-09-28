@@ -4,7 +4,7 @@ official_docs: https://tinyauth.app/docs/getting-started
 ---
 
 
-Example:
+Example: 
 
 ```sh
 git clone https://github.com/JAlcocerT/ThreeBodies
@@ -13,3 +13,5 @@ cd ThreeBodies
 
 sudo docker compose -f TinyAuth_docker-compose.yml up -d
 ```
+
+> Thanks to https://github.com/JamesTurland/JimsGarage/blob/main/Tinyauth/docker-compose.yaml

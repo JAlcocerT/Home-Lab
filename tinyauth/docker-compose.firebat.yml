@@ -1,0 +1,47 @@
+#./setup-tinyauth.sh
+#nano .env
+#docker compose -f docker-compose.firebat.yml up -d
+
+#docker-compose -f TinyAuth_docker-compose.yml stop tinyauth && docker-compose -f TinyAuth_docker-compose.yml rm -f tinyauth && docker-compose -f TinyAuth_docker-compose.yml up -d tinyauth
+#https://github.com/JAlcocerT/Docker/blob/main/Security/Auth/TinyAuth_docker-compose.yml
+###https://github.com/JAlcocerT/Home-Lab/blob/main/traefik/docker-compose.yml
+
+
+#nslookup tinyauth.jalcocertech.com
+
+services:
+  tinyauth:
+    image: ghcr.io/steveiliop56/tinyauth:v3 
+    container_name: tinyauth
+    restart: unless-stopped
+    environment:
+      - SECRET=${SECRET} #For Cookies - openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32
+      - APP_URL=https://auth.casa.jalcocertech.com #Set your DNS Records!
+      # generate with "echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g" - substitute the user with what you want, or use a file
+      - USERS=${USERS} #Alternative to below USERS_FILE
+      #- USERS_FILE=users_file # add a file with multiple users in the above format if necessary
+      - LOG_LEVEL=0
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID} #For GitHub OAuth
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - OAUTH_WHITELIST=${OAUTH_WHITELIST} #to restrict access (anyone with a github account can use it to log in if not set)
+    volumes:
+      - ./users:/tinyauth/users_file
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.tinyauth.entrypoints=http"
+      - "traefik.http.routers.tinyauth.rule=Host(`auth.casa.jalcocertech.com`)"
+      - "traefik.http.middlewares.tinyauth-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.tinyauth.middlewares=tinyauth-https-redirect"
+      - "traefik.http.routers.tinyauth-secure.entrypoints=https"
+      - "traefik.http.routers.tinyauth-secure.rule=Host(`auth.casa.jalcocertech.com`)"
+      - "traefik.http.routers.tinyauth-secure.tls=true"
+      - "traefik.http.routers.tinyauth-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.tinyauth-secure.service=tinyauth"
+      - "traefik.http.services.tinyauth.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+networks:
+  traefik_traefik-proxy:
+    external: true

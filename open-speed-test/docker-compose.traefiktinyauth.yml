@@ -13,18 +13,18 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.speedtest.entrypoints=http"
-      - "traefik.http.routers.speedtest.rule=Host(`speedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
-      - "traefik.http.middlewares.speedtest-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.speedtest.middlewares=speedtest-https-redirect"
-      - "traefik.http.routers.speedtest-secure.entrypoints=https"
-      - "traefik.http.routers.speedtest-secure.rule=Host(`speedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
-      - "traefik.http.routers.speedtest-secure.tls=true"
-      - "traefik.http.routers.speedtest.tls.certresolver=cloudflare"
-      - "traefik.http.routers.speedtest.service=speedtest"
-      - "traefik.http.services.speedtest.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
-
+      - "traefik.http.routers.openspeedtest.entrypoints=http"
+      - "traefik.http.routers.openspeedtest.rule=Host(`openspeedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.openspeedtest-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.openspeedtest.middlewares=openspeedtest-https-redirect"
+      - "traefik.http.routers.openspeedtest-secure.entrypoints=https"
+      - "traefik.http.routers.openspeedtest-secure.rule=Host(`openspeedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.openspeedtest-secure.tls=true"
+      - "traefik.http.routers.openspeedtest.tls.certresolver=cloudflare"
+      - "traefik.http.routers.openspeedtest.service=openspeedtest"
+      - "traefik.http.services.openspeedtest.loadbalancer.server.port=3000"
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      - "traefik.http.routers.openspeedtest-secure.middlewares=tinyauth"
 networks:
  traefik_traefik-proxy:
     external: true    

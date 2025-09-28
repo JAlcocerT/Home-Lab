@@ -33,7 +33,7 @@ certificatesResolvers:
     acme:
       # caServer: https://acme-v02.api.letsencrypt.org/directory # production (default)
       # caServer: https://acme-staging-v02.api.letsencrypt.org/directory # staging (testing)
-      email: place-your-email-here@gmail.com # Cloudflare email (or other provider)
+      email: place-your-email-here@gmail.com # Cloudflare email (or other provider) CHANGE ME!!!!
       storage: acme.json
       dnsChallenge:
         provider: cloudflare # change as required
