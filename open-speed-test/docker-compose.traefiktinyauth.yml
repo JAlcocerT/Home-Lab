@@ -1,0 +1,30 @@
+#version: '3'
+#sudo docker compose -f docker-compose.traefiktinyauth.yml up -d
+services:
+  openspeedtest:
+    image: openspeedtest/latest
+    container_name: openspeedtest-traefik-tinyauth
+    # ports:
+    #   - "6040:3000"
+    #   - "6041:3001"
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.speedtest.entrypoints=http"
+      - "traefik.http.routers.speedtest.rule=Host(`speedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.speedtest-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.speedtest.middlewares=speedtest-https-redirect"
+      - "traefik.http.routers.speedtest-secure.entrypoints=https"
+      - "traefik.http.routers.speedtest-secure.rule=Host(`speedtest.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.speedtest-secure.tls=true"
+      - "traefik.http.routers.speedtest.tls.certresolver=cloudflare"
+      - "traefik.http.routers.speedtest.service=speedtest"
+      - "traefik.http.services.speedtest.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+
+networks:
+ traefik_traefik-proxy:
+    external: true    

@@ -1,0 +1,47 @@
+services:
+  imagor:
+    image: ghcr.io/cshum/imagor:latest
+    container_name: imagor
+    restart: unless-stopped
+    environment:
+      # Development: allow unsigned (unsafe) URLs. For production, set a strong IMAGOR_SIGNATURE_KEY and disable UNSAFE.
+      - IMAGOR_UNSAFE=true
+      # - IMAGOR_SIGNATURE_KEY=change-me-32-bytes
+      # Serve on port 8000 inside the container
+      - IMAGOR_SERVER_ADDRESS=:8000
+      # Load images from local filesystem
+      - IMAGOR_FILE_LOADER_BASE_DIR=/workspace/images
+      # Optional caching (filesystem). Uncomment to persist cache
+      # - IMAGOR_RESULT_STORAGE_PATH=/workspace/cache
+      # - IMAGOR_RESULT_STORAGE_BASE_DIR=/workspace/cache
+    volumes:
+      - ./images:/workspace/images:ro
+      # - ./cache:/workspace/cache
+    ports:
+      - "8006:8000"
+
+  imagor-studio:
+    image: ghcr.io/cshum/imagor-studio:latest
+    container_name: imagor-studio
+    restart: unless-stopped
+    depends_on:
+      - imagor
+    environment:
+      # Point the Studio UI to the Imagor endpoint. One of these is typically sufficient; both are provided for compatibility.
+      - IMAGOR_STUDIO_IMAGOR_ENDPOINT=http://imagor:8000
+      - IMAGOR_ENDPOINT=http://imagor:8000
+      # Listen on port 3000 inside container
+      - IMAGOR_STUDIO_SERVER_ADDRESS=:3000
+    ports:
+      - "3006:3000"
+
+# Usage:
+#   cd imagor
+#   mkdir -p images
+#   sudo docker compose up -d
+#
+# Test Imagor directly:
+#   http://localhost:8000/unsafe/fit-in/800x600/filters:format(webp)/https://images.weserv.nl/?url=ssl:upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg
+#
+# Test via Studio UI:
+#   http://localhost:3000
