@@ -1,0 +1,77 @@
+#https://joplinapp.org/help/apps/to-dos
+#https://joplinapp.org/
+
+#version: '3.3'
+services:
+    app: #https://joplinapp.org/
+        image: joplin/server:latest #https://github.com/laurent22/joplin
+        depends_on:
+            - db
+        ports:
+            - "3000:22300" #http://192.168.1.11:3097/login
+        restart: unless-stopped     
+        #env_file: .env   
+        environment:
+            - APP_PORT=22300
+            - APP_BASE_URL= 192.168.1.11 #${APP_BASE_URL}  #  IP/URL
+            - DB_CLIENT=pg
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DATABASE=joplin
+            - POSTGRES_USER=user
+            - POSTGRES_PORT=5432
+            - POSTGRES_HOST=db    
+    db:
+        image: postgres:13
+        volumes:
+            - /home/Docker/joplin/data/postgres:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        restart: unless-stopped
+        environment:
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_USER=user
+            - POSTGRES_DB=joplin
+
+    # The out-of-the-box Joplin Server ships with a single admin account:
+
+    # • Email: admin@localhost
+    # • Password: admin
+
+# services:
+#   db:
+#     image: postgres:16-alpine
+#     container_name: joplin-db-standalone
+#     restart: unless-stopped
+#     environment:
+#       - POSTGRES_USER=joplin
+#       - POSTGRES_PASSWORD=joplinpass
+#       - POSTGRES_DB=joplindb
+#     volumes:
+#       - ./postgres-data:/var/lib/postgresql/data
+
+#   joplin:
+#     image: joplin/server:latest
+#     container_name: joplin-server-standalone
+#     restart: unless-stopped
+#     depends_on:
+#       - db
+#     environment:
+#       # Set to the URL you'll use to access the server directly (without Traefik)
+#       # Change localhost to your host IP if accessing from another device
+#       - APP_BASE_URL=http://localhost:22300
+#       - DB_CLIENT=pg
+#       - POSTGRES_HOST=db
+#       - POSTGRES_PORT=5432
+#       - POSTGRES_DATABASE=joplindb
+#       - POSTGRES_USER=joplin
+#       - POSTGRES_PASSWORD=joplinpass
+#       # Optional admin account on first run
+#       # - ADMIN_EMAIL=admin@example.com
+#       # - ADMIN_PASSWORD=change-me
+#     ports:
+#       - "22300:22300"
+#     volumes:
+#       - ./config:/home/joplin/config
+
+
+      

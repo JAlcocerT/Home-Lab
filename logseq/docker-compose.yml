@@ -1,0 +1,30 @@
+services:
+  logseq-site:
+    image: nginx:alpine
+    container_name: logseq-site
+    restart: unless-stopped
+    volumes:
+      # Put your exported/published Logseq static site here
+      - ./public:/usr/share/nginx/html:ro
+      # Optional: custom nginx config (uncomment and provide ./nginx.conf)
+      # - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-proxy"
+      - "traefik.http.routers.logseq.entrypoints=http"
+      - "traefik.http.routers.logseq.rule=Host(`logseq.casa.jalcocertech.com`)"
+      - "traefik.http.middlewares.logseq-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.logseq.middlewares=logseq-https-redirect"
+      - "traefik.http.routers.logseq-secure.entrypoints=https"
+      - "traefik.http.routers.logseq-secure.rule=Host(`logseq.casa.jalcocertech.com`)"
+      - "traefik.http.routers.logseq-secure.tls=true"
+      - "traefik.http.routers.logseq-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.logseq-secure.service=logseq"
+      - "traefik.http.services.logseq.loadbalancer.server.port=80"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
+    name: traefik_traefik-proxy

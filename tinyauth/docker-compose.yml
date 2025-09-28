@@ -3,6 +3,7 @@
 #docker-compose -f TinyAuth_docker-compose.yml up -d
 #docker-compose -f TinyAuth_docker-compose.yml stop tinyauth && docker-compose -f TinyAuth_docker-compose.yml rm -f tinyauth && docker-compose -f TinyAuth_docker-compose.yml up -d tinyauth
 #https://github.com/JAlcocerT/Docker/blob/main/Security/Auth/TinyAuth_docker-compose.yml
+###https://github.com/JAlcocerT/Home-Lab/blob/main/traefik/docker-compose.yml
 
 #version: '3.8'
 

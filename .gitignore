@@ -8,6 +8,8 @@ traefik.yaml
 cf-token
 logs/
 
+ThreeBodies/
+
 __pycache__
 
 node_modules/

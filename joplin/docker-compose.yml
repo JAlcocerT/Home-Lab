@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: joplin-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=joplin
+      - POSTGRES_PASSWORD=joplinpass
+      - POSTGRES_DB=joplindb
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  joplin:
+    image: joplin/server:latest
+    container_name: joplin-server
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - APP_BASE_URL=https://joplin.casa.jalcocertech.com
+      - DB_CLIENT=pg
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DATABASE=joplindb
+      - POSTGRES_USER=joplin
+      - POSTGRES_PASSWORD=joplinpass
+      # Optional admin account on first run
+      # - ADMIN_EMAIL=admin@example.com
+      # - ADMIN_PASSWORD=change-me
+    volumes:
+      - ./config:/home/joplin/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-proxy"
+      - "traefik.http.routers.joplin.entrypoints=http"
+      - "traefik.http.routers.joplin.rule=Host(`joplin.casa.jalcocertech.com`)"
+      - "traefik.http.middlewares.joplin-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.joplin.middlewares=joplin-https-redirect"
+      - "traefik.http.routers.joplin-secure.entrypoints=https"
+      - "traefik.http.routers.joplin-secure.rule=Host(`joplin.casa.jalcocertech.com`)"
+      - "traefik.http.routers.joplin-secure.tls=true"
+      - "traefik.http.routers.joplin-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.joplin-secure.service=joplin"
+      - "traefik.http.services.joplin.loadbalancer.server.port=22300"
+    networks:
+      - internal
+      - traefik
+
+networks:
+  internal:
+    driver: bridge
+  traefik:
+    external: true
+    name: traefik_traefik-proxy
