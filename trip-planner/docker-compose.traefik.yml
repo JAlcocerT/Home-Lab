@@ -1,0 +1,29 @@
+##sudo docker compose -f docker-compose.traefik.yml up -d
+
+services:
+  tripplanner: #https://github.com/JAlcocerT/Py_Trip_Planner/pkgs/container/py_trip_planner
+    image: ghcr.io/jalcocert/py_trip_planner:750fa2800d8f5f1541a293b91647efcf00f4548a #trip_planner
+    container_name: tripplanner #docker pull ghcr.io/jalcocert/py_trip_planner:750fa2800d8f5f1541a293b91647efcf00f4548a
+    # ports:
+    #   - 8051:8050
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.tripplanner.entrypoints=http"
+      - "traefik.http.routers.tripplanner.rule=Host(`tripplanner.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.tripplanner-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.tripplanner.middlewares=tripplanner-https-redirect"
+      - "traefik.http.routers.tripplanner-secure.entrypoints=https"
+      - "traefik.http.routers.tripplanner-secure.rule=Host(`tripplanner.casa.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.tripplanner-secure.tls=true"
+      - "traefik.http.routers.tripplanner.tls.certresolver=cloudflare"
+      - "traefik.http.routers.tripplanner.service=tripplanner"
+      - "traefik.http.services.tripplanner.loadbalancer.server.port=8050"
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      - "traefik.http.routers.tripplanner-secure.middlewares=tinyauth"
+networks:
+ traefik_traefik-proxy:
+    external: true    
