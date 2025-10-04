@@ -29,10 +29,8 @@ services:
     restart: always
     depends_on:
       - nextcloud-db
-    # networks:
-    #   - proxy
-    # ports:
-    #   - 8035:80      
+    ports:
+      - 8035:80      
     volumes:
       - /home/jalcocert/Docker/nextcloud/html:/var/www/html
     environment:
@@ -40,13 +38,10 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_HOST=nextcloud-db
-      - NEXTCLOUD_TRUSTED_DOMAINS=https://nextcloud.jalcocertech.com http://192.168.1.11:8035
+      - NEXTCLOUD_TRUSTED_DOMAINS=https://nextcloud.jalcocertech.com http://192.168.1.11:8035 #change this
     networks:
       - nc_network
-      - proxy      
 
 networks:
   nc_network:
     driver: bridge
-  proxy:
-    external: true
