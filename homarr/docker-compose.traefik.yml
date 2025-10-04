@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.homarr.service=homarr"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
       #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
-      #- "traefik.http.routers.tripplanner-secure.middlewares=tinyauth"
+      #- "traefik.http.routers.homarr-secure.middlewares=tinyauth"
 networks:
  traefik_traefik-proxy:
     external: true              
