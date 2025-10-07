@@ -1,0 +1,16 @@
+services:
+  open-resume:
+    container_name: openresume  
+    image: ghcr.io/jalcocert/open-resume:latest #itsnoted/open-resume:latest #ghcr.io/jalcocert/open-resume:latest
+    ports:
+      - "3000:3000" #UI
+
+#     networks:
+#       - cloudflare_tunnel
+#       - nginx_default
+            
+# networks:
+#   cloudflare_tunnel:
+#     external: true
+#   nginx_default:
+#     external: true      
