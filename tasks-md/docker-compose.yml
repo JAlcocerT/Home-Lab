@@ -1,0 +1,23 @@
+services:
+  tasks-md:
+    image: baldissaramatheus/tasks.md:latest
+    container_name: tasks.md
+    environment:
+      - PUID=1000  # Default user ID, change if needed
+      - PGID=1000   # Default group ID, change if needed
+      #- TITLE=      # Optional: Set your custom title
+      #- BASE_PATH=  # Optional: Set base path if using a reverse proxy
+      - LOCAL_IMAGES_CLEANUP_INTERVAL=1440  # Time in minutes to clean up local images
+    volumes:
+      - /home/Docker/taskmd/tasks/:/tasks/
+      - /home/Docker/taskmd/config/:/config/
+      #- ./tasks/:/tasks/        # Persistent storage for tasks
+      #- ./config/:/config/      # Persistent storage for configuration
+    ports:
+      - "8056:8080"             # Host:Container port mapping
+    restart: unless-stopped     # Restart policy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
