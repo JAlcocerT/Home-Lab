@@ -6,8 +6,10 @@ services:
       - "1880:1880"
     volumes:
       - myNodeREDdata:/data
+      #- /path/to/nodered/data:/data
     depends_on:
       - mqtt-broker
+    restart: unless-stopped
 
   mqtt-broker:
     image: emqx/emqx:5.0.0

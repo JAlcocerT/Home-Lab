@@ -16,11 +16,15 @@ services:
 #     volumes:
 #       - nginx_data:/data #  - ~/Docker/Nginx/data:/data
 #       - nginx_letsencrypt:/etc/letsencrypt #  - ~/Docker/Nginx/letsencrypt:/etc/letsencrypt    
-
+    networks:
+      nginx_network:
+        aliases:
+          - default  
 # volumes:
 #   nginx_data:
 #   nginx_letsencrypt:      
 
 networks:
   nginx_default:
-    name: nginx_default      
+    name: nginx_default  
+    internal: true    

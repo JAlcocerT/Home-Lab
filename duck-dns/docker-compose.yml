@@ -1,0 +1,29 @@
+#version: '3'
+services:
+
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest #https://hub.docker.com/r/linuxserver/duckdns
+    container_name: duckdns
+    environment:
+      - SUBDOMAINS=subdomain1,subdomain2
+      - TOKEN=yourtoken
+      - LOG_FILE=false #optional
+    volumes:
+      - duckdns_data:/config #optional
+    restart: unless-stopped     
+
+  # influxdb:
+  #   image: influxdb:1.8
+  #   container_name: influxdb
+  #   ports:
+  #     - "8086:8086"
+  #   volumes:
+  #     - influxdb_data:/var/lib/influxdb
+  #   environment:
+  #     - INFLUXDB_DB=sensor_data
+  #     - INFLUXDB_ADMIN_USER=admin
+  #     - INFLUXDB_ADMIN_PASSWORD=mysecretpassword
+
+volumes:
+  duckdns_data:
+  #influxdb_data:
