@@ -1,0 +1,12 @@
+services:
+  metabase:
+    image: metabase/metabase #https://github.com/jmlcas/metabase
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    volumes:
+      - metabase-data:/metabase-data
+    restart: always
+
+volumes:
+  metabase-data:

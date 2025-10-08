@@ -1,0 +1,34 @@
+services:
+  metabase:
+    image: metabase/metabase #https://hub.docker.com/r/metabase/metabase/
+    container_name: metabase #https://github.com/metabase/metabase
+    ports:
+      - "3000:3000"
+    volumes:
+      - metabase_data:/metabase-data
+    restart: always
+    depends_on:
+      - mariadb
+    environment:
+      MB_DB_TYPE: mysql
+      MB_DB_DBNAME: chinook
+      MB_DB_USER: myuser
+      MB_DB_PASS: mypassword
+      MB_DB_HOST: mariadb-db
+
+  mariadb:
+    image: mariadb:10.5
+    container_name: mariadb-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=chinook
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=mypassword
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3399:3306"
+      
+volumes:
+  metabase_data:
+  mariadb_data:

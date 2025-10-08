@@ -1,0 +1,23 @@
+services:
+  bunkerm:
+    image: bunkeriot/bunkerm:latest
+    container_name: bunkerm
+    ports:
+      - "1900:1900"  # MQTT port
+      - "2000:2000"  # Web UI port
+    # volumes:
+    #   - mosquitto_data:/var/lib/mosquitto
+    #   - auth_data:/data
+    environment:
+      - TZ=Europe/Madrid  # Set your timezone
+    restart: unless-stopped
+    # Uncomment and modify the following lines if you need to customize the configuration
+    # environment:
+    #   - MQTT_PORT=1900
+    #   - UI_PORT=2000
+    #   - ADMIN_USER=admin
+    #   - ADMIN_PASSWORD=your_secure_password
+
+#volumes:
+#  mosquitto_data:
+#  auth_data:

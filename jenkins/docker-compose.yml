@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"  # Web UI
+      - "50000:50000"  # Agent communication
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/bin/docker
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+      - TZ=Europe/Madrid
+    restart: unless-stopped
+    networks:
+      - jenkins-net
+
+networks:
+  jenkins-net:
+    driver: bridge
