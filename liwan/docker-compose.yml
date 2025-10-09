@@ -1,0 +1,25 @@
+services:
+  liwan:
+    image: ghcr.io/explodingcamera/liwan:1.1
+    container_name: liwan
+    ports:
+      # For local access only (more secure)
+      # - "127.0.0.1:9042:9042"
+      
+      # For network access
+      - "9042:9042"
+    volumes:
+      - liwan-data:/data
+    environment:
+      - LIWAN_BASE_URL=http://192.168.1.11  # Update this to your server's IP or domain
+    restart: unless-stopped
+    networks:
+      - liwan-net
+
+volumes:
+  liwan-data:
+    name: liwan-data
+
+networks:
+  liwan-net:
+    driver: bridge
