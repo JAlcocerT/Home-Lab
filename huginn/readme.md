@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/huginn/huginn?ref=fossengineer.com
+tags: "Automation"
 ---
 
 

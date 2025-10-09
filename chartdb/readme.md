@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/chartdb/chartdb
+tags: "Analytics"
 ---
 
 ```sh

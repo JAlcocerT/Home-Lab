@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/bcms/cms
+tags: "web"
 ---
 
 ```sh

@@ -2,6 +2,7 @@
 post: 
 source_code: https://github.com/metabase/metabase
 official_docs: https://www.metabase.com/docs/latest/
+tags: "Analytics"
 ---
 
 # Metabase Deployment Options

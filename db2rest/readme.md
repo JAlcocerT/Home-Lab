@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/9tigerio/db2rest?ref=fossengineer.com
 post: 
+tags: "Analytics"
 ---
 
 ```sh
