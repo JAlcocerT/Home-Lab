@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  tts-cpu:
+    image: ghcr.io/coqui-ai/tts-cpu
+    container_name: coquitts
+    ports:
+      - "5002:5002"
+    entrypoint: /bin/bash
+    tty: true
+    stdin_open: true
+    # command: /bin/bash -c "python3 TTS/server/server.py --model_name tts_models/en/vctk/vits"
+
+    # Optional: Mount a volume to persist data or access local files
+    # volumes:
+    #   - ./local_data:/data
