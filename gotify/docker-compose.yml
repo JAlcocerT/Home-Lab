@@ -1,0 +1,58 @@
+
+services:
+  gotify:
+    image: ghcr.io/gotify/server:2.6
+    container_name: gotify
+    restart: always
+    ports:
+      - "6886:80"  # Web UI and API
+    environment:
+      - GOTIFY_DATABASE_DIALECT=postgres
+      - GOTIFY_DATABASE_CONNECTION=host=postgres port=5432 user=gotify dbname=gotify password=change_this_password sslmode=disable
+      - GOTIFY_DEFAULTUSER_NAME=admin
+      - GOTIFY_DEFAULTUSER_PASS=change_this_too
+      - GOTIFY_REGISTRATION=false
+      - TZ=Europe/Madrid  # Set your timezone
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - gotify_data:/app/data
+    networks:
+      - gotify_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    image: postgres:17.2
+    container_name: gotify_db
+    restart: always
+    environment:
+      POSTGRES_DB: gotify
+      POSTGRES_USER: gotify
+      POSTGRES_PASSWORD: change_this_password  # Must match the password in the connection string
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gotify_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gotify -d gotify"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  gotify_data:
+  postgres_data:
+
+networks:
+  gotify_net:
+    driver: bridge

@@ -1,0 +1,13 @@
+---
+tags: "web-analytics"
+---
+
+services:
+  lunalytics:
+    image: ksjaay/lunalytics:latest
+    container_name: lunalytics
+    ports:
+      - '2308:2308'
+    volumes:
+      - ./path/to/data:/app/data
+      - ./path/to/logs:/app/logs

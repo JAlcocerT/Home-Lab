@@ -1,0 +1,28 @@
+services:
+  kodi:
+    container_name: kodi
+    image: linuxserver/kodi-headless:latest
+    restart: always
+    environment:
+      - PUID=1000  # Match this with your host user ID
+      - PGID=1000  # Match this with your host group ID
+      - TZ=Europe/Madrid  # Set your timezone
+    volumes:
+      - ./config:/config/.kodi  # Kodi configuration
+      # Uncomment and add media directories as needed
+      # - /path/to/your/media:/media
+    ports:
+      - "8066:8080"   # Web interface
+      - "9098:9090"   # Event server port (for Kodi Remote apps)
+      - "9777:9777/udp"  # Zeroconf/avahi service discovery
+    # Uncomment if you want to use host networking (for better DLNA/UPnP support)
+    # network_mode: "host"
+    # If using host networking, remove the ports section above
+    # and ensure no other services are using these ports
+    # devices:
+    #   - /dev/dri:/dev/dri  # For hardware acceleration (uncomment if needed)
+    #   - /dev/vchiq:/dev/vchiq  # For Raspberry Pi hardware acceleration
+    #   - /dev/video10:/dev/video10  # For VAAPI hardware acceleration
+    #   - /dev/video11:/dev/video11  # For VAAPI hardware acceleration
+    #   - /dev/video12:/dev/video12  # For VAAPI hardware acceleration
+    restart: unless-stopped

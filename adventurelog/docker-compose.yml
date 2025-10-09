@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  web:
+    image: ghcr.io/seanmorley15/adventurelog-frontend:latest
+    container_name: adventurelog-frontend
+    restart: unless-stopped
+    environment:
+      - PUBLIC_SERVER_URL=http://server:8000
+      # Uncomment and update for direct access
+      # - ORIGIN=http://your-server-ip:8015
+      - ORIGIN=https://adventure.yourdomain.com  # Update with your domain
+      - BODY_SIZE_LIMIT=Infinity
+      # Optional: Analytics
+      # - PUBLIC_UMAMI_SRC=https://your-umami-instance.com/script.js
+      # - PUBLIC_UMAMI_WEBSITE_ID=your-website-id
+    ports:
+      - "8015:3000"
+    depends_on:
+      - server
+    networks:
+      - cloudflared_tunnel
+      - adventurelog_net
+
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: adventurelog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_USER: adventure
+      POSTGRES_PASSWORD: change_this_password  # Change this!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - adventurelog_net
+
+  server:
+    image: ghcr.io/seanmorley15/adventurelog-backend:latest
+    container_name: adventurelog-backend
+    restart: unless-stopped
+    environment:
+      - PGHOST=db
+      - PGDATABASE=database
+      - PGUSER=adventure
+      - PGPASSWORD=change_this_password  # Match the password above
+      - SECRET_KEY=generate_a_secure_secret_key  # Change this!
+      - DJANGO_ADMIN_USERNAME=admin  # Change this!
+      - DJANGO_ADMIN_PASSWORD=change_this_password  # Change this!
+      - DJANGO_ADMIN_EMAIL=admin@yourdomain.com  # Change this!
+      - PUBLIC_URL=https://adventure.yourdomain.com  # Update with your domain
+      - CSRF_TRUSTED_ORIGINS=http://your-server-ip:8016,http://your-server-ip:8015,https://adventure.yourdomain.com
+      - DEBUG=False
+      - FRONTEND_URL=https://adventure.yourdomain.com
+      - DISABLE_REGISTRATION=True
+      - DISABLE_REGISTRATION_MESSAGE='Registration is disabled for this instance of AdventureLog.'
+    ports:
+      - "8016:80"
+    depends_on:
+      - db
+    volumes:
+      - adventurelog_media:/code/media/
+    networks:
+      - adventurelog_net
+
+volumes:
+  postgres_data:
+  adventurelog_media:
+
+networks:
+  adventurelog_net:
+  cloudflared_tunnel:
+    external: true  # This network should be created separately

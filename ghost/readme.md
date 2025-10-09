@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/TryGhost/Ghost?ref=fossengineer.com
 post: https://fossengineer.com/selfhosting-ghost-docker/
+tags: "web"
 ---
 
 

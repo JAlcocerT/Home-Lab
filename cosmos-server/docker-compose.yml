@@ -1,0 +1,32 @@
+
+services:
+  cosmos-server:
+    image: azukaar/cosmos-server:latest
+    container_name: cosmos-server
+    hostname: cosmos-server
+    privileged: true
+    restart: always
+    ports:
+      - "800:80"   # Web UI HTTP
+      - "4433:443"  # Web UI HTTPS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Required for Docker management
+      - /:/mnt/host  # Mounts the host filesystem
+      - ./config:/config  # Persists configuration
+    environment:
+      - TZ=Europe/Madrid  # Set your timezone
+      # Uncomment and configure additional environment variables as needed
+      # - COSMOS_PASSWORD=your_secure_password
+      # - COSMOS_SECRET_KEY=generate_a_secure_secret_key
+    networks:
+      - cosmos_net
+    # Uncomment to add health checks
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+networks:
+  cosmos_net:
+    driver: bridge
