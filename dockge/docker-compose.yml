@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  dockge:
+    image: louislam/dockge:latest
+    container_name: dockge
+    restart: unless-stopped
+    ports:
+      - "5001:5001"  # Web UI port (change if needed)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dockge:/app/data
+      - /docker:/docker  # Optional: Mount your docker-compose files directory
+    environment:
+      - DOCKGE_STACKS_DIR=/docker  # Optional: Where your docker-compose files are stored
+      - TZ=Europe/Madrid
+    cap_add:
+      - NET_ADMIN  # Required for some network operations
+    security_opt:
+      - apparmor:unconfined  # Required for some operations
+    networks:
+      - dockge-net
+
+networks:
+  dockge-net:
+    driver: bridge

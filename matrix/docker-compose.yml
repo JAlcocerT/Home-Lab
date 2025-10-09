@@ -1,0 +1,57 @@
+#version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: matrix-postgres
+    environment:
+      - POSTGRES_USER=matrix
+      - POSTGRES_PASSWORD=your_secure_password  # Change this!
+      - POSTGRES_DB=synapse
+      - TZ=Europe/Madrid
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    networks:
+      - matrix-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matrix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: matrix-synapse
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./synapse/data:/data
+      - ./synapse/homeserver.yaml:/data/homeserver.yaml
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - TZ=Europe/Madrid
+    ports:
+      - "8008:8008"
+      - "8448:8448"
+    networks:
+      - matrix-net
+    restart: unless-stopped
+
+  element:
+    image: vectorim/element-web:latest
+    container_name: element-web
+    depends_on:
+      - synapse
+    volumes:
+      - ./element/config.json:/app/config.json
+    ports:
+      - "8081:80"
+    networks:
+      - matrix-net
+    restart: unless-stopped
+
+networks:
+  matrix-net:
+    driver: bridge
