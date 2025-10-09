@@ -1,0 +1,35 @@
+version: "2.1"
+
+services:
+  amule:
+    image: ngosang/amule:latest
+    container_name: amule
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - GUI_PWD=change_this_password  # Change this to a secure password
+      - WEBUI_PWD=change_this_too     # Change this to a secure password
+      - MOD_AUTO_RESTART_ENABLED=true
+      - MOD_AUTO_RESTART_CRON=0 6 * * *  # Restarts daily at 6 AM
+      - MOD_AUTO_SHARE_ENABLED=false
+      - MOD_AUTO_SHARE_DIRECTORIES=/incoming;/my_movies
+      - MOD_FIX_KAD_GRAPH_ENABLED=true
+      - MOD_FIX_KAD_BOOTSTRAP_ENABLED=true
+    ports:
+      - "4711:4711"    # Web UI
+      - "4712:4712"    # Remote GUI, webserver, cmd
+      - "4662:4662"    # eD2K TCP
+      - "4665:4665/udp" # eD2K global search UDP
+      - "4672:4672/udp" # eD2K UDP
+    volumes:
+      - ./config:/home/amule/.aMule  # Configuration files
+      - ./incoming:/incoming         # Completed downloads
+      - ./temp:/temp                 # Temporary download files
+    restart: unless-stopped
+    networks:
+      - amule-net
+
+networks:
+  amule-net:
+    driver: bridge

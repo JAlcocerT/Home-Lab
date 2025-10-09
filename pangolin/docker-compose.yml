@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  pangolin:
+    image: ghcr.io/fosrl/pangolin:latest
+    container_name: pangolin
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # Web UI port
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Add any additional environment variables from your .env file here
+      # - DATABASE_URL=postgres://user:password@postgres:5432/pangolin
+    volumes:
+      - ./data:/app/data  # For persistent data storage
+    # Uncomment and configure the database section if using PostgreSQL
+    # depends_on:
+    #   - postgres
+    networks:
+      - pangolin-net
+
+  # Uncomment and configure this if you need PostgreSQL
+  # postgres:
+  #   image: postgres:15
+  #   container_name: pangolin-db
+  #   environment:
+  #     - POSTGRES_USER=pangolin
+  #     - POSTGRES_PASSWORD=your_secure_password
+  #     - POSTGRES_DB=pangolin
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - pangolin-net
+  #   restart: unless-stopped
+
+networks:
+  pangolin-net:
+    driver: bridge
+
+# volumes:
+#   postgres_data:
