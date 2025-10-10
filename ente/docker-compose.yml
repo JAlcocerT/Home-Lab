@@ -1,0 +1,35 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ente
+      POSTGRES_PASSWORD: entepassword
+      POSTGRES_DB: ente
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  ente:
+    image: enteio/ente:latest
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:80"
+    environment:
+      - DATABASE_URL=postgresql://ente:entepassword@postgres:5432/ente?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=your-secure-encryption-key-here
+      - JWT_SECRET=your-jwt-secret-here
+    volumes:
+      - ente_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  ente_data:

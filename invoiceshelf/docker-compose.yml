@@ -1,0 +1,65 @@
+services:
+  app:
+    image: invoiceshelf/invoiceshelf:latest
+    container_name: invoiceshelf
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=invoiceshelf
+      - DB_USERNAME=invoiceshelf
+      - DB_PASSWORD=invoiceshelf_password
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - APP_URL=http://localhost:8080
+      - APP_DEBUG=false
+      - APP_ENV=production
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: invoiceshelf_db
+    environment:
+      - POSTGRES_DB=invoiceshelf
+      - POSTGRES_USER=invoiceshelf
+      - POSTGRES_PASSWORD=invoiceshelf_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: invoiceshelf_redis
+    command: redis-server --requirepass invoiceshelf_redis_password
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  worker:
+    image: invoiceshelf/invoiceshelf:latest
+    container_name: invoiceshelf_worker
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=invoiceshelf
+      - DB_USERNAME=invoiceshelf
+      - DB_PASSWORD=invoiceshelf_password
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=invoiceshelf_redis_password
+      - QUEUE_CONNECTION=redis
+    volumes:
+      - ./storage:/var/www/storage
+    command: php artisan queue:work --tries=3 --timeout=90
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: omoide
+      POSTGRES_PASSWORD: omoide_password
+      POSTGRES_DB: omoide
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/einaeffchen/omoide-backend:latest
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://omoide:omoide_password@db:5432/omoide
+      - JWT_SECRET=your-jwt-secret-here
+      - JWT_EXPIRATION=7d
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/einaeffchen/omoide-frontend:latest
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

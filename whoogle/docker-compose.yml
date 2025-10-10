@@ -1,0 +1,15 @@
+
+services:
+  whoogle:
+    image: benbusby/whoogle-search:latest
+    container_name: whoogle
+    ports:
+      - "5000:5000"
+    environment:
+      - WHOOGLE_CONFIG_THEME=system
+      - WHOOGLE_CONFIG_SAFE=1
+      - WHOOGLE_CONFIG_ALTS=1
+      - WHOOGLE_CONFIG_TOR=0
+      - WHOOGLE_CONFIG_VIEW_IMAGE=1
+      - WHOOGLE_CONFIG_GET_ONLY=0
+    restart: unless-stopped

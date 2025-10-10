@@ -1,0 +1,25 @@
+services:
+  imagor:
+    image: shumc/imagor:latest
+    container_name: imagor
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - IMAGOR_SECRET=your-secret-key-here
+      - IMAGOR_UNSAFE=1  # Set to 0 in production
+      - IMAGOR_LOADER_ALLOWED_SOURCES=*
+    volumes:
+      - ./storage:/storage
+    restart: unless-stopped
+
+  imagor-studio:
+    image: shumc/imagor-studio:latest
+    container_name: imagor-studio
+    ports:
+      - "5000:5000"
+    environment:
+      - VITE_APP_IMAGOR_ENDPOINT=http://localhost:8000
+    depends_on:
+      - imagor
+    restart: unless-stopped
