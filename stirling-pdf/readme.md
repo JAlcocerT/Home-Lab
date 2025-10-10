@@ -1,4 +1,5 @@
 ---
+source_code: https://github.com/stirlingpdf/stirling-pdf
 tags: ["PDF", "Document Processing"]
 ---
 
@@ -9,9 +10,10 @@ Stirling PDF is a powerful, locally hosted web-based PDF manipulation tool that 
 ## Quick Start
 
 1. Create the necessary directories for persistent storage:
-   ```bash
-   mkdir -p StirlingPDF/{trainingData,extraConfigs,customFiles,logs,pipeline}
-   ```
+
+```bash
+mkdir -p StirlingPDF/{trainingData,extraConfigs,customFiles,logs,pipeline}
+```
 
 2. Create a `docker-compose.yml` file with the following content:
 
