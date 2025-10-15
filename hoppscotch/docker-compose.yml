@@ -1,0 +1,18 @@
+#version: '3.8'
+
+services:
+  hoppscotch:
+    # Image to pull from Docker Hub
+    image: hoppscotch/hoppscotch:latest    
+    # Assigns the name to the container
+    container_name: hoppscotch    
+    # Port mapping: HostPort:ContainerPort
+    ports:
+      - "3003:3000"      
+    # Policy to restart the container if it stops, 
+    restart: unless-stopped   
+    environment:
+      # Fixes the 'Cannot read properties of undefined (reading 'split')' error.
+      # The value below explicitly whitelists the common local host addresses.
+      # You MUST change this value if your frontend is on a different domain/port.
+      - WHITELISTED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
