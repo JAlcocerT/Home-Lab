@@ -6,4 +6,4 @@ official_docs: https://invoiceninja.github.io/en/getting-started/
 > See also https://github.com/JAlcocerT/serverless-invoices
 
 
-https://invoiceninja.github.io/en/self-host-installation/
+Thanks to: https://invoiceninja.github.io/en/self-host-installation/
