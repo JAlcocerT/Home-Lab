@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/bcms/cms
-tags: "web"
+tags: ["web","cms"]
 ---
 
 ```sh
@@ -22,7 +22,9 @@ BCMS is a modern **headless content management system** designed for developers 
 
 ### Technical Architecture:
 
-BCMS is an API-first, decoupled system where content storage and management are separated from presentation. This enables developers to build flexible user interfaces independent of the backend system, ensuring content can be delivered via REST or GraphQL APIs to websites, mobile apps, or other digital platforms.[5]
+BCMS is an API-first, decoupled system where content storage and management are separated from presentation. 
+
+This enables developers to build flexible user interfaces independent of the backend system, ensuring content can be delivered via REST or GraphQL APIs to websites, mobile apps, or other digital platforms.[5]
 
 ### Use Cases and Benefits:
 

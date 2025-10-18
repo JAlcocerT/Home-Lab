@@ -8,6 +8,8 @@ traefik.yaml
 cf-token
 logs/
 
+*.deb
+
 ThreeBodies/
 images/
 storage/

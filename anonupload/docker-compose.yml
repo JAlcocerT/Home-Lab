@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  anonupload:
+    image: ghcr.io/supernova3339/anonfiles:1
+    container_name: anonupload
+    ports:
+      - "77:80"
+    volumes:
+      - /etc/anonupload/files:/var/www/html/files
+    environment:
+      - ADMIN_EMAIL=admin@admin.com
+      - ADMIN_PASSWORD=password
+      - APP_FILELIST=jpeg,jpg,gif,png,zip,xls,doc,mp3,mp4,mpeg,wav,avi,rar,7z,txt
+      - APP_SIZE_VERIFICATION=true
+      - APP_FILE_DESTINATION=files
+      - APP_BASE_URL=https://xxx.xxx/
+      - APP_MAX_SIZE=10000000000
+      - APP_MIN_SIZE=0
+      - APP_CONTACT_EMAIL=changemecerdo
+      - APP_DOWNLOAD_TIME=30

@@ -1,0 +1,55 @@
+version: '3.8' # Specify a modern Docker Compose version
+
+services:
+  # 1. PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine # Use a modern, lightweight PostgreSQL image
+    container_name: postgres
+    restart: always
+    environment:
+      # These credentials MUST be updated from the default values for security!
+      POSTGRES_USER: rachoon_user
+      POSTGRES_PASSWORD: your_strong_db_password
+      POSTGRES_DB: rachoon_db
+    volumes:
+      # Persist the database data outside the container
+      - postgres_data:/var/lib/postgresql/data
+    # Expose the DB port to the host for easier debugging, though not strictly required
+    # - 5432:5432 
+
+  # 2. Rachoon Application Service
+  rachoon:
+    image: ghcr.io/ad-on-is/rachoon
+    container_name: rachoon
+    # Ensure rachoon starts AFTER the database is ready
+    depends_on:
+      - postgres 
+      - gotenberg
+    ports:
+      - 8060:8080 # Host:8060 maps to Container:8080
+    environment:
+      - HOST=0.0.0.0
+      - APP_KEY=a_unique_and_secure_app_key_here # <<< UPDATE THIS
+      - DRIVE_DISK=local
+      - DB_CONNECTION=pg
+      # Use the container name 'postgres' as the hostname
+      - PG_HOST=postgres 
+      - PG_PORT=5432
+      # Use the credentials defined in the postgres service
+      - PG_USER=rachoon_user 
+      - PG_PASSWORD=your_strong_db_password # <<< UPDATE THIS
+      - PG_DB_NAME=rachoon_db 
+      # Use the container name 'gotenberg' as the hostname
+      - GOTENBERG_URL=http://gotenberg 
+      # Correct the base URL to use the external host port
+      - BASE_URL=http://localhost:8060 
+
+  # 3. Gotenberg PDF Converter Service
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    restart: always
+
+# 4. Define volumes for persistent storage
+volumes:
+  postgres_data:

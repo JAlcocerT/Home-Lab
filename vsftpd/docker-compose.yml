@@ -1,0 +1,32 @@
+
+services:
+  vsftpd:
+    image: fauria/vsftpd
+    container_name: vsftpd
+    volumes:
+      - /home/Docker/vsftpd:/home/vsftpd
+    ports:
+      - "20:20"
+      - "21:21"
+      - "21100-21110:21100-21110"
+    environment:
+      - FTP_USER=myuser
+      - FTP_PASS=mypass
+      - PASV_ADDRESS=127.0.0.1
+      - PASV_MIN_PORT=21100
+      - PASV_MAX_PORT=21110
+    restart: always
+
+
+# version: '2.1'
+# services:
+#   ftp:
+#     image: fauria/vsftpd
+#     ports:
+#       - 21:21
+#     environment:
+#       - FTP_USER=one
+#       - FTP_PASS=StrongPassword1
+#       - PASV_ADDRESS=your_server_ip_address #192.168.3.200 #localhost #greatdomain.com
+#     volumes:
+#       - /home/Docker/delfer/one:/home/vsftpd/one

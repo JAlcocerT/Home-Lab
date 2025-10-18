@@ -1,0 +1,11 @@
+
+services:
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    # Gotenberg runs as a stateless API service on port 3000 for PDF conversion.
+    ports:
+      - "3000:3000"
+    # The '--rm' flag from the original docker run command is usually omitted in
+    # Docker Compose services since APIs like Gotenberg are meant to run continuously.
