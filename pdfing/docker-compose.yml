@@ -2,19 +2,21 @@ services:
   pdfding:
     image: mrmn/pdfding:latest
     container_name: pdfding
-    restart: unless-stopped # Recommended for self-hosting
+    restart: unless-stopped
     ports:
       - "8027:8000"
     volumes:
       - sqlite_data:/home/nonroot/pdfding/db
       - media:/home/nonroot/pdfding/media
+    command: >
+      sh -c "cd /home/nonroot/pdfding && python manage.py runserver 0.0.0.0:8000 --noreload"
     environment:
-      - HOST_NAME=127.0.0.1
-      - SECRET_KEY=some_secret # IMPORTANT: Change this to a secure, unique key
-      - CSRF_COOKIE_SECURE=FALSE
-      - SESSION_COOKIE_SECURE=FALSE # Set these to TRUE if you are serving over HTTPS
-      - ALLOWED_HOSTS=localhost,127.0.0.1
-    # Add network configuration if needed, e.g., for reverse proxy
+      - HOST_NAME=localhost:8027
+      - SECRET_KEY=some_secret # Change this to a secure, unique key
+      - ALLOWED_HOSTS=*
+      - DEBUG=True
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8027,http://127.0.0.1:8027
+      - PYTHONUNBUFFERED=1
 
 volumes:
   sqlite_data:
