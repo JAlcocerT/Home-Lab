@@ -443,10 +443,28 @@
         function getChartConfig() {
             try {
                 const config = JSON.parse(chartConfigEl.value);
+                
+                // Validate that we have the required structure
+                if (!config.series || !Array.isArray(config.series)) {
+                    showError('Configuration must include a "series" array');
+                    return null;
+                }
+                
+                if (!config.options || typeof config.options !== 'object') {
+                    showError('Configuration must include an "options" object');
+                    return null;
+                }
+                
                 // Ensure the chart takes full container height
-                if (!config.options) config.options = {};
                 if (!config.options.chart) config.options.chart = {};
+                
+                // Preserve user's chart type if specified, otherwise default to line
+                if (!config.options.chart.type) {
+                    config.options.chart.type = 'line';
+                }
+                
                 config.options.chart.height = '100%';
+                
                 return config;
             } catch (error) {
                 showError('Invalid JSON: ' + error.message);
@@ -462,19 +480,27 @@
             hideMessages();
             
             try {
+                // Prepare the ApexCharts configuration
+                const apexConfig = {
+                    series: config.series,
+                    chart: config.options.chart,
+                    ...config.options
+                };
+                
                 // If chart already exists, update it
                 if (chart) {
-                    chart.updateOptions(config, true);
+                    chart.updateOptions(apexConfig, true);
                 } 
                 // Otherwise, create a new chart
                 else {
                     chartContainer.innerHTML = ''; // Clear any previous content
-                    chart = new ApexCharts(chartContainer, config);
+                    chart = new ApexCharts(chartContainer, apexConfig);
                     chart.render();
                 }
                 showSuccess('Chart updated successfully!');
             } catch (error) {
                 showError('Error rendering chart: ' + error.message);
+                console.error('Chart rendering error:', error);
             }
         }
 

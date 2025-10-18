@@ -9,7 +9,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PORT=3001
     restart: unless-stopped
     volumes:
       - ./:/usr/src/app
