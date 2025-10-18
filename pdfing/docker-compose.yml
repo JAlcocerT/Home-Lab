@@ -1,0 +1,22 @@
+services:
+  pdfding:
+    image: mrmn/pdfding:latest
+    container_name: pdfding
+    restart: unless-stopped # Recommended for self-hosting
+    ports:
+      - "8027:8000"
+    volumes:
+      - sqlite_data:/home/nonroot/pdfding/db
+      - media:/home/nonroot/pdfding/media
+    environment:
+      - HOST_NAME=127.0.0.1
+      - SECRET_KEY=some_secret # IMPORTANT: Change this to a secure, unique key
+      - CSRF_COOKIE_SECURE=FALSE
+      - SESSION_COOKIE_SECURE=FALSE # Set these to TRUE if you are serving over HTTPS
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    # Add network configuration if needed, e.g., for reverse proxy
+
+volumes:
+  sqlite_data:
+  media:
+

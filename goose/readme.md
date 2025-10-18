@@ -3,6 +3,7 @@ source_code: https://github.com/block/goose
 ---
 
 ```sh
+#https://github.com/block/goose/releases
 wget https://github.com/block/goose/releases/download/v1.11.0/goose_1.11.0_amd64.deb
 curl -L -o goose_1.11.0_amd64.deb https://github.com/block/goose/releases/download/v1.11.0/goose_1.11.0_amd64.deb
 
