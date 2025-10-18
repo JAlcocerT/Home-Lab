@@ -1,0 +1,84 @@
+version: "3"
+
+services:
+  shlink:
+    image: shlinkio/shlink:stable
+    restart: always
+    container_name: shlink-backend
+    environment:
+      - TZ="America/Denver"
+      - DEFAULT_DOMAIN=192.168.1.66:8987 #no http/https. no trailing slash
+      - IS_HTTPS_ENABLED=false
+      - GEOLITE_LICENSE_KEY=Ea2FHWtkMx2q5MIN #we'll need to get this key from maxmind.com
+      - DB_DRIVER=maria
+      - DB_USER=shlink
+      - DB_NAME=shlink
+      - DB_PASSWORD=password #change this
+      - DB_HOST=database
+    depends_on:
+      - database
+    ports:
+      - 8987:8080
+
+  database:
+    image: mariadb:10.8
+    restart: always
+    container_name: shlink-database
+    environment:
+      - MARIADB_ROOT_PASSWORD=password #change this
+      - MARIADB_DATABASE=shlink
+      - MARIADB_USER=shlink
+      - MARIADB_PASSWORD=password #change this
+    volumes:
+      - /home/docker/shlink:/var/lib/mysql
+
+  shlink-web-client:
+    image: shlinkio/shlink-web-client
+    restart: always
+    container_name: shlink-gui
+    volumes:
+      - /home/docker/shlink/servers.json:/usr/share/nginx/html/servers.json #this file will be generated automatically
+    depends_on:
+      - shlink
+    ports:
+      - 8081:80
+
+# version: "3.8"
+
+# services:
+#   shlink:
+#     image: shlinkio/shlink:latest
+#     container_name: shlink
+#     environment:
+#       - DB_DRIVER=maria
+#       - DB_HOST=db
+#       - DB_PORT=3306
+#       - DB_USER=shlink
+#       - DB_PASSWORD=shlink_password
+#       - DB_NAME=shlink_db
+#       - SHORT_DOMAIN_HOST=shlink.example.com
+#       - SHORT_DOMAIN_SCHEMA=https
+#       - DEFAULT_SHORT_CODES_LENGTH=6
+#       - SHORT_CODES_CHARSET=alphanumeric
+#       - GEOLITE_LICENSE_KEY=YOUR_MAXMIND_LICENSE_KEY  # Optional, for geolocation
+#     depends_on:
+#       db:
+#         condition: service_started
+#     ports:
+#       - "8080:8080"
+#     restart: unless-stopped
+
+#   db:
+#     image: mariadb:10.6
+#     container_name: shlink-db
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root_password
+#       MYSQL_DATABASE: shlink_db
+#       MYSQL_USER: shlink
+#       MYSQL_PASSWORD: shlink_password
+#     volumes:
+#       - shlink_db_data:/var/lib/mysql
+#     restart: unless-stopped
+
+# volumes:
+#   shlink_db_data:
