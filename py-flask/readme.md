@@ -2,6 +2,7 @@
 source_code: 
 official_site:
 post: 
+tags: ["web apps"]
 ---
 
 Requires a uv python project to be built properly:

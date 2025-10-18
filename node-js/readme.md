@@ -1,6 +1,4 @@
 ---
 source_code: 
-official_site:
-post: 
 tags: ["web apps"]
 ---

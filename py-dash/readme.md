@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/plotly/dash
-tags: "dev"
+tags: ["dev","web apps"]
 ---
 
 
