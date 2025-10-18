@@ -1,4 +1,3 @@
-version: '3'
 
 services:
   codex:
@@ -8,19 +7,19 @@ services:
     container_name: codex-container
     working_dir: /app
     volumes:
-      - ./codex-cli:/app #A volume for Codex Container Tests
-      - ./codex-cli/docs:/app/docs #A volume for Codex Container Tests
-      - ./codex-cli/input-sources:/app/input-sources #DEMO with SDLC SpeedUp
+      - ./codex-cli-safe:/app #A volume for Codex Container Tests
+      - ./codex-cli-safe/docs:/app/docs #A volume for Codex Container Tests
+      - ./codex-cli-safe/input-sources:/app/input-sources #DEMO with SDLC SpeedUp
       #- ./<project-repo>:/app/Codex-Container #sample project volume map
     environment:
       - NODE_ENV=development
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
-      - project-network
+      - project-codexcli-network
     tty: true
     stdin_open: true
     restart: "no"
 
 networks:
   project-network:
-    name: project-documentation-network
+    name: project-codexcli-network

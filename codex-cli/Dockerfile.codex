@@ -23,7 +23,7 @@ WORKDIR /app
 # Copy the orchestrator directory into the container
 #COPY orchestrator /app/orchestrator
 #Initialize git to simplify codex use inside the container
-#RUN git init 
+RUN git init 
 
 # Set default command
 CMD ["bash"]

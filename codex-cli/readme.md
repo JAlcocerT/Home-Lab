@@ -1,7 +1,10 @@
-
+---
+source_code: https://github.com/openai/codex/
+---
 
 This container provides an environment for running the OpenAI Codex CLI tool.
 
+> It also [supports MCP](https://github.com/openai/codex/blob/main/docs/config.md)
 
 1. Docker and Docker Compose installed
 2. OpenAI API key from [OpenAI API Keys](https://platform.openai.com/api-keys)
@@ -43,4 +46,13 @@ codex process input.txt output.txt
 
 # Interactive mode
 codex chat
+```
+
+
+---
+
+```sh
+chmod +x run_codex.sh
+#cd codex-cli-sage && git init
+./run_codex.sh
 ```
