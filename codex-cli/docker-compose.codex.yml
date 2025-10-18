@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  codex:
+    build:
+      context: .
+      dockerfile: Dockerfile.codex
+    container_name: codex-container
+    working_dir: /app
+    volumes:
+      - ./codex-cli:/app #A volume for Codex Container Tests
+      - ./codex-cli/docs:/app/docs #A volume for Codex Container Tests
+      - ./codex-cli/input-sources:/app/input-sources #DEMO with SDLC SpeedUp
+      #- ./<project-repo>:/app/Codex-Container #sample project volume map
+    environment:
+      - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - project-network
+    tty: true
+    stdin_open: true
+    restart: "no"
+
+networks:
+  project-network:
+    name: project-documentation-network

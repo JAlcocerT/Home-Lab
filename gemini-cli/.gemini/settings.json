@@ -1,0 +1,8 @@
+{
+    "theme": "Default", // Keep any existing settings
+    "mcpServers": {
+      "context7": {
+        "url": "https://mcp.context7.com/sse"
+      }
+    }
+  }
