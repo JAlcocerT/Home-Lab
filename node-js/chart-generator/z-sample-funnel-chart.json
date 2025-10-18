@@ -1,0 +1,40 @@
+{
+  "series": [
+    {
+      "name": "Funnel Series",
+      "data": [
+        {
+          "x": "Sourced",
+          "y": 138
+        },
+        {
+          "x": "Assessed",
+          "y": 99
+        },
+        {
+          "x": "Technical",
+          "y": 75
+        },
+        {
+          "x": "Offered",
+          "y": 30
+        }
+      ]
+    }
+  ],
+  "options": {
+    "chart": {
+      "type": "bar",
+      "height": 350
+    },
+    "plotOptions": {
+      "bar": {
+        "horizontal": true,
+        "isFunnel": true
+      }
+    },
+    "title": {
+      "text": "Recruitment Funnel"
+    }
+  }
+}
