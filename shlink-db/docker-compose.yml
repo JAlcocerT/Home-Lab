@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  shlink:
+    image: shlinkio/shlink:latest
+    container_name: shlink
+    environment:
+      - DB_DRIVER=mysql
+      - DB_HOST=db
+      - DB_USER=shlink
+      - DB_PASS=shlink_password
+      - DB_NAME=shlink_db
+      - SHORT_DOMAIN_HOST=shlink.example.com
+      - SHORT_DOMAIN_SCHEMA=https
+      - DEFAULT_SHORT_CODES_LENGTH=6
+      - SHORT_CODES_CHARSET=alphanumeric
+      - GEOLITE_LICENSE_KEY=YOUR_MAXMIND_LICENSE_KEY  # Optional, for geolocation
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.6
+    container_name: shlink-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: shlink_db
+      MYSQL_USER: shlink
+      MYSQL_PASSWORD: shlink_password
+    volumes:
+      - shlink_db_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  shlink_db_data:
