@@ -8,4 +8,3 @@ A lightweight container management platform empowering community members to spin
 
 
 * https://github.com/alexcastrodev/shortener
-* https://github.com/alam00000/bentopdf
