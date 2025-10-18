@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  chart-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apexcharts-generator
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    working_dir: /usr/src/app

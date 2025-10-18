@@ -246,10 +246,7 @@
                 <textarea id="chartConfig" spellcheck="false">{
     "chart": {
         "type": "line",
-        "height": "100%",
-        "toolbar": {
-            "show": true
-        }
+        "height": "100%"
     },
     "series": [{
         "name": "Sample Data",
@@ -276,9 +273,11 @@
     },
     "stroke": {
         "curve": "smooth"
+    },
+    "toolbar": {
+        "show": true
     }
-        }
-    }
+}
 }</textarea>
                 <div id="errorMessage" class="error-message"></div>
                 <div id="successMessage" class="success-message">Chart updated successfully!</div>
