@@ -1,3 +1,8 @@
+---
+source_code: https://github.com/chatwoot/chatwoot
+tags: ["web apps", "chat","customer support","customer engagement"]
+---
+
 * https://www.chatwoot.com/docs/self-hosted/deployment/docker
 * https://github.com/chatwoot/chatwoot
 
