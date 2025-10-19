@@ -1,0 +1,41 @@
+# Conduit configuration file (example)
+# Docs: https://docs.conduit.rs/configuration.html
+
+# The public server name of your homeserver.
+# Use a real domain if you plan to federate. For LAN-only tests you can use an IP.
+server_name = "matrix.example.com"
+
+# The port Conduit listens on inside the container.
+# If you change this, also update your Docker port mapping.
+port = 6167
+
+# Database backend and path.
+# "rocksdb" is recommended for small/home deployments.
+database_backend = "rocksdb"
+# Inside the official image, the persistent path is /var/lib/matrix-conduit
+# which we already map via docker-compose to a host directory.
+database_path = "/var/lib/matrix-conduit"
+
+# Registration and federation
+allow_registration = false      # set to true temporarily to create the first (admin) user
+allow_federation  = true
+
+# Performance and limits
+max_request_size = 20_000_000   # bytes
+max_concurrent_requests = 100
+
+# Optional: trusted servers for fetching public keys faster (reduces latency on first federation)
+trusted_servers = ["matrix.org"]
+
+# Logging (one of: error, warn, info, debug, trace)
+# log = "info"
+
+# Optional: TURN (for Voice/Video)
+# turn_uris = [
+#   "turn:turn.example.com?transport=udp",
+#   "turn:turn.example.com?transport=tcp"
+# ]
+# turn_secret = "change_me_turn_secret"
+
+# Optional: If running behind a reverse proxy, you may want to bind only on localhost.
+# address = "0.0.0.0"

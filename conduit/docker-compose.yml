@@ -1,0 +1,30 @@
+services:
+  conduit:
+    image: matrixconduit/matrix-conduit:latest
+    container_name: matrix-conduit
+    restart: unless-stopped
+    environment:
+      - CONDUIT_SERVER_NAME=example.com # your domain (no protocol). Use your LAN: 192.168.1.11 if testing
+      - CONDUIT_DATABASE_BACKEND=rocksdb
+      - CONDUIT_ALLOW_REGISTRATION=false # set true initially to create admin, then switch back to false
+      - CONDUIT_ALLOW_FEDERATION=true
+      - CONDUIT_MAX_REQUEST_SIZE=20000000
+      - CONDUIT_MAX_CONCURRENT_REQUESTS=100
+      - CONDUIT_TRUSTED_SERVERS=["matrix.org"]
+      - CONDUIT_PORT=6167
+      # If you prefer configuring only via env vars, set CONDUIT_CONFIG="" and add more CONDUIT_* vars
+      - CONDUIT_CONFIG=/etc/conduit/conduit.toml
+    volumes:
+      - /home/docker/conduit:/var/lib/matrix-conduit
+      - ./conduit.toml:/etc/conduit/conduit.toml:ro
+    ports:
+      - "8448:6167"  # Federation default. Terminate TLS at a reverse proxy for production
+      # - "6167:6167" # Optional: direct access without reverse proxy (not recommended on the open internet)
+    # Optional healthcheck
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6167/_matrix/client/versions"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+# For Traefik/Nginx well-known setup see readme.md in this folder.
