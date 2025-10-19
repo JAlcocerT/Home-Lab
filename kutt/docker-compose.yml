@@ -1,0 +1,52 @@
+version: "3"
+
+services:
+  kutt:
+    image: kutt/kutt:latest
+    container_name: kutt
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=production
+      - DEFAULT_DOMAIN=192.168.1.11:8788 #example.com # your public domain, no protocol
+      - SITE_NAME=Kutt
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=kutt
+      - DB_USER=kutt
+      - DB_PASSWORD=change_me # change this
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=please_change_me # change this
+      # Optional email configuration (for password reset, verification, etc.)
+      # - MAIL_HOST=smtp.example.com
+      # - MAIL_PORT=587
+      # - MAIL_SECURE=false
+      # - MAIL_USER=smtp_user
+      # - MAIL_PASSWORD=smtp_password
+      # - MAIL_FROM=Kutt <kutt@example.com>
+      # Optional admin emails (comma separated)
+      # - ADMIN_EMAILS=you@example.com
+    ports:
+      - "8788:3000" # change host port if needed
+
+  postgres:
+    image: postgres:15
+    container_name: kutt-postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=kutt
+      - POSTGRES_USER=kutt
+      - POSTGRES_PASSWORD=change_me # change this
+    volumes:
+      - /home/docker/kutt/postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: kutt-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - /home/docker/kutt/redis:/data
