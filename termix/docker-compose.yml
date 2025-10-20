@@ -8,8 +8,7 @@ services:
     volumes:
       - termix-data:/app/data
     environment:
-      # Generate random salt here https://www.lastpass.com/features/password-generator (max 32 characters, include all characters for settings)
-      SALT: "something_generated"
+      SALT: "something_generated" #https://www.lastpass.com/features/password-generator (max 32 characters, include all characters for settings
       PORT: "8080"
 
 volumes:
