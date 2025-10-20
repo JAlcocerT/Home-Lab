@@ -1,0 +1,134 @@
+services:
+  mariadb:
+    image: mariadb:10.6
+    container_name: frappecms-mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - /home/docker/frappecms/mariadb:/var/lib/mysql
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: frappecms-redis-cache
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  redis-queue:
+    image: redis:7-alpine
+    container_name: frappecms-redis-queue
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  redis-socketio:
+    image: redis:7-alpine
+    container_name: frappecms-redis-socketio
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  configurator:
+    image: frappe/erpnext:v15
+    container_name: frappecms-configurator
+    restart: on-failure
+    entrypoint: ["bash", "-c"]
+    command: |
+      ls -1 apps > sites/apps.txt;
+      bench set-config -g db_host mariadb;
+      bench set-config -gp db_port 3306;
+      bench set-config -g redis_cache redis://redis-cache:6379;
+      bench set-config -g redis_queue redis://redis-queue:6379;
+      bench set-config -g redis_socketio redis://redis-socketio:6379;
+      bench set-config -gp socketio_port 9000;
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  backend:
+    image: frappe/erpnext:v15
+    container_name: frappecms-backend
+    restart: unless-stopped
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      mariadb:
+        condition: service_started
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+      redis-socketio:
+        condition: service_started
+    environment:
+      - FRAPPE_SITE_NAME_HEADER=${FRAPPE_SITE_NAME_HEADER:-$${host}}
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  websocket:
+    image: frappe/erpnext:v15
+    container_name: frappecms-websocket
+    restart: unless-stopped
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  queue-short:
+    image: frappe/erpnext:v15
+    container_name: frappecms-queue-short
+    restart: unless-stopped
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    command: ["bench", "worker", "--queue", "short,default"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  queue-long:
+    image: frappe/erpnext:v15
+    container_name: frappecms-queue-long
+    restart: unless-stopped
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    command: ["bench", "worker", "--queue", "long,default,short"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  scheduler:
+    image: frappe/erpnext:v15
+    container_name: frappecms-scheduler
+    restart: unless-stopped
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    command: ["bench", "schedule"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  frontend:
+    image: frappe/erpnext:v15
+    container_name: frappecms-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - websocket
+    environment:
+      - BACKEND=backend:8000
+      - SOCKETIO=websocket:9000
+      - UPSTREAM_REAL_IP_ADDRESS=192.168.1.11
+      - UPSTREAM_REAL_IP_HEADER=X-Forwarded-For
+      - UPSTREAM_REAL_IP_RECURSIVE=off
+      - PROXY_READ_TIMEOUT=120
+      - CLIENT_MAX_BODY_SIZE=50m
+    command: ["nginx-entrypoint.sh"]
+    ports:
+      - "8089:8080"  # http://192.168.1.11:8089
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+volumes:
+  sites:
