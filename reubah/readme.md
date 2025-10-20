@@ -1,14 +1,14 @@
 ---
 source_code: https://github.com/dendianugerah/reubah?ref=fossengineer.com
 post: 
-tags: "Image"
+tags: ["Image","Document Processing","PDF"]
 About: "A web-based tool for processing images and converting documents with a simple interface"
 ---
 
 
-# Reubah
+Reubah is a web interface for managing and monitoring your services. 
 
-Reubah is a web interface for managing and monitoring your services. This is based on the [YouTube tutorial](https://www.youtube.com/watch?v=2jftRXvHvlU).
+This is based on the [YouTube tutorial](https://www.youtube.com/watch?v=2jftRXvHvlU).
 
 ## Quick Start
 
@@ -51,6 +51,7 @@ This configuration doesn't include persistent storage by default. If you need to
 ## Updating
 
 To update to the latest version:
+
 ```bash
 docker-compose pull
 docker-compose up -d --force-recreate

@@ -15,33 +15,14 @@ Stirling PDF is a powerful, locally hosted web-based PDF manipulation tool that 
 mkdir -p StirlingPDF/{trainingData,extraConfigs,customFiles,logs,pipeline}
 ```
 
-2. Create a `docker-compose.yml` file with the following content:
+2. Create the `docker-compose.yml` file
 
-```yaml
-version: '3.3'
-
-services:
-  stirling-pdf:
-    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
-    container_name: stirling-pdf
-    ports:
-      - '8050:8080'
-    volumes:
-      - ./StirlingPDF/trainingData:/usr/share/tessdata
-      - ./StirlingPDF/extraConfigs:/configs
-      - ./StirlingPDF/customFiles:/customFiles/
-      - ./StirlingPDF/logs:/logs/
-      - ./StirlingPDF/pipeline:/pipeline/
-    environment:
-      - DOCKER_ENABLE_SECURITY=false
-      - LANGS=en_GB
-    restart: unless-stopped
-```
 
 3. Start the service:
-   ```bash
-   docker-compose up -d
-   ```
+
+```bash
+docker-compose up -d
+```
 
 ## Access
 
