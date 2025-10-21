@@ -74,3 +74,10 @@ Existen múltiples alternativas open source y autoalojadas a Shopify y WordPress
 
 En resumen, **Medusa.js**, **Bagisto** y **Saleor** representan la nueva generación de plataformas headless modernas, mientras que **Magento**, **PrestaShop** y **nopCommerce** siguen siendo las opciones más sólidas para quienes buscan ecosistemas maduros y autogestionados.
 
+
+---
+
+```
+Add one folder with a docker file to selfhost https://github.com/ente-io/ente
+and in the readme just keep a simple front matter with source_code: do this for any other repo ill provide
+```
