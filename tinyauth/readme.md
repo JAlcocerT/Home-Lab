@@ -5,6 +5,9 @@ moto: "The simplest way to protect your apps with a login screen."
 tags: ["auth"]
 ---
 
+Use Tiny Auth together with Traefik.
+
+---
 
 Example: 
 
