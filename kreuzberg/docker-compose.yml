@@ -1,0 +1,13 @@
+#version: '3.8'
+
+services:
+  kreuzberg:
+    # Use a clear name for the service
+    container_name: kreuzberg   
+    # Specify the image from your docker run command
+    image: goldziher/kreuzberg
+    # Map the ports: "HOST_PORT:CONTAINER_PORT"
+    ports:
+      - "8027:8000"
+    # Ensure the service restarts if it crashes (good practice for APIs)
+    restart: unless-stopped
