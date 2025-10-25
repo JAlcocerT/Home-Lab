@@ -1,0 +1,31 @@
+#version: '3.8'
+services:
+  netdata:
+    container_name: netdata
+    image: netdata/netdata
+    ports:
+      - '19999:19999'
+    volumes:
+      - netdataconfig:/etc/netdata
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
+      - '/etc/passwd:/host/etc/passwd:ro'
+      - '/etc/group:/host/etc/group:ro'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - '/etc/os-release:/host/etc/os-release:ro'
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor=unconfined
+    #networks: ["nginx_nginx_network"] #optional 
+ 
+volumes:
+  netdataconfig:
+  netdatalib:
+  netdatacache:
+
+# networks: #optional
+#   nginx_nginx_network: #optional
+#     external: true #optional
