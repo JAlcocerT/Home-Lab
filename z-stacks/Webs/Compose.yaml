@@ -1,0 +1,157 @@
+#version: '3.1'
+
+services: #GHOST, WP, LINKSTACK, LITTLELINK
+  ghostcyclingv2:
+    image: ghost:5-alpine
+    container_name: ghostciclyng_containerv2
+    environment:
+      database__client: mysql
+      database__connection__host: dbciclyingv2 #should match the name of the service of mariadb
+      database__connection__user: ghostuser
+      database__connection__password: somepassw #must be like in DB
+      database__connection__database: ghost
+      url: http://192.168.3.200:8018
+      #url: http://ghostciclyng_container:8018
+      #url: https://cyclingthere.com
+    restart: always
+    networks:
+      - ghost_network_ciclyingv2
+      #- cloudflare_tunnel
+    ports:
+      - 8018:2368
+    volumes:
+      - ghost_data_ciclyingv2:/var/lib/ghost/content
+    depends_on: 
+      - dbciclyingv2
+
+  dbciclyingv2:
+    container_name: ghostciclyng_dbv2
+    image: mariadb:10.5
+    restart: always
+    environment:
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghostuser
+      MYSQL_PASSWORD: somepassw
+      MYSQL_ROOT_PASSWORD: anotherpwd
+    networks:
+      - ghost_network_ciclyingv2
+    volumes:
+      - db_ghost_data_ciclyingv2:/var/lib/mysql
+
+volumes:
+  ghost_data_ciclyingv2:
+  db_ghost_data_ciclyingv2:
+  linkstack:  
+
+networks:
+  wp:
+  nginx_default:
+    external: true  
+  ghost_network_ciclyingv2:
+  cloudflare_tunnel:
+    external: true
+
+
+#services:
+  linkstack: #https://code.dbt3ch.com/vdimomWF
+    image: linkstackorg/linkstack
+    container_name: linkstack
+    hostname: linkstack
+    environment:
+      HTTP_SERVER_NAME: "192.168.0.12" #"www.example.xyz"
+      HTTPS_SERVER_NAME: "192.168.0.12" #change this so that it works with CF tunnels
+      SERVER_ADMIN: "admin@example.xyz"
+      TZ: "Europe/Berlin"
+      PHP_MEMORY_LIMIT: "512M"
+      UPLOAD_MAX_FILESIZE: "16M"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - linkstack:/htdocs
+    restart: unless-stopped
+    # networks:
+    #   - cloudflaretunnel_tunnel
+
+# volumes:
+#   linkstack:
+
+# networks:
+#   cloudflaretunnel_tunnel:
+#   external: true
+
+services:
+  littlelink-server:
+    image: ghcr.io/techno-tim/littlelink-server:latest
+    # dockerhub is also supported timothystewart6/littlelink-server
+    # image: timothystewart6/littlelink-server:latest
+    container_name: littlelink-server
+    environment:
+      - META_TITLE=J. Alcocer Tagua 
+      - META_DESCRIPTION=Entrepreneur | Blogger | Traveler 🚵 
+      - META_AUTHOR=JAlcocerT
+      - META_KEYWORDS=Entrepreneur, Engineering, Travel
+      - LANG=en
+      - META_INDEX_STATUS=all
+      - OG_SITE_NAME=JAlcocerT
+      - OG_TITLE=JAlcocerT
+      - OG_DESCRIPTION=The Home of JAlcocerT
+      - OG_URL=https://links.jalcocertech.com
+      - OG_IMAGE=https://pbs.twimg.com/profile_images/1286144221217316864/qIAsKOpB_400x400.jpg
+      - OG_IMAGE_WIDTH=400
+      - OG_IMAGE_HEIGHT=400
+      - THEME=Dark
+      - FAVICON_URL=https://pbs.twimg.com/profile_images/1286144221217316864/qIAsKOpB_200x200.jpg
+      - AVATAR_URL=https://pbs.twimg.com/profile_images/1286144221217316864/qIAsKOpB_200x200.jpg
+      - AVATAR_2X_URL=https://pbs.twimg.com/profile_images/1286144221217316864/qIAsKOpB_400x400.jpg
+      - AVATAR_ALT=JAlcocerT Profile Pic
+      - NAME=JAlcocerT
+      - BIO=Entrepreneur | Blogger | Traveler 🚵 
+      # use ENV variable names for order, listed buttons will be boosted to the top
+      - BUTTON_ORDER=YOUTUBE,TWITCH,TWITTER,GITHUB,INSTAGRAM,LINKED_IN,DISCORD,FACEBOOK,TIKTOK,PATREON,GEAR,DOCUMENTATION
+      - CUSTOM_BUTTON_NAME=DOCUMENTATION,GEAR
+      - INSTAGRAM=https://l.technotim.live/instagram
+      - GITHUB=https://github.com/JAlcocerT
+      - CAL=https://l.technotim.live/linkedin
+      - YOUTUBE=https://l.technotim.live/subscribe
+      - FOOTER=JAlcocerTech © 2025
+    ports:
+      - 8089:3000
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+#services: ##for ubuntu
+  wordpress:
+    image: wordpress:php7.4-apache #wordpress:php7.1-apache
+    ports:
+      - 8082:80
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: root
+      WORDPRESS_DB_NAME: wordpress
+    links:
+      - mysql:mysql
+    restart: always
+    networks:
+      - nginx_default #allow communication with the nginx service  
+      - wp
+
+  mysql:
+    image: mysql:8.0.13
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ~/Docker/wordpress/mysql-data:/var/lib/mysql
+    restart: always
+    networks:
+      - wp #allow communication with the nginx service  
+    
+
+# networks:
+#   wp:
+#   nginx_default:
+#     external: true

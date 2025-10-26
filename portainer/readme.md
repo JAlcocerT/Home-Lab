@@ -1,6 +1,7 @@
 ---
-source_code:
+source_code: https://github.com/portainer/portainer
 post: https://fossengineer.com/selfhosting-portainer-docker/
+tags: "HomeLab Essentials"
 ---
 
 ```sh

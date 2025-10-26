@@ -1,0 +1,37 @@
+---
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /home/Docker/radarr/config:/config #/path/to/data:/config
+      # - /path/to/movies:/movies #optional
+      # - /path/to/downloadclient-downloads:/downloads #optional
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+#https://github.com/Radarr/Radarr
+#https://docs.linuxserver.io/images/docker-radarr/#media-folders
+
+#http://localhost:7878/
+
+
+# ```sh
+# docker run -d --name=radarr \
+# -e PUID=1000 \
+# -e PGID=1000 \
+# -e TZ=Europe/Madrid \
+# -p 7878:7878 \
+# -v ~/Docker/Radarr/config:/config \
+# -v /path/to/movies:/movies `#optional` \
+# -v ~/Downloads/Radarr/downloads:/downloads `#optional` \
+# --restart unless-stopped \
+# linuxserver/radarr
+
+# #ghcr.io/linuxserver/radarr
+# ```
