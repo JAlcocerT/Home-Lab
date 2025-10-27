@@ -2,14 +2,14 @@
 source_code: https://github.com/steveiliop56/tinyauth
 official_docs: https://tinyauth.app/docs/getting-started
 moto: "The simplest way to protect your apps with a login screen."
-tags: ["auth"]
+tags: ["auth","HomeLab Essentials"]
 ---
 
-Use Tiny Auth together with Traefik.
+
 
 ---
 
-Example: 
+Example: Use Tiny Auth together with Traefik.
 
 ```sh
 git clone https://github.com/JAlcocerT/ThreeBodies

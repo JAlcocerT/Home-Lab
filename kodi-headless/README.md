@@ -1,3 +1,8 @@
+---
+tags: ["Media Server"]
+source_code: https://github.com/linuxserver/kodi-headless
+---
+
 # Kodi Headless - Media Server
 
 [Kodi](https://kodi.tv/) is a free and open-source media player software application developed by the XBMC Foundation. This is a headless version that runs without a graphical interface, perfect for server environments.

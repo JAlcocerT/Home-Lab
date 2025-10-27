@@ -1,8 +1,7 @@
 ---
-tags: ["Document","PDF Parsing","PDF to md"]
+tags: ["Document","PDF Parsing","PDF to md","ebook"]
 source_code: https://github.com/Goldziher/kreuzberg
 ---
-
 
 Very interesting to extract knowledge from PDFs.
 
