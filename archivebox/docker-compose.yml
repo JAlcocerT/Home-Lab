@@ -1,0 +1,12 @@
+#version: '3.8'
+services:
+  archivebox:
+    image: archivesspace/archivebox:latest
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    volumes:
+      - ./data:/archive/data
+      - ./config:/archive/config
+    environment:
+      SHOW_FAVICON: 'true'

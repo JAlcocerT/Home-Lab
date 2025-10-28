@@ -1,12 +1,14 @@
 ---
 source_code: https://github.com/rajnandan1/kener
-tags: ["web","status pages"]
+tags: ["web","Status Pages"]
 ---
+
+See other [Awsome status Pages](https://github.com/ivbeg/awesome-status-pages) Tools.
 
 
 Add `https://fossengineer.com/favicon.ico` or `https://www.jalcocertech.com/favicon.ico` and the domain `www.fossengineer.com` to monitor.
 
-You can tweak all the kener public page settings, via: `http://192.168.1.11:5173/manage/app/home`
+You can tweak all the **kener public page settings**, via: `http://192.168.1.11:5173/manage/app/home`
 
 Example:
 
