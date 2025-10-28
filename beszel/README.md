@@ -1,5 +1,5 @@
 ---
-tags: "Monitoring"
+tags: ["Monitoring"]
 source_code: https://github.com/henrygd/beszel
 ---
 

@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/mautic/mautic
+tags: ["CRM","Email Marketing","OSS for Business"]
 ---
 
 

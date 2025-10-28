@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/WordPress/WordPress
 post: https://fossengineer.com/selfhosting-wordpress-docker/
-tags: "web"
+tags: ["web","CMS"]
 ---
 
 
