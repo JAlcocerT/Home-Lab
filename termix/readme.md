@@ -1,5 +1,5 @@
 ---
 source_code: https://github.com/lukegus/termix
 post: 
-tags: ["terminal","ssh","vnc"]
+tags: ["terminal","ssh","vnc","HomeLab Essentials"]
 ---

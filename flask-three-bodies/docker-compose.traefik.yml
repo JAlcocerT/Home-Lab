@@ -1,0 +1,37 @@
+#nslookup flask.jalcocertech.com
+#sudo docker compose up -d
+#sudo docker compose down
+
+
+#version: '3.8'
+services:
+  threebody-app: #working with traefik
+    image: threebodies-threebody-app #built before
+    # ports:
+    #   - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_ENV=production
+    #command: tail -f /dev/null #keep running for debug
+    volumes:
+      - /home/jalcocert/Docker/ThreeBodies:/app #Tweak this as per your path
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.threebody-app.entrypoints=http"
+      - "traefik.http.routers.threebody-app.rule=Host(`threebodies.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.threebody-app-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.threebody-app.middlewares=threebody-app-https-redirect"
+      - "traefik.http.routers.threebody-app-secure.entrypoints=https"
+      - "traefik.http.routers.threebody-app-secure.rule=Host(`threebodies.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.threebody-app-secure.tls=true"
+      - "traefik.http.routers.threebody-app-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.threebody-app-secure.service=threebody-app"
+      - "traefik.http.services.threebody-app.loadbalancer.server.port=5000"
+    networks: #Important to connect to Traefik Network
+      - proxy      
+
+networks:
+  proxy:
+    external: true

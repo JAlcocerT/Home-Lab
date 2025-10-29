@@ -1,0 +1,55 @@
+secrets:
+  cf-token:
+    file: ./cf-token
+
+services:
+  traefik:
+    image: traefik:v3.3 # or traefik:v3.3 to pin a version
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true # helps to increase security
+    secrets:
+      - cf-token # the secret at the top of this file (For Cloudflare DNS Challenge, used together with CF_DNS_API_TOKEN_FILE)
+    env_file:
+      - .env # store other secrets e.g., (For the Traefik Dashboard user/password)
+    networks:
+       - traefik-proxy
+    ports:
+      - 80:80
+      - 443:443
+     # - 10000:10000 # optional
+     # - 33073:33073 # optional
+    environment:
+      - TRAEFIK_DASHBOARD_CREDENTIALS=${TRAEFIK_DASHBOARD_CREDENTIALS}
+      - CF_API_EMAIL=jesalctag@gmail.com #${CF_API_EMAIL} # !!!Cloudflare email - CHANGE THIS!!!
+      # - CF_DNS_API_TOKEN=YOUR-TOKEN # Cloudflare API Token (Can be used instead of the CF_DNS_API_TOKEN_FILE)
+      - CF_DNS_API_TOKEN_FILE=/run/secrets/cf-token # see https://doc.traefik.io/traefik/https/acme/#providers (Or just use the above)
+      - TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL=${CF_API_EMAIL}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik.yaml:/traefik.yaml:ro
+      - ./config/acme.json:/acme.json
+      - ./config/config.yaml:/config.yaml:ro
+      - ./logs:/var/log/traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`x300.jalcocertech.com`)" #CHANGE THIS!!! Im considering x300.jalcocertech.com and subdomains
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_CREDENTIALS}"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`x300.jalcocertech.com`)" #CHANGE THIS!!!
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare" #we are using cloudflare for this setup
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=x300.jalcocertech.com" #CHANGE THIS!!!
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.x300.jalcocertech.com" #CHANGE THIS!!!
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
+networks:
+  traefik-proxy:
+    #external: true # or comment this line to auto create the network
