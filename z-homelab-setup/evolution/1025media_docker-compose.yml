@@ -1,0 +1,89 @@
+#version: "3"
+services:
+  metube:
+    image: ghcr.io/alexta69/metube #ytdownloader
+    container_name: metube
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    volumes:
+      - /home/jalcocert/Desktop/YoutubeMusic:/downloads
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    ports:
+      - "8096:8096"
+    volumes:
+      - "/home/Docker/Jellyfin:/config"
+      #- "/media/pi/Nowy:/data/tvshows"
+      - "/home/jalcocert/Desktop/YoutubeVideos:/data/tvshows"
+      - "/home/jalcocert/Desktop/P2P:/data/movies"
+    restart: unless-stopped
+
+  gonic:
+    image: sentriz/gonic:latest
+    container_name: gonic
+    user: "1000:1000" # You can adjust this to your user's UID and GID for permissions
+    ports:
+      - "4747:4747"
+    environment:
+      # This is the path to your music collection inside the container
+      - GONIC_MUSIC_PATH=/music
+      # Gonic will store its database and cache here
+      - GONIC_DB_PATH=/data/gonic.db
+      - GONIC_CACHE_PATH=/data/cache
+      # Optional: listen on all interfaces.
+      - GONIC_LISTEN_ADDR=0.0.0.0:4747
+    volumes:
+      # This is the directory for Gonic's data (database and cache) on your host machine
+      - /Home/Docker/gonic/data:/data
+      # This is the directory with your music files on your host machine
+      - /home/jalcocert/Desktop/YoutubeMusic:/music:ro
+    restart: unless-stopped
+
+
+  # navidrome:
+  #   image: deluan/navidrome:latest
+  #   ports:
+  #     - "4533:4533"
+  #   environment:
+  #     # Optional: put your config options customization here. Examples:
+  #     ND_SCANSCHEDULE: 1h
+  #     ND_LOGLEVEL: info  
+  #     ND_BASEURL: ""
+  #   volumes:
+  #     - "/home/Docker/navidrome/data:/data"
+  #     - "/home/jalcocert/Downloads/Music:/music:ro"
+  #   restart: unless-stopped
+
+  # jdownloader-2:
+  #   image: jlesage/jdownloader-2
+  #   ports:
+  #     - "5800:5800"
+  #   volumes:
+  #     - "/home/docker/jdownloader/appdata:/config:rw"
+  #     - "/home/jalcocert/Downloads/Music:/output:rw"
+  #   restart: unless-stopped
+
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - WEBUI_PORT=6011
+    volumes:
+      - /home/Docker/qbittorrent/config:/config
+      - /home/jalcocert/Desktop/P2P:/downloads
+    #network_mode: "service:your_gluetun_service_name" #change gluetun to your VPN service name  
+    ports: #you wont need the ports in this configuration file, you will need to include them in the Gluetun container
+      - 6081:6881
+      - 6081:6881/udp
+      - 6011:6011  
+    restart: unless-stopped
