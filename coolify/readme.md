@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/coollabsio/coolify
-tags: "PaaS"
+tags: ["PaaS"]
 ---
 
 > See [this post](https://jalcocert.github.io/JAlcocerT/deploying-software-with-paas-to-servers/#coolify)

@@ -1,6 +1,6 @@
 ---
-tags: ["Media Server"]
 source_code: https://github.com/linuxserver/kodi-headless
+tags: ["Music Server","Media Server"]
 ---
 
 # Kodi Headless - Media Server
