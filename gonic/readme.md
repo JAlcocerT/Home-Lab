@@ -13,6 +13,8 @@ docker compose -f ./gonic/docker-compose.traefik.yml up -d
 
 Default credentials are `admin/admin`.
 
+Alternatively, see [Polaris](https://github.com/agersant/polaris) or Navidrome.
+
 For Android, look for: [Ultrasonic](https://github.com/ultrasonic/ultrasonic) which moved [here](https://gitlab.com/ultrasonic/ultrasonic)
 
 For IoS, look for [Amperfy](https://github.com/BLeeEZ/amperfy)

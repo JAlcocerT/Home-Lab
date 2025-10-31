@@ -1,0 +1,150 @@
+# PocketBase Development Makefile
+.DEFAULT_GOAL := help
+
+# Colors for output
+BLUE := \033[36m
+GREEN := \033[32m
+YELLOW := \033[33m
+RED := \033[31m
+RESET := \033[0m
+
+.PHONY: help
+help: ## Show this help message
+	@echo "$(BLUE)PocketBase Development Commands$(RESET)"
+	@echo "================================"
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "$(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+.PHONY: setup
+setup: ## Set up PocketBase with Docker
+	@echo "$(YELLOW)🚀 Starting PocketBase...$(RESET)"
+	docker compose -f PB_docker-compose.yml up -d
+	@echo "$(GREEN)✅ PocketBase is running on http://localhost:8080$(RESET)"
+
+.PHONY: stop
+stop: ## Stop PocketBase
+	@echo "$(YELLOW)🛑 Stopping PocketBase...$(RESET)"
+	docker compose -f PB_docker-compose.yml down
+	@echo "$(GREEN)✅ PocketBase stopped$(RESET)"
+
+.PHONY: logs
+logs: ## Show PocketBase logs
+	docker compose -f PB_docker-compose.yml logs -f
+
+.PHONY: status
+status: ## Check PocketBase status
+	@echo "$(BLUE)📊 PocketBase Status:$(RESET)"
+	@docker compose -f PB_docker-compose.yml ps
+
+.PHONY: create-collections
+create-collections: ## Create all collections from JSON
+	@echo "$(YELLOW)📝 Creating collections...$(RESET)"
+	python3 create_json_collection.py
+	@echo "$(GREEN)✅ Collections created$(RESET)"
+
+.PHONY: create-specific
+create-specific: ## Create specific collections (usage: make create-specific COLLECTIONS="posts user_settings")
+	@echo "$(YELLOW)📝 Creating specific collections: $(COLLECTIONS)$(RESET)"
+	python3 create_json_collection.py $(COLLECTIONS)
+
+.PHONY: list-collections
+list-collections: ## List all existing collections
+	@echo "$(BLUE)📋 Listing all collections...$(RESET)"
+	python3 delete_collection.py --list
+
+.PHONY: delete-collection
+delete-collection: ## Delete specific collections (usage: make delete-collection COLLECTIONS="posts user_settings")
+	@echo "$(RED)🗑️  Deleting collections: $(COLLECTIONS)$(RESET)"
+	@if [ -z "$(COLLECTIONS)" ]; then \
+		echo "$(RED)❌ Error: Please specify COLLECTIONS to delete$(RESET)"; \
+		echo "$(YELLOW)Usage: make delete-collection COLLECTIONS=\"posts user_settings\"$(RESET)"; \
+		exit 1; \
+	fi
+	python3 delete_collection.py $(COLLECTIONS)
+
+.PHONY: delete-collection-force
+delete-collection-force: ## Force delete collections without confirmation (usage: make delete-collection-force COLLECTIONS="posts")
+	@echo "$(RED)🗑️  Force deleting collections: $(COLLECTIONS)$(RESET)"
+	@if [ -z "$(COLLECTIONS)" ]; then \
+		echo "$(RED)❌ Error: Please specify COLLECTIONS to delete$(RESET)"; \
+		echo "$(YELLOW)Usage: make delete-collection-force COLLECTIONS=\"posts user_settings\"$(RESET)"; \
+		exit 1; \
+	fi
+	python3 delete_collection.py --force $(COLLECTIONS)
+
+.PHONY: export-all
+export-all: ## Export all collections as full backup with metadata
+	@echo "$(BLUE)📤 Exporting all collections (full format)...$(RESET)"
+	python3 export_collections_enhanced.py --format=full
+	@echo "$(GREEN)✅ Full backup export completed$(RESET)"
+
+.PHONY: export-template
+export-template: ## Export all collections as template (creation-ready format)
+	@echo "$(BLUE)📤 Exporting all collections (template format)...$(RESET)"
+	python3 export_collections_enhanced.py --format=template --output=exported_collections_template.json
+	@echo "$(GREEN)✅ Template export completed - ready for recreation$(RESET)"
+	@echo "$(YELLOW)💡 Use: python3 create_json_collection.py to recreate$(RESET)"
+
+.PHONY: export-specific
+export-specific: ## Export specific collections as template (usage: make export-specific COLLECTIONS="posts user_settings")
+	@echo "$(BLUE)📤 Exporting specific collections: $(COLLECTIONS)$(RESET)"
+	@if [ -z "$(COLLECTIONS)" ]; then \
+		echo "$(RED)❌ Error: Please specify COLLECTIONS to export$(RESET)"; \
+		echo "$(YELLOW)Usage: make export-specific COLLECTIONS=\"posts user_settings\"$(RESET)"; \
+		exit 1; \
+	fi
+	python3 export_collections_enhanced.py $(COLLECTIONS) --format=template
+	@echo "$(GREEN)✅ Specific collections exported$(RESET)"
+
+.PHONY: export-backup
+export-backup: ## Create complete backup with custom filename (usage: make export-backup OUTPUT="my_backup.json")
+	@echo "$(BLUE)📤 Creating complete backup...$(RESET)"
+	@if [ -z "$(OUTPUT)" ]; then \
+		python3 export_collections_enhanced.py --format=full; \
+	else \
+		python3 export_collections_enhanced.py --format=full --output=$(OUTPUT); \
+	fi
+	@echo "$(GREEN)✅ Backup completed$(RESET)"
+
+.PHONY: backup-and-recreate
+backup-and-recreate: ## Backup current collections and prepare for recreation
+	@echo "$(BLUE)🔄 Creating backup and recreation template...$(RESET)"
+	python3 export_collections_enhanced.py --format=full --output=backup_full_$$(date +%Y%m%d_%H%M%S).json
+	python3 export_collections_enhanced.py --format=template --output=collection_details_backup.json
+	@echo "$(GREEN)✅ Backup completed$(RESET)"
+	@echo "$(YELLOW)💡 Files created:$(RESET)"
+	@echo "  • backup_full_*.json (complete backup)"
+	@echo "  • collection_details_backup.json (recreation template)"
+
+.PHONY: flask-deps
+flask-deps: ## Install Flask dependencies
+	@echo "$(YELLOW)📦 Installing Flask dependencies...$(RESET)"
+	pip install -r flask_requirements.txt
+	@echo "$(GREEN)✅ Dependencies installed$(RESET)"
+
+.PHONY: flask-run
+flask-run: ## Run sample Flask application connected to PB
+	@echo "$(YELLOW)🌐 Starting Flask app...$(RESET)"
+	python3 flask_pocketbase_app.py
+
+.PHONY: dev
+dev: setup create-collections flask-deps ## Full development setup
+	@echo "$(GREEN)🎉 Development environment ready!$(RESET)"
+	@echo "$(BLUE)Next steps:$(RESET)"
+	@echo "  1. Visit PocketBase admin: http://localhost:8080/_/"
+	@echo "  2. Run Flask app: make flask-run"
+	@echo "  3. Visit Flask app: http://localhost:5000"
+
+.PHONY: clean
+clean: ## Clean up containers and volumes
+	@echo "$(RED)🧹 Cleaning up...$(RESET)"
+	docker compose -f PB_docker-compose.yml down -v
+	@echo "$(GREEN)✅ Cleanup complete$(RESET)"
+
+.PHONY: reset
+reset: clean setup ## Reset everything (clean + setup)
+	@echo "$(GREEN)🔄 Reset complete$(RESET)"
+
+
+
+
+

@@ -1,3 +1,9 @@
+---
+source_code: https://github.com/pocketbase/pocketbase
+official_docs: https://pocketbase.io/docs
+tags: ["Dev","BaaS"]
+---
+
 
 
 ```sh
