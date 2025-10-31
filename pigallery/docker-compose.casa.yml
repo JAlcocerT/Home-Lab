@@ -1,0 +1,17 @@
+services:
+  pigallery2:
+    image: bpatrik/pigallery2:latest
+    container_name: pigallery2
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - "/home/Docker/pigallery/config:/app/data/config" # CHANGE ME
+      - "/home/Docker/pigallery/tmp:/app/data/tmp" # CHANGE ME      
+      - "db-data:/app/data/db"
+      - "/media/casa/Datos_copia_2/TODO LO MÍO/FOTOS#/:/app/data/images:ro" # CHANGE ME, ':ro' mean read-only
+    ports:
+      - 8088:80
+    restart: "no"
+
+volumes:
+  db-data:
