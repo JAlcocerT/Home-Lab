@@ -32,7 +32,7 @@ Installation & Usage
 - Funkwhale
 - Gonic
 - LMS
-- Nextcloud Music
+- NC Music
 - Supysonic
 - And others supporting Subsonic API.[1]
 
