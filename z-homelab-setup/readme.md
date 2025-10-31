@@ -7,4 +7,8 @@ chmod +x homelab-selfhosting.sh
 ./homelab-selfhosting.sh
 ```
 
-See under `./evolution` the stacks I've been using to selfhost across the years.
+> See under `./evolution` the stacks I've been using to selfhost across the years.
+
+```sh
+docker system prune -a --volumes
+```

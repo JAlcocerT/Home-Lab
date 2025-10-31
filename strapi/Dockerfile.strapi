@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y git openssl && rm -rf /var/lib/apt/list
 # Set working directory
 WORKDIR /app
 
+# Copy helper scripts into the image
+COPY scripts/ /scripts
+RUN chmod +x /scripts/*.sh
+
 # Install Strapi CLI globally
 #RUN npm install --global create-strapi-app
 RUN yes | npm install --global create-strapi-app
