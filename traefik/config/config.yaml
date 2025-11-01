@@ -42,10 +42,10 @@ http:
     freshrss:
       loadBalancer:
         servers:
-          - url: "https://192.168.1.2:8200"
+          - url: "http://192.168.1.2:8200" #without https and using the port of the host (not the container one)!
         passHostHeader: true  
     portainer:
       loadBalancer:
         servers:
-          - url: "https://100.86.82.103:9000"
+          - url: "http://portainer:9000" #or simply using the container name plus host port
         passHostHeader: true
