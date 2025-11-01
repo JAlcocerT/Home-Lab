@@ -2,10 +2,10 @@
 
 This doc shows two supported patterns to expose apps (e.g., Portainer, Termix) via Traefik:
 
-- Docker provider (labels on the container)
-- File provider (config.yaml)
+- Docker provider (labels on the container, as internal service)
+- File provider (config.yaml, as external service)
 
-Both work. 
+**Both work.**
 
 Choose one per service to avoid duplicate routers.
 

@@ -48,7 +48,6 @@ docker compose -f docker-compose.x300.yml up -d
 ```
 
 
-
 ```sh
 ZONE_ID=$(yq -r '.cloudflare.zone_id' cloudflare_config.yaml); \
 [ -z "$ZONE_ID" ] || [ "$ZONE_ID" == "null" ] && \

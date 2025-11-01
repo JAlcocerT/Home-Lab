@@ -22,7 +22,7 @@ services:
      # - 33073:33073 # optional
     environment:
       - TRAEFIK_DASHBOARD_CREDENTIALS=${TRAEFIK_DASHBOARD_CREDENTIALS}
-      - CF_API_EMAIL=jesalctag@gmail.com #${CF_API_EMAIL} # !!!Cloudflare email - CHANGE THIS!!!
+      - CF_API_EMAIL=${CF_API_EMAIL} # !!!Cloudflare email - CHANGE THIS!!!
       # - CF_DNS_API_TOKEN=YOUR-TOKEN # Cloudflare API Token (Can be used instead of the CF_DNS_API_TOKEN_FILE)
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cf-token # see https://doc.traefik.io/traefik/https/acme/#providers (Or just use the above)
       - TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL=${CF_API_EMAIL}
