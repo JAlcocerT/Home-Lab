@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/block/goose
+tags: "AI"
 ---
 
 ```sh
