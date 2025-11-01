@@ -6,8 +6,20 @@ post: https://fossengineer.com/selfhosting-traefik/
 tags: ["Proxy", "Load Balancer", "Reverse Proxy","HomeLab Essentials"]
 ---
 
+If you havent done it before, go for the [manual setup process](#manual-traefik-setup).
 
-Thanks to [JimsGarage](https://github.com/JamesTurland/JimsGarage/tree/main/Traefikv3)
+```sh
+cd ./traefik
+chmod +x setup-traefik.sh
+./setup-traefik.sh
+```
+
+---
+
+## Traefik Manual Setup
+
+**Manual Traefik setup process** Thanks to [JimsGarage](https://github.com/JamesTurland/JimsGarage/tree/main/Traefikv3)!
+
 
 ```sh
 #cd traefik
