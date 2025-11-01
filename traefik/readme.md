@@ -39,7 +39,13 @@ chmod 600 ./config/acme.json && \
 chmod 600 ./config/traefik.yml #or it will be a security risk for other users to see the privatekey
 ```
 
-Point the DNS of the subdomain to the IP of the server:
+Point the DNS of the subdomain to the IP of the server first!
+
+Manually via CF UI or using the script: *Or see `cd ../z-dns-scripts` for programmatic updates*
+
+```sh
+uv run cf-dns-updater.py
+```
 
 ```sh
 docker compose -f docker-compose.x300.yml up -d
