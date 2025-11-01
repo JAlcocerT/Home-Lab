@@ -35,7 +35,7 @@ certificatesResolvers:
       # caServer: https://acme-staging-v02.api.letsencrypt.org/directory # staging (testing)
       email: place-your-email-here@gmail.com # Cloudflare email (or other provider) CHANGE ME!!!!
       storage: acme.json
-      dnsChallenge:
+      dnsChallenge: #It works without portforwarding!
         provider: cloudflare # change as required
         # disablePropagationCheck: true # Some people using Cloudflare note this can solve DNS propagation issues.
         resolvers:

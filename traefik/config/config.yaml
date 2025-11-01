@@ -18,34 +18,34 @@ http:
         scheme: https
         permanent: true
 
-  routers:
+  routers: #for external services (outside the traefik network)
     portainer:
       entryPoints:
         - "https"
-      rule: "Host(`portainer.casa.jalcocertech.com`)"
+      rule: "Host(`portainer.x300.jalcocertech.com`)"
       middlewares:
         - default-security-headers
         - https-redirectscheme
       tls: {}
       service: portainer
-    silverbullet:
+    freshrss:
       entryPoints:
         - "https"
-      rule: "Host(`silverbullet.casa.jalcocertech.com`)"
+      rule: "Host(`freshrss.x300.jalcocertech.com`)"
       middlewares:
         - default-security-headers
         - https-redirectscheme
       tls: {}
-      service: silverbullet      
+      service: freshrss      
 
   services:
-    silverbullet:
+    freshrss:
       loadBalancer:
         servers:
-          - url: "https://192.168.1.106:3000"
+          - url: "https://192.168.1.2:8200"
         passHostHeader: true  
     portainer:
       loadBalancer:
         servers:
-          - url: "https://192.168.1.106:9000"
+          - url: "https://100.86.82.103:9000"
         passHostHeader: true
