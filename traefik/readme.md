@@ -28,22 +28,22 @@ curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=jalcocertech.com
 
 ```sh
 #cd ./Home-Lab/traefik
-touch ./acme.json #blank, just change the permissions to 600 later (private key)
-touch ./acme.yml
-touch ./traefik.yml
+touch ./config/acme.json #blank, just change the permissions to 600 later (private key)
+#touch ./config/acme.yml
+touch ./config/traefik.yml
 #touch config/acme.json && chmod 600 config/acme.json
 ```
 
 ```sh
-chmod 600 ./acme.json && \
-chmod 600 ./traefik.yml #or it will be a security risk for other users to see the privatekey
+chmod 600 ./config/acme.json && \
+chmod 600 ./config/traefik.yml #or it will be a security risk for other users to see the privatekey
 ```
 
 Point the DNS of the subdomain to the IP of the server:
 
 ```sh
-docker-compose -f docker-compose.x300.yml up -d
-#sudo docker logs traefik
+docker compose -f docker-compose.x300.yml up -d
+#sudo docker logs traefik ###No log line matching the '' filter
 #docker-compose -f docker-compose.x300.yml stop
 ```
 
