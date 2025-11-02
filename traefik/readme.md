@@ -11,6 +11,9 @@ If you havent done it before, go for the [manual setup process](#manual-traefik-
 ```sh
 cd ./traefik
 chmod +x setup-traefik.sh
+#cp .env.sample .env
+#cp cf-token.sample cf-token
+#sudo docker compose up -d
 ./setup-traefik.sh
 ```
 

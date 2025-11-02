@@ -1,0 +1,36 @@
+#---
+#version: "2.1"
+services:
+  homeassistant:
+    image: lscr.io/linuxserver/homeassistant:latest
+    container_name: homeassistant
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - /home/Docker/HomeAssistant:/config
+    ports:
+      - 8123:8123 #optional
+    #devices:
+    #  - /path/to/device:/path/to/device #optional
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.homeassistant.entrypoints=http"
+      - "traefik.http.routers.homeassistant.rule=Host(`homeassistant.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.homeassistant-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.homeassistant.middlewares=homeassistant-https-redirect"
+      - "traefik.http.routers.homeassistant-secure.entrypoints=https"
+      - "traefik.http.routers.homeassistant-secure.rule=Host(`homeassistant.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.homeassistant-secure.tls=true"
+      - "traefik.http.routers.homeassistant-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.homeassistant-secure.service=homeassistant"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"      
+networks:
+  traefik_traefik-proxy:
+    external: true

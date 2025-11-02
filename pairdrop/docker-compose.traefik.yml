@@ -1,0 +1,34 @@
+#version: "3"
+services:
+  pairdrop:
+    image: "lscr.io/linuxserver/pairdrop:latest"
+    container_name: pairdrop
+    restart: unless-stopped
+    environment:
+      - PUID=1000 # UID to run the application as
+      - PGID=1000 # GID to run the application as
+      - WS_FALLBACK=false # Set to true to enable websocket fallback if the peer to peer WebRTC connection is not available to the client.
+      - RATE_LIMIT=false # Set to true to limit clients to 1000 requests per 5 min.
+      - RTC_CONFIG=false # Set to the path of a file that specifies the STUN/TURN servers.
+      - DEBUG_MODE=false # Set to true to debug container and peer connections.
+      - TZ=Etc/UTC # Time Zone
+    ports:
+      - "127.0.0.1:3000:3000" # Web UI. Change the port number before the last colon e.g. `127.0.0.1:9000:3000`
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.pairdrop.entrypoints=http"
+      - "traefik.http.routers.pairdrop.rule=Host(`pairdrop.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.pairdrop-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.pairdrop.middlewares=pairdrop-https-redirect"
+      - "traefik.http.routers.pairdrop-secure.entrypoints=https"
+      - "traefik.http.routers.pairdrop-secure.rule=Host(`pairdrop.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.pairdrop-secure.tls=true"
+      - "traefik.http.routers.pairdrop-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.pairdrop-secure.service=pairdrop"
+      - "traefik.http.services.pairdrop.loadbalancer.server.port=3000"      
+networks:
+  traefik_traefik-proxy:
+    external: true

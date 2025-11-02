@@ -1,0 +1,26 @@
+#version: '3.9'
+services:
+  it-tools:
+    image: 'corentinth/it-tools:latest'
+    ports:
+      - '8035:80'
+    restart: unless-stopped
+    container_name: it-tools
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.it-tools.entrypoints=http"
+      - "traefik.http.routers.it-tools.rule=Host(`it-tools.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.it-tools-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.it-tools.middlewares=it-tools-https-redirect"
+      - "traefik.http.routers.it-tools-secure.entrypoints=https"
+      - "traefik.http.routers.it-tools-secure.rule=Host(`it-tools.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.it-tools-secure.tls=true"
+      - "traefik.http.routers.it-tools-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.it-tools-secure.service=it-tools"
+      - "traefik.http.services.it-tools.loadbalancer.server.port=8035"      
+networks:
+  traefik_traefik-proxy:
+    external: true

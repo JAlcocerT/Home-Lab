@@ -1,0 +1,45 @@
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      # Standard DNS ports
+      - "53:53/tcp"
+      - "53:53/udp"
+      # Pi-hole web interface (access at http://your-docker-host-ip:80)
+      - "85:80/tcp"
+    environment:
+      TZ: 'Europe/London' # IMPORTANT: Set your desired timezone
+      WEBPASSWORD: 'your_secure_password_here' # IMPORTANT: Set a strong password
+      # Pi-hole listens on all interfaces (important for Docker bridge networks)
+      DNSMASQ_LISTENING: 'all'
+      # UPSTREAM DNS SERVERS: Pi-hole will forward unblocked queries here.
+      # You can use Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9), etc.
+      # These are unencrypted DNS queries.
+      PIHOLE_DNS_: '1.1.1.1;1.0.0.1' # Using Cloudflare Public DNS as an example
+    volumes:
+      # Persistent storage for Pi-hole's configuration and data
+      - '/home/ubuntu/docker/pihole/etc-pihole/:/etc/pihole/'
+      - '/home/ubuntu/docker/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    # Uncomment the following if you plan to use Pi-hole as a DHCP server later
+    # cap_add:
+    #   - NET_ADMIN
+    networks:
+      - traefik_traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.pihole.entrypoints=http"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.pihole-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.pihole.middlewares=pihole-https-redirect"
+      - "traefik.http.routers.pihole-secure.entrypoints=https"
+      - "traefik.http.routers.pihole-secure.rule=Host(`pihole.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.pihole-secure.tls=true"
+      - "traefik.http.routers.pihole-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.pihole-secure.service=pihole"
+      - "traefik.http.services.pihole.loadbalancer.server.port=85"      
+networks:
+  traefik_traefik-proxy:
+    external: true
