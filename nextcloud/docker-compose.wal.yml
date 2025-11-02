@@ -1,0 +1,70 @@
+
+#sudo docker compose -f docker-compose.traefik.yml up -d
+#docker compose -f docker-compose.traefik.yml down
+
+#nslookup nextcloud.casa.jalcocertech.com
+
+#version: '3.8'
+
+volumes:
+  nextcloud-db:
+
+services:
+  nextcloud-db:
+    image: linuxserver/mariadb
+    restart: always
+    container_name: nextcloud-db
+    volumes:
+      - nextcloud-db:/var/lib/mysql
+    environment:
+      - MYSQL_INITDB_SKIP_TZINFO=1
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_PASSWORD=ncpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    networks:
+      - nc_network      
+
+  nextcloud:
+    image: nextcloud
+    container_name: nc
+    restart: always
+    depends_on:
+      - nextcloud-db
+    # ports:
+    #   - 8035:80      
+    volumes:
+      - /home/jalcocert/Docker/nextcloud/html:/var/www/html
+      #- /media/casa/Datos_copia_2/nextcloud-oct-25/html:/var/www/html
+      #- /home/jalcocert/Docker/nextcloud/html:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=ncpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=nextcloud-db
+      - NEXTCLOUD_TRUSTED_DOMAINS=https://nextcloud.wal.jalcocertech.com #match it with the domain set in traefik labels below
+#      - NEXTCLOUD_TRUSTED_DOMAINS=http://192.168.0.233:8080 http://0.0.0.0:8080 #https://somedomain.duckdns.org
+    networks:
+      - nc_network
+      - traefik_traefik-proxy  
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.nextcloud.entrypoints=http"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.middlewares.nextcloud-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-https-redirect"
+      - "traefik.http.routers.nextcloud-secure.entrypoints=https"
+      - "traefik.http.routers.nextcloud-secure.rule=Host(`nextcloud.wal.jalcocertech.com`)" #Tweak this with your subdomain
+      - "traefik.http.routers.nextcloud-secure.tls=true"
+      - "traefik.http.routers.nextcloud.tls.certresolver=cloudflare"
+      - "traefik.http.routers.nextcloud.service=nextcloud"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80" #this has to match the port of the container
+      #- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik" #IMPORTANT!!!
+      #- "traefik.http.routers.nextcloud-secure.middlewares=tinyauth"
+
+networks:
+  nc_network:
+    driver: bridge
+  traefik_traefik-proxy:
+    external: true

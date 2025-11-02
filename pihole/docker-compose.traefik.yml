@@ -10,7 +10,7 @@ services:
       # Pi-hole web interface (access at http://your-docker-host-ip:80)
       - "85:80/tcp"
     environment:
-      TZ: 'Europe/London' # IMPORTANT: Set your desired timezone
+      TZ: 'Europe/Rome' # IMPORTANT: Set your desired timezone
       WEBPASSWORD: 'your_secure_password_here' # IMPORTANT: Set a strong password
       # Pi-hole listens on all interfaces (important for Docker bridge networks)
       DNSMASQ_LISTENING: 'all'
