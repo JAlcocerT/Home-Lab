@@ -1,6 +1,8 @@
 .env
 .venv/
 
+*.db*
+
 acme.json
 traefik.yaml
 #acme.json

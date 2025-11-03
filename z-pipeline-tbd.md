@@ -1,3 +1,15 @@
+* https://github.com/onionshare/onionshare/
+
+ Securely and anonymously share files, host websites, and chat with friends using the Tor network 
+
+* https://github.com/wannabespace/conar/
+
+ AI-powered tool for working with Postgres. (beta) 
+
+* https://github.com/addyosmani/chatty/
+
+ ChattyUI - your private AI chat for running LLMs in the browser 
+
 https://github.com/DartSteven/Nutify/tree/main
 
  Modern web-based UPS monitoring system with real-time data visualization, alerts, and comprehensive reporting. Docker-ready with multi-architecture support. 

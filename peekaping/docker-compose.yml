@@ -1,0 +1,17 @@
+#version: "3.9"
+
+services:
+  peekaping:
+    image: 0xfurai/peekaping-bundle-sqlite:latest
+    container_name: peekaping
+    restart: always
+    ports:
+      - "8383:8383"
+    environment:
+      DB_NAME: /app/data/peekaping.db
+    volumes:
+      - data-sqlite-peekaping:/app/data
+      #- ./\.data/sqlite:/app/data
+
+volumes:
+  data-sqlite-peekaping:
