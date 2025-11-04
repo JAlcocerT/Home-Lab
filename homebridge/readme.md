@@ -1,32 +1,7 @@
 ---
-source_code: https://github.com/getumbrel/umbrel
-post: 
-tags: ["OS","PaaS","OS inside container"]
----
-
-
-Thanks to https://github.com/dockur/umbrel we can have all these apps https://apps.umbrel.com/category/all but via container, instead of a full OS installation.
-
-```sh
-#docker run -it --rm --name umbrel --pid=host -p 80:80 -v "${PWD:-.}/umbrel:/data" -v "/var/run/docker.sock:/var/run/docker.sock" --stop-timeout 60 docker.io/dockurr/umbrel
-```
-
-> MIT | umbrelOS inside a Docker container.
-
-
-```sh
-#df -h | egrep '^Filesystem|^/dev/sda2|^/dev/nvme|^/dev/sdb1'
-mkdir /mnt/data1tb
-#lsblk
-sudo mount /dev/sdb1 /mnt/data1tb
-df -h | grep data1tb
-#sudo docker compose up -d #review the data path!!!
-#sudo docker logs umbrel
-#sudo docker stats umbrel
-```
-
-> Go to `http://192.168.1.2:86/onboarding` and later to `http://192.168.1.2:86/app-store/category/all`
-
+source_code: https://github.com/homebridge/homebridge
+post:
+tags:
 ---
 
 Yes, absolutely! Umbrel is part of a growing category of **turnkey self-hosting platforms** that aim to make running multiple web applications via **Docker containers** easy for non-technical users. They often provide an OS or a simple installation script, a clean web UI, and an "App Store" for one-click deployment.

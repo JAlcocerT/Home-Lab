@@ -1,14 +1,17 @@
 ---
 source_code: https://github.com/seanmorley15/AdventureLog
 post: https://fossengineer.com/selfhosting-adventurelog/
-tags: "trip"
+tags: ["trip"]
 ---
+
+If you are new to Selfhosting, you can install AdventureLog or similar tools like Wanderer with Umbrel.
 
 # AdventureLog - Self-Hosted Adventure Logging Platform
 
 [AdventureLog](https://adventurelog.app/) is a self-hosted platform for logging and sharing your outdoor adventures, trips, and experiences.
 
 ## Features
+
 - Track and share your adventures
 - Photo galleries for your trips
 - Route mapping

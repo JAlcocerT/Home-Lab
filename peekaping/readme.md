@@ -5,15 +5,19 @@ tags: ["Monitoring","Status Pages"]
 ---
 
 ```sh
-docker run -d --restart=always \
-  -p 8383:8383 \
-  -e DB_NAME=/app/data/peekaping.db \
-  -v $(pwd)/.data/sqlite:/app/data \
-  --name peekaping \
-  0xfurai/peekaping-bundle-sqlite:latest
+# docker run -d --restart=always \
+#   -p 8383:8383 \
+#   -e DB_NAME=/app/data/peekaping.db \
+#   -v $(pwd)/.data/sqlite:/app/data \
+#   --name peekaping \
+#   0xfurai/peekaping-bundle-sqlite:latest
 ```
 
-Add them to your websites as per: https://docs.peekaping.com/badges
+---
+
+Add status badges to your websites as per: https://docs.peekaping.com/badges
+
+**Examples**
 
 ![My Local Service Status](http://192.168.1.2:8383/api/v1/badge/1e12dabc-e962-4cd7-b808-ee08c994ec53/status)
 

@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/rclone/rclone
-tags: ["cloud_sync","files"]
+tags: ["cloud_sync","files","Proton Drive"]
 ---
 
 You can combine rclone+ProtonDrive for sync: https://blog.otterlord.dev/posts/proton-drive-rclone/

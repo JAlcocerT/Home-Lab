@@ -1,1 +1,37 @@
 #https://fossengineer.com/selfhosting-airtrail/
+
+services:
+  db:
+    container_name: airtrail_db
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: airtrail
+      POSTGRES_USER: airtrail
+      POSTGRES_PASSWORD: password  # Hardcoded password - CHANGE THIS IN PRODUCTION!
+      #POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # env_file:
+    #   - .env      
+    volumes:
+      - db_airtrail_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U airtrail -d airtrail']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airtrail:
+    container_name: airtrail
+    image: johly/airtrail:latest
+    restart: always
+    ports:
+      - 3000:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ORIGIN: http://localhost:3000
+      DB_URL: postgres://airtrail:password@db:5432/airtrail # Matches the DB configuration
+
+volumes:
+  db_airtrail_data:

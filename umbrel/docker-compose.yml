@@ -1,0 +1,13 @@
+services:
+  umbrel:
+    image: dockurr/umbrel
+    container_name: umbrel
+    pid: host
+    ports:
+      - 86:80
+    volumes:
+      - /mnt/data1tb/umbrel:/data
+      #- ./umbrel:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    stop_grace_period: 1m
