@@ -1,8 +1,8 @@
 ---
-source_code: https://fossengineer.com/selfhosting-Gitea-docker/
-post:
+source_code: 
+post: https://fossengineer.com/selfhosting-Gitea-docker/
 docs: https://docs.gitea.com/next/installation/install-with-docker
-tags: "dev"
+tags: ["dev","git","version control"]
 ---
 
 * https://docs.gitea.com/usage/actions/overview

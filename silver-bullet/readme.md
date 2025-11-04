@@ -1,5 +1,7 @@
 ---
 source_code:
+post: https://fossengineer.com/selfhosting-silverbullet/
+tags: "Notes"
 ---
 
 

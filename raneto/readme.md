@@ -1,3 +1,9 @@
+---
+source_code: https://github.com/raneto/raneto
+post: https://fossengineer.com/raneto-markdown-knowledgebase-selfhosting/
+tags: "Notes"
+---
+
 # Raneto Self-Hosted Knowledge Base
 
 This is a self-hosted instance of Raneto, a knowledge base platform that uses Markdown files for content.

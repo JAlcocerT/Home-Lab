@@ -1,3 +1,8 @@
+---
+source_code: https://github.com/fosrl/pangolin
+post: https://fossengineer.com/selfhosting-pangolin-cloudflared-tunnel-alternative/
+---
+
 # Pangolin - Self-Hosted Deployment
 
 [Pangolin](https://github.com/fosrl/pangolin) is a self-hosted web application for managing and monitoring your services.

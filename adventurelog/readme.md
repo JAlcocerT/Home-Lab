@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/seanmorley15/AdventureLog
-post: 
+post: https://fossengineer.com/selfhosting-adventurelog/
 tags: "trip"
 ---
 
