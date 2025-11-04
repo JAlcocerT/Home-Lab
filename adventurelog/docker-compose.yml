@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  web:
+  adventurelog:
     image: ghcr.io/seanmorley15/adventurelog-frontend:latest
     container_name: adventurelog-frontend
     restart: unless-stopped
@@ -35,7 +35,7 @@ services:
     networks:
       - adventurelog_net
 
-  server:
+  adventurelogserver:
     image: ghcr.io/seanmorley15/adventurelog-backend:latest
     container_name: adventurelog-backend
     restart: unless-stopped

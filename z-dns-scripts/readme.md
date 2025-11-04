@@ -1,6 +1,6 @@
-I put together a (programatic) way to **modify DNS settings for Cloudflare and Porkbun.**
+I've put together a (programatic) way to **modify DNS settings for Cloudflare and Porkbun.**
 
-All started with scripts, [here](https://github.com/JAlcocerT/waiting-to-landing/blob/main/cloudflare-dns-updater.py) and here [here](https://github.com/JAlcocerT/waiting-to-landing/blob/main/porkbun-domains.py)
+> All started with scripts, [here](https://github.com/JAlcocerT/waiting-to-landing/blob/main/cloudflare-dns-updater.py) and here [here](https://github.com/JAlcocerT/waiting-to-landing/blob/main/porkbun-domains.py)
 
 
 ```sh
@@ -11,3 +11,11 @@ curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=jalcocertech.com
   -H "Authorization: Bearer $cf_token" \
   -H "Content-Type: application/json" | jq -r '.result[0].id'
 ```
+
+
+**Cloudflare**
+https://developers.cloudflare.com/api/resources/dns/
+https://github.com/cloudflare/cloudflare-python
+
+**Porkbun**
+https://porkbun.com/api

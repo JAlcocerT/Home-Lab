@@ -10,6 +10,8 @@ tags: "web"
 podman run --rm -it ghcr.io/linkchecker/linkchecker:latest --verbose https://www.psikolognevinkeskin.com/ > linkchecker_psyc.txt
 ```
 
+> You can use Linkchecker inside your Github Actions CI/CD workflows!
+
 # LinkChecker - Website Link Validator
 
 [LinkChecker](https://wummel.github.io/linkchecker/) is a free, open-source tool to check HTML documents for broken links.

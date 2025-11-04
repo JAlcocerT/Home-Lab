@@ -5,7 +5,7 @@ source_code: https://github.com/henrygd/beszel
 
 # Beszel - Docker Container Monitoring
 
-[Beszel](https://github.com/henrygd/beszel) is a self-hosted monitoring solution for Docker containers, providing a web interface to monitor your Docker environment.
+[Beszel](https://github.com/henrygd/beszel) is a self-hosted monitoring solution for Docker containers, providing an interface to monitor your Docker environment.
 
 ## Features
 - Real-time container monitoring

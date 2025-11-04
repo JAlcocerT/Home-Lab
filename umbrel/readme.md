@@ -18,7 +18,7 @@ Thanks to https://github.com/dockur/umbrel we can have all these apps https://ap
 #df -h | egrep '^Filesystem|^/dev/sda2|^/dev/nvme|^/dev/sdb1'
 mkdir /mnt/data1tb
 #lsblk
-sudo mount /dev/sdb1 /mnt/data1tb
+sudo mount /dev/sdb1 /mnt/data1tb #one time mount only
 df -h | grep data1tb
 #sudo docker compose up -d #review the data path!!!
 #sudo docker logs umbrel

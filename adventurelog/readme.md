@@ -58,6 +58,7 @@ If you are new to Selfhosting, you can install AdventureLog or similar tools lik
 ### Environment Variables
 
 #### Frontend (web)
+
 - `PUBLIC_SERVER_URL`: URL of the backend server (usually `http://server:8000`)
 - `ORIGIN`: Public URL of your frontend (e.g., `https://adventure.yourdomain.com`)
 - `BODY_SIZE_LIMIT`: Maximum request body size (default: `Infinity`)
