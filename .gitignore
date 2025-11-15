@@ -9,6 +9,7 @@ traefik.yaml
 #config.yaml
 cf-token
 logs/
+uploads/
 
 *.deb
 
