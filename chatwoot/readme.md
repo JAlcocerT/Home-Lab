@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/chatwoot/chatwoot
 tags: ["web apps", "chat","customer support","customer engagement"]
+post: https://fossengineer.com/chatwoot-docker-setup
 ---
 
 * https://www.chatwoot.com/docs/self-hosted/deployment/docker

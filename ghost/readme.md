@@ -4,10 +4,20 @@ post: https://fossengineer.com/selfhosting-ghost-docker/
 tags: "web"
 ---
 
+> Thanks to [noted.lol](https://noted.lol/self-host-ghost)
 
 ```sh
 echo -e "MYSQL_DATABASE=ghost\nMYSQL_USER=ghostuser\nMYSQL_PASSWORD=$(openssl rand -base64 32)\nMYSQL_ROOT_PASSWORD=$(openssl rand -base64 32)" > .env
 ```
+
+## Ghost Themes
+
+
+* {{< newtab url="https://ghost.org/themes/alto" text="Free theme alto in Ghost Official Page." >}}
+* {{< newtab url="https://ghost.org/themes/edge" text="Free theme edge in Ghost Official Page." >}}
+* {{< newtab url="https://ghost.org/themes/headline/" text="Free theme headline in Ghost Official Page." >}}
+* {{< newtab url="https://github.com/TryGhost/Solo" text="Solo theme in GitHub." >}}
+* {{< newtab url="https://github.com/godofredoninja/Paway" text="Paway theme in GitHub." >}}
 
 ## API Guide
 

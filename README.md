@@ -1,6 +1,6 @@
 # Home-Lab
 
-A collection of 150+ docker-compose for your HomeLab. 
+A collection of 300+ docker-compose configurations for your HomeLab. 
 
 ```sh
 #find ~/Desktop/IT/Home-Lab -mindepth 1 -maxdepth 2 -type d | wc -l
