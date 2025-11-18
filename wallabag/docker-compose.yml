@@ -1,0 +1,21 @@
+services:
+  wallabag:
+    image: wallabag/wallabag:latest
+    container_name: wallabag
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - WALLABAG_DATABASE_HOST=your_database_host
+      - WALLABAG_DATABASE_PORT=3306
+      - WALLABAG_DATABASE_NAME=your_database_name
+      - WALLABAG_DATABASE_USER=your_database_username
+      - WALLABAG_DATABASE_PASSWORD=your_database_password
+      - WALLABAG_URL=https://your_domain_name
+    # environment:
+    # - ${WALLABAG_DATABASE_HOST}
+    # - ${WALLABAG_DATABASE_PORT}
+    # - ${WALLABAG_DATABASE_NAME}
+    # - ${WALLABAG_DATABASE_USER}
+    # - ${WALLABAG_DATABASE_PASSWORD}
+    # - ${WALLABAG_URL}   
