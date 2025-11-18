@@ -4,7 +4,7 @@ tags: ["Headless CMS","OSS for Business","Web"]
 official_docs: https://directus.io/docs/getting-started/create-a-project
 ---
 
-
+Spin up a Directus instance via container:
 
 ```sh
 docker compose -f docker-compose.yml up -d
@@ -13,8 +13,7 @@ docker compose -f docker-compose.yml up -d
 
 Use the DirectusCMS API: https://directus.io/docs/getting-started/use-the-api
 
-
-Directus and Strapi are two of the most popular open-source, self-hosted headless CMS platforms, but they operate with fundamentally different philosophies.
+Directus and Strapi are two of the most popular open-source, **self-hosted headless CMS platforms**, but they operate with fundamentally different philosophies.
 
 The choice often comes down to whether you prefer a **Database-First** approach (Directus) or a **Code-First** approach (Strapi).
 

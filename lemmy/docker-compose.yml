@@ -32,7 +32,7 @@ services:
     restart: always
     environment:
       - LEMMY_INTERNAL_HOST=lemmy:8536
-      - LEMMY_EXTERNAL_HOST=http://192.168.1.4:1235 #change this
+      - LEMMY_EXTERNAL_HOST=http://192.168.1.12:1235 #change this!
       - LEMMY_HTTPS=false
     depends_on:
       - lemmy

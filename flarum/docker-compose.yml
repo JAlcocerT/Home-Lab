@@ -1,0 +1,44 @@
+version: "3.9" #https://mariushosting.com/how-to-install-flarum-on-your-synology-nas/
+services:
+  flarum:
+    image: mondedie/flarum
+    container_name: Flarum
+    environment:
+        DEBUG: "false"
+        FORUM_URL: http://192.168.1.12
+        DB_HOST: db
+        DB_NAME: flarum
+        DB_USER: flarum
+        DB_PASS: mariushosting
+        DB_PREF: flarum_
+        DB_PORT: 3306
+        FLARUM_ADMIN_USER: Marius
+        FLARUM_ADMIN_PASS: mariushosting
+        FLARUM_ADMIN_MAIL: admin@example.com
+    volumes:
+      - flarum_assets:/flarum/app/public/assets
+      - flarum_extensions:/flarum/app/extensions
+      - flarum_logs:/flarum/app/storage/logs
+      - flarum_nginx:/etc/nginx/flarum
+    ports:
+      - 8444:8888
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11.3-jammy
+    container_name: Flarum-DB
+    environment:
+      - MYSQL_ROOT_PASSWORD=mariushosting
+      - MYSQL_DATABASE=flarum
+      - MYSQL_USER=flarum
+      - MYSQL_PASSWORD=mariushosting
+    volumes:
+      - flarum_db:/var/lib/mysql
+
+volumes:
+  flarum_assets:
+  flarum_extensions:
+  flarum_logs:
+  flarum_nginx:
+  flarum_db:
