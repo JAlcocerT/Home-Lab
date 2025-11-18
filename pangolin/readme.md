@@ -3,6 +3,11 @@ source_code: https://github.com/fosrl/pangolin
 post: https://fossengineer.com/selfhosting-pangolin-cloudflared-tunnel-alternative/
 ---
 
+See also 
+
+1. https://github.com/localtunnel/server - *localtunnel exposes your localhost to the world for easy testing and sharing! No need to mess with DNS or deploy just to have others test out your changes.*
+
+
 # Pangolin - Self-Hosted Deployment
 
 [Pangolin](https://github.com/fosrl/pangolin) is a self-hosted web application for managing and monitoring your services.
