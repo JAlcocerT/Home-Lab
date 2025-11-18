@@ -1,29 +1,37 @@
-version: '2.2'
+version: '3.8'
 
 services:
   postgres:
     image: postgres:14-alpine
+    hostname: postgres
+    restart: always
     environment:
       - POSTGRES_USER=lemmy
       - POSTGRES_PASSWORD=lemmylemmy
       - POSTGRES_DB=lemmy
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
-    restart: always
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lemmy_net
 
   lemmy:
     image: dessalines/lemmy:0.16.4
-    ports:
-      - "8536:8536"
-      - "6669:6669"
+    hostname: lemmy
     restart: always
     environment:
       - RUST_LOG="warn,lemmy_server=info,lemmy_api=info,lemmy_api_common=info,lemmy_api_crud=info,lemmy_apub=info,lemmy_db_schema=info,lemmy_db_views=info,lemmy_db_views_actor=info,lemmy_db_views_moderator=info,lemmy_routes=info,lemmy_utils=info,lemmy_websocket=info"
     volumes:
+      - lemmy_config:/config
+      - lemmy_data:/lemmy
       - ./lemmy.hjson:/config/config.hjson
+    ports:
+      - "8536:8536"
+      - "6669:6669"
     depends_on:
       - postgres
       - pictrs
+    networks:
+      - lemmy_net
 
   lemmy-ui:
     image: dessalines/lemmy-ui:0.16.5
@@ -32,10 +40,12 @@ services:
     restart: always
     environment:
       - LEMMY_INTERNAL_HOST=lemmy:8536
-      - LEMMY_EXTERNAL_HOST=http://192.168.1.12:1235 #change this!
+      - LEMMY_EXTERNAL_HOST=http://192.168.1.12:1235
       - LEMMY_HTTPS=false
     depends_on:
       - lemmy
+    networks:
+      - lemmy_net
 
   pictrs:
     image: asonix/pictrs:0.3.1
@@ -44,5 +54,17 @@ services:
       - "6670:6669"
     user: 991:991
     volumes:
-      - ./volumes/pictrs:/mnt
+      - pictrs_data:/mnt
     restart: always
+    networks:
+      - lemmy_net
+
+volumes:
+  lemmy_config:
+  lemmy_data:
+  postgres_data:
+  pictrs_data:
+
+networks:
+  lemmy_net:
+    driver: bridge
