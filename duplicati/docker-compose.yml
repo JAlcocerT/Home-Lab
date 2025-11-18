@@ -1,0 +1,17 @@
+version: "2.1" #https://github.com/duplicati/duplicati?tab=License-1-ov-file#readme
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati #ghcr.io/linuxserver/duplicati #:arm32v7-v2.0.6.1-2.0.6.1_beta_2021-05-03-ls101
+    container_name: duplicati
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - CLI_ARGS= #optional
+    volumes:
+    - /home/your_user_name/Docker/Duplicati/config:/config
+    - ~/Docker:/source
+    - ~/Docker/backups:/backups
+    ports:
+      - 8200:8200
+    restart: unless-stopped
