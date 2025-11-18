@@ -1,0 +1,16 @@
+services:
+  wireshark:
+    image: lscr.io/linuxserver/wireshark:latest #https://github.com/linuxserver/docker-wireshark
+    container_name: wireshark
+    cap_add:
+      - NET_ADMIN # Access to read network configuration
+    network_mode: host # Or use a Docker network for more controlled capture
+    environment:
+      - PUID=1000 # User ID - find yours with `id your_user_name`
+      - PGID=1000 # Group ID - find yours with `id your_user_name`
+      - TZ=Europe/Rome # Set your timezone
+    volumes:
+      - ~/Docker/Wireshark:/config # Persistent storage for configurations and captures
+    ports:
+      - 3000:3000 # Optional - for accessing the web UI (if available in the image)
+    restart: unless-stopped

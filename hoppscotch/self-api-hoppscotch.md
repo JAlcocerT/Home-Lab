@@ -24,9 +24,9 @@ curl "https://api.openweathermap.org/data/2.5/weather?q=YOUR_LOCATION&appid=YOUR
 
 ## The HoppScotch Project
 
-* [The Drawio Site](https://hoppscotch.io/ "GH {rel='nofollow'}")
+* [The HoppScotch Site](https://hoppscotch.io/ "GH {rel='nofollow'}")
     * <https://docs.hoppscotch.io/documentation/self-host/enterprise-edition/install-and-build#docker>
-* [The Drawio Source Code at Github](https://github.com/hoppscotch/hoppscotch "GH {rel='nofollow'}")
+* [The HoppScotch Source Code at Github](https://github.com/hoppscotch/hoppscotch "GH {rel='nofollow'}")
     * License: [MIT ❤️](https://github.com/hoppscotch/hoppscotch?tab=MIT-1-ov-file#readme)
 
 ---
