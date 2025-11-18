@@ -1,8 +1,7 @@
 ---
 source_code:
-post: 
-official_docs: 
+post: https://fossengineer.com/selfhosting-webtops-docker/
+official_docs: https://docs.linuxserver.io/images/docker-webtop/
 yt_video:
+tags: "OS inside container"
 ---
-
-#https://docs.linuxserver.io/images/docker-webtop/

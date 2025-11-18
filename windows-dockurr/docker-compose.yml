@@ -1,0 +1,21 @@
+services:
+  windows:
+    image: dockurr/windows
+    container_name: windows
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8006:8006" #UI
+      - "3389:3389/tcp"
+      - "3389:3389/udp"
+    stop_grace_period: 2m
+    restart: on-failure
+    volumes:
+      - ./data:/storage
+    environment:
+      RAM_SIZE: 8GB
+      CPU_CORES: 3
+      DISK_SIZE: 75GB
+      VERSION: "win10"
