@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+
+    postgres:
+      image: postgres:latest #15 #mariadb:10.7.5
+      container_name: postgres
+      restart: unless-stopped
+      environment:
+        - POSTGRES_USER=gogs
+        - POSTGRES_PASSWORD=p4ssw0rd
+        - POSTGRES_DB=gogs
+      ports:
+        - "5432:5432"       
+      volumes:
+        - ./db-data:/var/lib/postgresql/data
+
+    gogs:
+      image: gogs/gogs:latest
+      container_name: gogs
+      restart: unless-stopped
+      ports:
+        - "3000:3000" #UI 
+        - "10022:22"      
+      links:
+        - postgres
+      environment:
+        - TZ="Europe/Prague"
+      volumes:
+        - ./gogs-data:/data
+      depends_on:
+        - postgres

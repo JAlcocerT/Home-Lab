@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/stirlingpdf/stirling-pdf
 tags: ["PDF", "Document Processing"]
+post: https://fossengineer.com/selfhosting-stirling-pdf/
 ---
 
 # Stirling PDF

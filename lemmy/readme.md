@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/LemmyNet/lemmy
 tags: ["web","forum"]
+post:
 ---
 
 
