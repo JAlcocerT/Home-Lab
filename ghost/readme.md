@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/TryGhost/Ghost?ref=fossengineer.com
 post: https://fossengineer.com/selfhosting-ghost-docker/
-tags: "web"
+tags: ["web","CMS"]
 ---
 
 > Thanks to [noted.lol](https://noted.lol/self-host-ghost)
@@ -10,8 +10,9 @@ tags: "web"
 echo -e "MYSQL_DATABASE=ghost\nMYSQL_USER=ghostuser\nMYSQL_PASSWORD=$(openssl rand -base64 32)\nMYSQL_ROOT_PASSWORD=$(openssl rand -base64 32)" > .env
 ```
 
-## Ghost Themes
+Ghost can be used as a CMS for static sites, like Gatsby.
 
+## Ghost Themes
 
 * {{< newtab url="https://ghost.org/themes/alto" text="Free theme alto in Ghost Official Page." >}}
 * {{< newtab url="https://ghost.org/themes/edge" text="Free theme edge in Ghost Official Page." >}}

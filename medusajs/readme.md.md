@@ -1,7 +1,10 @@
 ---
 source_code: https://github.com/medusajs/medusa
 tags: ["ecommerce", "medusa", "node"]
+official_docs: https://medusajs.com/plugins/
 ---
+
+
 
 # MedusaJS – Backend with Docker Compose
 

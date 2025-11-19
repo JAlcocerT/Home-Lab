@@ -1,0 +1,21 @@
+# Use an official Node runtime as the parent image
+FROM node:18.17
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json to the container
+COPY package*.json ./
+
+# Install Gatsby CLI globally and install dependencies
+RUN npm install -g gatsby-cli && npm install
+
+# Copy the rest of the application to the container
+COPY . .
+
+# Make port 8000 available outside the container
+EXPOSE 8000
+EXPOSE 8001
+
+# Run gatsby develop command when the container launches
+CMD ["gatsby", "develop", "-H", "0.0.0.0"]

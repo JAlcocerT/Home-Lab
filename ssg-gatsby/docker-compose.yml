@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  gatsby-dev:
+    image: gatsby-dev:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - app_data:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: tail -f /dev/null #keep it running      
+
+#   gatsby-prod:
+#     image: gatsby-prod:latest
+#     ports:
+#       - "80:80"
+#     environment:
+#       - NODE_ENV=production
+
+volumes:
+  node_modules:
+  app_data:
+
+version: '3.8'
+
+services:
+  gatsby-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: gatsby-dev:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  gatsby-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: gatsby-prod:latest
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production

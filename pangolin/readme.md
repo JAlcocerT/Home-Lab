@@ -7,6 +7,7 @@ See also
 
 1. https://github.com/localtunnel/server - *localtunnel exposes your localhost to the world for easy testing and sharing! No need to mess with DNS or deploy just to have others test out your changes.*
 
+> Thanks to https://noted.lol/pangolin/
 
 # Pangolin - Self-Hosted Deployment
 
