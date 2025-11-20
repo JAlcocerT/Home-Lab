@@ -1,8 +1,13 @@
+---
+source_code:
+tags:
+---
+
 > See [this post](https://jalcocert.github.io/JAlcocerT/blog/dev-forms/#contact-forms)
 
 ## FORMs with Docker
 
-1. FormBricks
+1. FormBricks - This is my go to. Its OSS and their hosted service free tier is generous.
 
 * https://formbricks.com/pricing
 * [Formmbricks App Profile](https://app.formbricks.com/environments/cm0vgwasu00061484bqmicsbm/settings/profile)
