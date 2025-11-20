@@ -4,7 +4,7 @@ post:
 tags: ["static site generator","SSG","File based CMS"]
 ---
 
-
+Example Nuxt SGG with Nuxt Content CMS https://content.nuxt.com/templates/canvas
 
 ### Interesting Nuxt Themes
 
