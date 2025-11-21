@@ -3,6 +3,9 @@
 
 *.db*
 
+.cache/
+#my_resume
+
 acme.json
 traefik.yaml
 #acme.json

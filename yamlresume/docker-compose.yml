@@ -1,0 +1,7 @@
+services:
+  yamlresume-new:
+    image: yamlresume/yamlresume
+    working_dir: /home/yamlresume
+    volumes:
+      - ./:/home/yamlresume
+    command: ["new", "my-resume.yml"]
