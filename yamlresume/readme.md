@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/yamlresume/yamlresume
-tags: ["Career","Curriculum","CV"]
+tags: ["Career","Curriculum","CV","Resume","Job"]
 official_docs: https://yamlresume.dev/docs/layout/templates
 ---
 

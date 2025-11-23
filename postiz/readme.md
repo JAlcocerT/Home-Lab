@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/gitroomhq/postiz-app
 official_docs:
+tags: ["Email Marketing","Social Media"]
 ---
 
 
