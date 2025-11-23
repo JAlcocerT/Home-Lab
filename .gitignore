@@ -34,4 +34,5 @@ data/
 music/
 
 app/
+!/listmonk/listmonk-subscribe/app/
 slidev-sample/

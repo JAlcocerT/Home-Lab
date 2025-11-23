@@ -22,4 +22,11 @@ docker compose up -d
 
 ---
 
-See `./listmonk-api-py/README.md` for more info on how to use the API to interact programatically with Listmonk
+See `./listmonk-api-py/README.md` for more info on how to use the API to interact programatically with Listmonk.
+
+But what it worked for me was `./listmonk-subscribe` which uses the NEXTjs endpoints: 
+
+```sh
+curl -s https://listmonk.jalcocertech.com/api/public/lists | jq
+#npm run dev
+```
