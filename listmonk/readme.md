@@ -29,4 +29,16 @@ But what it worked for me was `./listmonk-subscribe` which uses the NEXTjs endpo
 ```sh
 curl -s https://listmonk.jalcocertech.com/api/public/lists | jq
 #npm run dev
+
+
+# create subscriber
+curl -u 'apiuser:ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "yosua@some.domain",
+    "name": "Jane Doe",
+    "status": "enabled",
+    "list_uuids": ["7fbcb72b-cc0a-4a31-a196-bdc847d55ea5"]
+  }' \
+  https://listmonk.jalcocertech.com/api/subscribers
 ```
