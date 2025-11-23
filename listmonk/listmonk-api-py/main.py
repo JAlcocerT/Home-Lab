@@ -9,6 +9,24 @@ import os
 
 load_dotenv()  # loads from .env by default
 
+from dotenv import load_dotenv
+import os
+import listmonk
+
+load_dotenv()
+
+# base_url = os.getenv("LISTMONK_URL_BASE", "http://localhost:9077")
+# admin_user = os.getenv("LISTMONK_ADMIN_USER", "admin")        # fallback only for local
+# admin_pass = os.getenv("LISTMONK_ADMIN_PASSWORD", "admin")    # fallback only for local
+
+# listmonk.set_url_base(base_url)
+
+# print("Health:", listmonk.is_healthy())
+
+# listmonk.login(admin_user, admin_pass)
+# print("verify_login:", listmonk.verify_login())
+
+
 listmonk.set_url_base(os.getenv('LISTMONK_URL_BASE','http://localhost:9077'))
 
 listmonk.login(os.getenv('LISTMONK_ADMIN_USER'), os.getenv('LISTMONK_ADMIN_PASSWORD'))

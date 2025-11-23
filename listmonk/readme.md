@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/listmonk/listmonk
 tags: ["Email Marketing","OSS for Business"]
+official_docs: https://listmonk.app/docs/configuration/
 ---
 
 
@@ -12,6 +13,7 @@ curl -LO https://github.com/knadh/listmonk/raw/master/docker-compose.yml
 # Run the services in the background.
 docker compose up -d
 #docker compose logs -f app
+###docker network connect cloudflared_tunnel listmonk_app #add listmonk_app:9000 via CF UI
 ```
 
 > Go to `http://localhost:9077` to access the web app.
