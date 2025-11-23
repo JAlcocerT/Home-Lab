@@ -17,3 +17,7 @@ docker compose up -d
 > Go to `http://localhost:9077` to access the web app.
 
 > > Use it together with proper email SMTP [as per this post](https://jalcocert.github.io/JAlcocerT/emails-101/) and if needed, import email leads from your custom tools like [this](https://github.com/JAlcocerT/simple-waiting-list)
+
+---
+
+See `./listmonk-api-py/README.md` for more info on how to use the API to interact programatically with Listmonk

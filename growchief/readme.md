@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/growchief/growchief
-official_docs:
+official_docs: https://docs.growchief.com/quickstart
 tags: ["Email Marketing","Social Media"]
 ---
 
