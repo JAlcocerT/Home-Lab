@@ -1,5 +1,7 @@
 ---
 tags: "Analytics"
+official_docs: https://superset.apache.org/docs/
+source_code: https://github.com/apache/superset
 ---
 
 ```sh

@@ -1,0 +1,15 @@
+#version: '3'
+
+services:
+  mariadb:
+    image: mariadb:10.5
+    container_name: mariadb-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=chinook
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=mypassword
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+    ports:
+      - "3306:3306"

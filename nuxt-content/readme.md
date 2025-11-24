@@ -1,29 +1,32 @@
 ---
 source_code: https://github.com/nuxt/content
 post:
-tags: ["static site generator","SSG","File based CMS"]
+official_docs: https://content.nuxt.com/
+tags: ["static site generator","SSG","File based CMS","Git based CMS","Headless CMS"]
 ---
 
-Example Nuxt SGG with Nuxt Content CMS https://content.nuxt.com/templates/canvas
+> Example Nuxt SGG with Nuxt Content CMS https://content.nuxt.com/templates/canvas
+
+> > Wrote about it [here](https://jalcocert.github.io/JAlcocerT/trying-nuxt-themes/)
+
+Nuxt Content is a module for Nuxt that provides a simple way to manage content for your application. It allows developers to write their content in Markdown, YAML or JSON files and then query and display it in their application.
 
 ### Interesting Nuxt Themes
 
+* https://github.com/HugoRCD/canvas
 * https://github.com/apdev95/bento-portfolio-nuxt
 * https://github.com/samkanje/usenuxt-free
     * Includes F/OSS Auth with - https://github.com/lucia-auth/lucia
 * https://github.com/Flosciante/nuxt-image-gallery
-* https://github.com/HugoRCD/canvas
+
 
 ### Nuxt Content (CMS)
 
 Write pages in markdown - use Vue components and enjoy
 
-https://github.com/nuxt/content
-https://github.com/nuxt/content/blob/main/LICENSE
-
-https://content.nuxt.com/
-
-https://www.npmjs.com/package/@nuxt/content
+* https://github.com/nuxt/content
+    * **MIT Licensed**: https://github.com/nuxt/content/blob/main/LICENSE
+    * https://www.npmjs.com/package/@nuxt/content
 
 > The **file-based CMS** for your Nuxt application, powered by Markdown and Vue components.
 

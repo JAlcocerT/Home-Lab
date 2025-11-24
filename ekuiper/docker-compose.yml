@@ -1,0 +1,11 @@
+#version: "3.9"
+
+services:
+  ekuiper:
+    image: lfedge/ekuiper:latest
+    container_name: ekuiper
+    environment:
+      - MQTT_SOURCE__DEFAULT__SERVER=tcp://broker.emqx.io:1883
+    ports:
+      - "9081:9081"
+    restart: unless-stopped
