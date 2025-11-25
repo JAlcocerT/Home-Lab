@@ -3,7 +3,7 @@
 services:
     pocketbase:
         build: .                # Build from Dockerfile in the current directory
-        #image: pocketbase 
+        #image: pocketbase does not provide an official image
         container_name: pocketbase
         restart: unless-stopped
         ports:
@@ -12,10 +12,10 @@ services:
         #     - "./pocketbase-data:/pb/pb_data"  # Attaches pb_data to a volume named 'pocketbase-data' on your current directory
         volumes:
             - pocketbase-data:/pb/pb_data  # Reference the named volume here
-      # environment:
-      #   - POCKETBASE_URL=http://localhost:8080
-      #   - POCKETBASE_ADMIN_EMAIL=admin@example.com
-      #   - POCKETBASE_ADMIN_PASSWORD=admin123
+        environment:
+            - POCKETBASE_URL=${POCKETBASE_URL:-http://192.168.1.12:8080} #http://localhost:8080
+            - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL:-admin@example.com} #For automatic superuser creation to login PB UI
+            - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD:-admin123}            
       # healthcheck:
       #   test: ["CMD", "curl", "-f", "http://localhost:8090/api/health"]
       #   interval: 30s

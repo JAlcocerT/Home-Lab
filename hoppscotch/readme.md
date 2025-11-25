@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/hoppscotch/hoppscotch
-tags: ["API"]
+tags: ["API","IoT"]
 ---
 
 
@@ -22,6 +22,7 @@ sudo apt install ./Hoppscotch_linux_x64.deb #https://hoppscotch.com/download
 1. https://github.com/httpie/desktop
 
 ```sh
+#sudo apt install appimagelauncher
 wget -P ~/Applications https://github.com/httpie/desktop/releases/download/v2025.2.0/HTTPie-2025.2.0.AppImage
 #httpie
 ```
@@ -37,3 +38,10 @@ One app is worth multiple apps: Advanced API Debugging Proxy and REST Client
 ```sh
 flatpak install flathub com.reqable.Reqable
 ```
+
+
+3. https://github.com/mountain-loop/yaak/
+
+>  MIT | The most intuitive **desktop API client**.
+
+> > Organize and execute **REST, GraphQL, WebSockets, Server Sent Events (SSE), and gRPC** 🦬 

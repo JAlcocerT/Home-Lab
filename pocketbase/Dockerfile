@@ -1,6 +1,9 @@
 FROM alpine:latest
+#https://pocketbase.io/docs/going-to-production/#using-docker
 
+#https://github.com/pocketbase/pocketbase/releases
 ARG PB_VERSION=0.18.1
+#0.30.0
 
 RUN apk add --no-cache \
     unzip \
