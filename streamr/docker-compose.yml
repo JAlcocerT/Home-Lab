@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  streamr:
+    image: streamr/node
+    container_name: streamr
+    restart: always
+    ports:
+      - "32200:32200"
+    # volumes:
+    #   # Use ${HOME} (or an absolute path) instead of ~
+    #   - ${HOME}/.streamrDocker:/home/streamr/.streamr
+    volumes:
+      - streamr_data:/home/streamr/.streamr
+
+volumes:
+  streamr_data:
