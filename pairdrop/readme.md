@@ -10,3 +10,5 @@ Or just sping your pairdropcontainer: https://github.com/schlagmichdoch/PairDrop
 ```sh
 docker compose -f ./pairdrop/docker-compose.yml up -d
 ```
+
+> Alternative to airdrop and OSS ones like snapdrop
