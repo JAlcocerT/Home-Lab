@@ -23,15 +23,3 @@ services:
 networks:
   nginx_nginx_network:
     external: true    
-
-#https://docs.linuxserver.io/images/docker-code-server/
-
-
-# code --list-extensions
-# code --install-extension ms-vscode.cpptools
-# code --uninstall-extension ms-vscode.csharp
-
-
-#https://docs.linuxserver.io/images/docker-vscodium/?h=vscod
-
-#webtop + vscodium

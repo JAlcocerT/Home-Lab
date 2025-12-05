@@ -8,6 +8,7 @@ tags: "PaaS"
 [Cosmos Server](https://cosmos-cloud.io/) is a self-hosted cloud platform that allows you to run your own cloud services with a focus on privacy and security.
 
 ## Features
+
 - Web-based interface for managing services
 - Docker container management
 - File browser and manager
@@ -16,6 +17,7 @@ tags: "PaaS"
 - Automatic HTTPS with Let's Encrypt
 
 ## Prerequisites
+
 - Docker
 - Docker Compose
 - Ports 800 and 4433 available

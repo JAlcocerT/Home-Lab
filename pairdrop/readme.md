@@ -11,4 +11,4 @@ Or just sping your pairdropcontainer: https://github.com/schlagmichdoch/PairDrop
 docker compose -f ./pairdrop/docker-compose.yml up -d
 ```
 
-> Alternative to airdrop and OSS ones like snapdrop
+> Alternative to airdrop and other OSS ones, like snapdrop
