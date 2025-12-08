@@ -4,7 +4,7 @@ official_docs: https://strapi.io/blog/how-to-self-host-your-headless-cms-using-d
 tags: ["Headless CMS","OSS for Business","Web"]
 ---
 
-The most advanced open-source headless CMS to build powerful APIs with no effort.
+The most advanced **open-source headless CMS** to build powerful APIs with no effort.
 
 * https://hub.docker.com/r/strapi/strapi/tags
     * https://hub.docker.com/r/strapi/strapi#strapi-base
@@ -26,4 +26,3 @@ npx create-strapi-app@latest my-sample-project --quickstart #https://docs.strapi
 yes | npx create-strapi-app@latest my-strapi-project --quickstart --skip-cloud --no-example #v5.30.0
 ```
 > `http://localhost:1337/admin`
-
