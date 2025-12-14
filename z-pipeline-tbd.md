@@ -22,7 +22,22 @@ https://github.com/DartSteven/Nutify/tree/main
 A lightweight container management platform empowering community members to spin up isolated QEMU environments for experiments and learning. 🚀
 
 
+* https://github.com/teableio/teable
+
+ ✨ The Next Gen Airtable Alternative: No-Code Postgres 
+
+
+https://github.com/vitodeploy/vito
+
+ Free and Self-Hosted Server Management Tool 
+
+https://github.com/crocofied/CoreControl
+
+ Dashboard to manage your entire server infrastructure 
+
 ---
+
+
 
 ```
 Add one folder with a docker file to selfhost https://github.com/ente-io/ente
