@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 QR Code Generator</h1>
+            <p class="subtitle">Generate QR codes from any link and download as PNG or PDF</p>
+        </div>
+
+        <div class="card">
+            <div class="input-section">
+                <label for="urlInput">Enter your URL:</label>
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="https://example.com"
+                    autocomplete="url"
+                >
+                <button id="generateBtn" class="btn btn-primary">
+                    Generate QR Code
+                </button>
+            </div>
+
+            <div id="qrSection" class="qr-section hidden">
+                <div class="preview-section">
+                <h3>QR Code Preview</h3>
+                <div class="qr-container">
+                    <canvas id="qrCanvas"></canvas>
+                </div>
+                <p class="preview-note">Scan this code with your phone's camera or a QR scanner app</p>
+                
+                <div class="download-section">
+                    <h3>Download Options</h3>
+                    <div class="button-group">
+                        <button id="downloadPng" class="btn btn-success">
+                            📥 Download PNG
+                        </button>
+                        <button id="downloadPdf" class="btn btn-danger">
+                            📄 Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div id="errorMessage" class="error-message hidden"></div>
+        </div>
+
+        <div class="footer">
+            <p>Built with ❤️ using QRCode.js and jsPDF</p>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Main Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
