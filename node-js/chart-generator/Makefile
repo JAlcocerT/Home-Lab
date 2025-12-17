@@ -50,7 +50,7 @@ docker-build:
 # Run the application in a Docker container
 .PHONY: docker-run
 docker-run:
-	docker-compose up -d
+	docker compose up -d
 
 # Build and run with Docker Compose
 .PHONY: docker-up
