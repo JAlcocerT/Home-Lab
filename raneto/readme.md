@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/raneto/raneto
 post: https://fossengineer.com/raneto-markdown-knowledgebase-selfhosting/
-tags: "Notes"
+tags: ["Notes","markdown"]
 ---
 
 # Raneto Self-Hosted Knowledge Base
@@ -22,7 +22,8 @@ This is a self-hosted instance of Raneto, a knowledge base platform that uses Ma
 ```bash
 docker-compose up -d
 ```
-4. Access the application at http://localhost:3000
+
+4. Access the application at `http://localhost:3000`
 
 ## Configuration
 

@@ -1,5 +1,5 @@
 ---
-source_code:
+source_code: https://github.com/silverbulletmd/silverbullet
 post: https://fossengineer.com/selfhosting-silverbullet/
 tags: "Notes"
 ---
