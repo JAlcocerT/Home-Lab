@@ -1,0 +1,40 @@
+services: #https://docs.speedtest-tracker.dev/getting-started/installation/using-docker-compose
+    speedtest-tracker: 
+        image: lscr.io/linuxserver/speedtest-tracker:latest
+        restart: unless-stopped
+        container_name: speedtest-tracker
+        ports:
+            - 8089:80
+            - 8443:443
+        environment: #https://docs.speedtest-tracker.dev/getting-started/environment-variables
+            - PUID=1000
+            - PGID=1000
+            - APP_KEY=base64:somethingsomething #generate it as per CLI above
+            - DB_CONNECTION=mariadb
+            - DB_HOST=db
+            - DB_PORT=3306
+            - DB_DATABASE=speedtest_tracker
+            - DB_USERNAME=speedtest_tracker
+            - DB_PASSWORD=password
+        volumes:
+            - /path/to/data:/config
+            - /path/to-custom-ssl-keys:/config/keys
+        depends_on:
+            - db
+    db: #you can also use the SQLITE one as per the docs
+        image: mariadb:11
+        restart: always
+        environment:
+            - MYSQL_DATABASE=speedtest_tracker
+            - MYSQL_USER=speedtest_tracker
+            - MYSQL_PASSWORD=password
+            - MYSQL_RANDOM_ROOT_PASSWORD=true
+        volumes:
+            - speedtest-db:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            interval: 5s
+            retries: 3
+            timeout: 5s
+volumes:
+  speedtest-db:
