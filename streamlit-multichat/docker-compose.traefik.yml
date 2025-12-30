@@ -1,0 +1,44 @@
+#version: '3'
+#github.com/JAlcocerT/Streamlit-MultiChat
+services:
+  streamlit-multichat:
+    image: ghcr.io/jalcocert/streamlit-multichat #:v1.0
+    container_name: streamlit_multichat
+    volumes:
+      - ai_streamlit_multichat:/app
+    working_dir: /app
+    command: /bin/sh -c "\
+      mkdir -p /app/.streamlit && \
+      echo 'OPENAI_API_KEY = \"sk-proj-openaiAPIhere\"' > /app/.streamlit/secrets.toml && \
+      echo 'GROQ_API_KEY = \"gsk_groqAPIhere\"' >> /app/.streamlit/secrets.toml && \
+      echo 'ANTHROPIC_API_KEY = \"sk-ant-yourANTHROPICapihere\"' >> /app/.streamlit/secrets.toml && \      
+      streamlit run Z_multichat.py"
+    # ports:
+    #   - "8501:8501"
+    restart: always
+    environment:
+      MODEL_API_KEY: sk-proj-openaiAPIhere
+      MODEL: gpt-4o-mini      #gpt-4 
+      TEMPERATURE: 0 #dont be creative :)    
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.docker.network=proxy"
+#       - "traefik.http.routers.streamlit-multichat.entrypoints=http"
+#       - "traefik.http.routers.streamlit-multichat.rule=Host(`multichat.jalcocertech.com`)" #Tweak this with your subdomain
+#       - "traefik.http.middlewares.streamlit-multichat-https-redirect.redirectscheme.scheme=https"
+#       - "traefik.http.routers.streamlit-multichat.middlewares=streamlit-multichat-https-redirect"
+#       - "traefik.http.routers.streamlit-multichat-secure.entrypoints=https"
+#       - "traefik.http.routers.streamlit-multichat-secure.rule=Host(`multichat.jalcocertech.com`)" #Tweak this with your subdomain
+#       - "traefik.http.routers.streamlit-multichat-secure.tls=true"
+#       - "traefik.http.routers.streamlit-multichat-secure.tls.certresolver=cloudflare"
+#       - "traefik.http.routers.streamlit-multichat-secure.service=streamlit-multichat"
+#       - "traefik.http.services.streamlit-multichat.loadbalancer.server.port=8501"
+#     networks: #Important to connect to Traefik Network
+#       - proxy      
+
+# networks:
+#   proxy:
+#     external: true
+
+volumes:
+  ai_streamlit_multichat:

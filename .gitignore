@@ -3,6 +3,8 @@
 
 *.db*
 
+*.sql
+
 .cache/
 #my_resume
 

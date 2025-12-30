@@ -21,6 +21,8 @@ services:
         condition: service_healthy
     networks:
       - wp-network
+      #- cloudflare_tunnel
+      #- nginx_default   
 
   wp-db:
     image: mysql:8.0
@@ -45,6 +47,11 @@ services:
 networks:
   wp-network:
     driver: bridge
+
+#   cloudflare_tunnel:
+#     external: true
+  # nginx_default:
+  #   external: true
 
 volumes:
   wp-data:
