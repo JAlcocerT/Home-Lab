@@ -11,7 +11,7 @@ docker compose up -d
 #sudo docker compose stop
 ```
 
-Used to create a DIY plug and play db analytics via rag around [this repo](https://github.com/JAlcocerT/langchain-db-ui).
+Used to create a DIY plug and play db analytics via rag around [this repo](https://github.com/JAlcocerT/langchain-db-ui) and [this post](https://jalcocert.github.io/JAlcocerT/plug-and-play-data-analytics/).
 
 ```sh
 #docker stop $(docker ps -a -q) #stop all

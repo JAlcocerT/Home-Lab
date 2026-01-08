@@ -11,6 +11,8 @@ Giving back to all SelfHosters and Tinkers.
 Let's make that having a HomeLab is as easy as:
 
 ```sh
+#git clone https://github.com/JAlcocerT/Home-Lab
+#cd into the folder of the service
 #docker compose up -d
 docker compose -f docker-compose.yml up -d
 make setup
