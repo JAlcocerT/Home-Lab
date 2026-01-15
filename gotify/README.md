@@ -4,6 +4,25 @@ official_docs: https://gotify.net/docs/
 tags: "notifications"
 ---
 
+```sh
+curl -X POST \
+  "http://192.168.1.11:6886/message?token=your_app_generated_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "message": "Hello from your server at 192.168.1.11!",
+        "title": "Gotify Test Message",
+        "priority": 5,
+        "extras": {
+          "client::display": {
+            "contentType": "text/markdown",
+            "url": "https://gotify.net"
+          }
+        }
+      }'
+```
+
+---
+
 # Gotify - Self-Hosted Push Notifications
 
 [Gotify](https://gotify.net/) is a simple server for sending and receiving messages in real-time per WebSocket, with a sleek web UI and Android app.
@@ -32,9 +51,10 @@ tags: "notifications"
    - Change the default admin username/password if desired
 
 2. **Start Gotify**:
-   ```bash
-   docker-compose up -d
-   ```
+
+```bash
+docker-compose up -d
+```
 
 3. **Access the Web UI**:
    - Open your browser and go to: `http://your-server-ip:6886`
@@ -47,6 +67,7 @@ tags: "notifications"
 ### Environment Variables
 
 #### Gotify Service
+
 - `GOTIFY_DATABASE_DIALECT`: Database type (postgres)
 - `GOTIFY_DATABASE_CONNECTION`: Database connection string
 - `GOTIFY_DEFAULTUSER_NAME`: Default admin username
@@ -55,14 +76,17 @@ tags: "notifications"
 - `TZ`: Timezone (e.g., `Europe/Madrid`)
 
 #### PostgreSQL Service
+
 - `POSTGRES_DB`: Database name
 - `POSTGRES_USER`: Database user
 - `POSTGRES_PASSWORD`: Database password (must match the one in the connection string)
 
 ### Ports
+
 - `6886:80` - Web UI and API (change the first number if needed)
 
 ### Volumes
+
 - `gotify_data` - Gotify application data
 - `postgres_data` - PostgreSQL database files
 
@@ -79,6 +103,7 @@ docker-compose up -d --force-recreate
 ## Backup and Restore
 
 ### Backup
+
 ```bash
 # Backup Gotify data
 docker run --rm -v gotify_gotify_data:/source -v $(pwd):/backup alpine tar czf /backup/gotify_data_backup_$(date +%Y%m%d).tar.gz -C /source .
@@ -88,6 +113,7 @@ docker exec gotify_db pg_dump -U gotify gotify > gotify_db_backup_$(date +%Y%m%d
 ```
 
 ### Restore
+
 ```bash
 # Stop Gotify
 docker-compose down
