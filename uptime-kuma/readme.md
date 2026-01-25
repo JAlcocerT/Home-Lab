@@ -6,6 +6,8 @@ yt_video: https://www.youtube.com/watch?v=fxVNTffZC2U
 tags: ["web","Status Pages","Monitoring"]
 ---
 
+The user and pwd is created during the first run: `http://192.168.1.2:3001/setup-database`
+
 ```sh
 # Default (Development)
 docker compose up -d
@@ -26,7 +28,7 @@ docker rm uptimekuma
 See also:
 
 * https://github.com/louislam/uptime-kuma/wiki/3rd-Party-Addons-Apps
-
+* https://github.com/louislam/uptime-kuma/wiki/Badge
 
 ---
 
@@ -35,7 +37,27 @@ See also:
 
 Uptime Kuma API: https://github.com/louislam/uptime-kuma/wiki/API-Documentation
 
-Yes, Uptime Kuma does provide an API, but it is primarily an internal API designed for the application's own use and is not officially supported for third-party integrations. 
+* https://uptime-kuma-api.readthedocs.io/en/latest/
+
+## API Automation (Python)
+
+To add monitors programmatically, you can use the Python script:
+
+```bash
+# 1. Install the library
+uv init
+#pip install uptime-kuma-api
+uv add uptime-kuma-api
+
+# 2. Edit the script with your credentials
+# nano scripts/add_monitor.py
+
+# 3. Run it
+#python3 scripts/add_monitor.py
+uv run scripts/add_monitor.py
+```
+
+Uptime Kuma does provide an API, but it is primarily an internal API designed for the application's own use and is not officially supported for third-party integrations. 
 
 It offers a `Socket.io` real-time communication API after authentication and some RESTful API endpoints for tasks like push monitors, status badges, and public status page data.
 
