@@ -1,0 +1,20 @@
+services:
+  uptimekuma-monitoring:
+    container_name: uptimekuma
+    image: louislam/uptime-kuma:2 #'louislam/uptime-kuma:1'
+    ports:
+      - '3001:3001'
+    volumes:
+      - uptimekuma-data:/app/data #/home/jalcocert/DOCKER/uptime-kuma/data:/app/data
+    restart: unless-stopped
+    networks:
+      - cloudflared_tunnel #["nginx_default","cloudflared_tunnel"]
+
+networks:
+    cloudflared_tunnel:
+      external: true
+#     nginx_default:
+#         external: true 
+
+volumes:
+  uptimekuma-data:

@@ -6,6 +6,23 @@ yt_video: https://www.youtube.com/watch?v=fxVNTffZC2U
 tags: ["web","Status Pages","Monitoring"]
 ---
 
+```sh
+# Default (Development)
+docker compose up -d
+
+# Production
+docker compose -f docker-compose.prod.yml up -d
+
+# Stop and Remove (via Compose)
+docker compose down
+# OR (for prod)
+docker compose -f docker-compose.prod.yml down
+
+# Stop and Remove (via Container Name)
+docker stop uptimekuma
+docker rm uptimekuma
+```
+
 See also:
 
 * https://github.com/louislam/uptime-kuma/wiki/3rd-Party-Addons-Apps
