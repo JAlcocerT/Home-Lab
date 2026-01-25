@@ -6,13 +6,17 @@ yt_video: https://www.youtube.com/watch?v=fxVNTffZC2U
 tags: ["web","Status Pages","Monitoring"]
 ---
 
+See also:
 
-Uptime Kuma API: https://github.com/louislam/uptime-kuma/wiki/API-Documentation
+* https://github.com/louislam/uptime-kuma/wiki/3rd-Party-Addons-Apps
+
 
 ---
 
 
 ### Uptime Kuma API
+
+Uptime Kuma API: https://github.com/louislam/uptime-kuma/wiki/API-Documentation
 
 Yes, Uptime Kuma does provide an API, but it is primarily an internal API designed for the application's own use and is not officially supported for third-party integrations. 
 
@@ -20,7 +24,7 @@ It offers a `Socket.io` real-time communication API after authentication and som
 
 Using the API (especially through unofficial wrappers like the Python wrapper "uptime-kuma-api"), you can programmatically add new monitors (websites or services) and retrieve some monitoring data.
 
-For example, you can create a new HTTP monitor by specifying the type, name, and URL via the API.[2][3]
+For example, you can create a new HTTP monitor by specifying the type, name, and URL via the API.
 
 The API allows you to:
 

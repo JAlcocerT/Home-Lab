@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: production
+    user: "${UID:-1000}:${GID:-1000}"  # Run as host user for file permissions #check with id
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # Production imgproxy configuration
+      - IMGPROXY_URL=http://imgproxy:8080
+      - IMGPROXY_KEY=${IMGPROXY_KEY}
+      - IMGPROXY_SALT=${IMGPROXY_SALT}
+      - IMAGES_DIR=/data/images
+      - METADATA_FILE=/data/metadata.json
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - MAX_BATCH_UPLOAD=${MAX_BATCH_UPLOAD:-10}
+      - ALLOWED_FORMATS=${ALLOWED_FORMATS:-jpg,jpeg,png,webp,gif}
+      - IMAGES_PER_PAGE=${IMAGES_PER_PAGE:-12}
+      - ISR_REVALIDATE=${ISR_REVALIDATE:-3600}
+    depends_on:
+      - imgproxy
+    networks:
+      - gallery-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  imgproxy:
+    image: darthsim/imgproxy:latest
+    ports:
+      - "8080:8080"  # Expose for local testing
+    environment:
+      # Production optimization settings
+      - IMGPROXY_KEY=${IMGPROXY_KEY}
+      - IMGPROXY_SALT=${IMGPROXY_SALT}
+      - IMGPROXY_QUALITY=85
+      - IMGPROXY_COMPRESSION=9
+      - IMGPROXY_ENABLE_WEBP_DETECTION=true
+      - IMGPROXY_ENFORCE_WEBP=true
+      - IMGPROXY_ENABLE_AVIF_DETECTION=true
+      - IMGPROXY_USE_ETAG=true
+      - IMGPROXY_CACHE_CONTROL_PASSTHROUGH=true
+      - IMGPROXY_MAX_SRC_RESOLUTION=50.0
+      - IMGPROXY_MAX_SRC_FILE_SIZE=52428800
+      - IMGPROXY_STRIP_METADATA=true
+      - IMGPROXY_STRIP_COLOR_PROFILE=false
+      - IMGPROXY_AUTO_ROTATE=true
+      # Performance optimizations
+      - IMGPROXY_WORKERS=4
+      - IMGPROXY_MAX_CLIENTS=1000
+      - IMGPROXY_TTL=31536000
+      - IMGPROXY_DOWNLOAD_TIMEOUT=30
+      - IMGPROXY_KEEP_ALIVE_TIMEOUT=300
+      - IMGPROXY_READ_TIMEOUT=30
+      - IMGPROXY_WRITE_TIMEOUT=30
+      # Format support
+      - IMGPROXY_JPEG_PROGRESSIVE=true
+      - IMGPROXY_PNG_INTERLACED=true
+      - IMGPROXY_PNG_QUANTIZE=true
+      - IMGPROXY_PNG_QUANTIZATION_COLORS=256
+      # Security
+      - IMGPROXY_ALLOW_ORIGIN=*
+      - IMGPROXY_ENABLE_DEBUG_HEADERS=false
+      # Enable local filesystem access
+      - IMGPROXY_LOCAL_FILESYSTEM_ROOT=/images
+    volumes:
+      - ./data/images:/images:ro
+    networks:
+      - gallery-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - nextjs
+    networks:
+      - gallery-network
+    restart: unless-stopped
+    profiles:
+      - with-nginx
+
+networks:
+  gallery-network:
+    driver: bridge
