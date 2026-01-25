@@ -57,6 +57,19 @@ uv add uptime-kuma-api
 uv run scripts/add_monitor.py
 ```
 
+## Bulk Monitoring (JSON)
+
+You can manage multiple monitors via [monitors.json](monitors.json):
+
+```bash
+# 1. Edit the list
+# nano monitors.json
+
+# 2. Run the bulk script
+uv run scripts/bulk_add_monitors.py
+```
+
+
 Uptime Kuma does provide an API, but it is primarily an internal API designed for the application's own use and is not officially supported for third-party integrations. 
 
 It offers a `Socket.io` real-time communication API after authentication and some RESTful API endpoints for tasks like push monitors, status badges, and public status page data.
