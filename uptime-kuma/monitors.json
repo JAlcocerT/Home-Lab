@@ -1,18 +1,32 @@
 [
     {
         "name": "Web Audit",
-        "url": "https://webaudit.jalcocertech.com/"
+        "url": "https://webaudit.jalcocertech.com/",
+        "type": "http"
     },
     {
         "name": "GenBI",
-        "url": "https://genbi.jalcocertech.com/"
+        "url": "https://genbi.jalcocertech.com/",
+        "type": "http"
     },
     {
         "name": "Real Estate",
-        "url": "https://realestate.jalcocertech.com/"
+        "url": "https://realestate.jalcocertech.com/",
+        "type": "http"
     },
     {
         "name": "Slubnechwile",
-        "url": "https://slubnechwile.com/"
+        "url": "https://slubnechwile.com/",
+        "type": "http"
+    },
+    {
+        "name": "Google DNS",
+        "url": "8.8.8.8",
+        "type": "ping"
+    },
+    {
+        "name": "Cloudflare DNS",
+        "url": "1.1.1.1",
+        "type": "ping"
     }
 ]

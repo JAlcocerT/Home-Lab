@@ -23,6 +23,14 @@ def bulk_add_monitors():
 
     api = UptimeKumaApi(UPTIME_KUMA_URL)
     
+    # Map friendly names to MonitorType enums
+    type_map = {
+        "http": MonitorType.HTTP,
+        "ping": MonitorType.PING,
+        "port": MonitorType.PORT,
+        "dns": MonitorType.DNS
+    }
+
     try:
         print(f"Connecting to {UPTIME_KUMA_URL}...")
         api.login(USERNAME, PASSWORD)
@@ -33,22 +41,34 @@ def bulk_add_monitors():
         for monitor_data in monitors_to_add:
             name = monitor_data.get("name")
             url = monitor_data.get("url")
+            raw_type = monitor_data.get("type", "http").lower()
             
             if name in existing_monitors:
                 print(f"Monitor '{name}' already exists. Skipping.")
                 continue
 
-            print(f"Adding '{name}' monitor ({url})...")
+            monitor_type = type_map.get(raw_type, MonitorType.HTTP)
+            print(f"Adding '{name}' monitor [{raw_type}] ({url})...")
             
             # Build data with Uptime Kuma 2.0 patch
-            data = api._build_monitor_data(
-                type=MonitorType.HTTP,
-                name=name,
-                url=url,
-                interval=600,
-                retryInterval=60,
-                maxretries=3
-            )
+            # Note: For PING, 'hostname' is used instead of 'url' in some logic, 
+            # but _build_monitor_data handles them correctly if we pass url for http 
+            # and hostname for ping. We'll be flexible here.
+            
+            kwargs = {
+                "type": monitor_type,
+                "name": name,
+                "interval": 600,
+                "retryInterval": 60,
+                "maxretries": 3
+            }
+            
+            if monitor_type == MonitorType.PING:
+                kwargs["hostname"] = url
+            else:
+                kwargs["url"] = url
+
+            data = api._build_monitor_data(**kwargs)
             data["conditions"] = [] # Required by Uptime Kuma 2.0
             
             _convert_monitor_input(data)
@@ -57,6 +77,7 @@ def bulk_add_monitors():
                 api._call("add", data)
                 
             print(f"Successfully added '{name}'.")
+
             
     except Exception as e:
         print(f"Error: {e}")
