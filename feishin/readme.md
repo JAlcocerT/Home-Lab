@@ -4,23 +4,23 @@ source_code: https://github.com/jeffvli/feishin
 ---
 
 
-Feishin is a modern, open-source, self-hosted music player that is a complete rewrite of Sonixd.
+Feishin is a modern, open-source, **self-hosted music player** that is a complete rewrite of Sonixd.
 
-It supports playback from Subsonic-compatible music servers such as Navidrome, Jellyfin, Airsonic, Ampache, Gonic, Funkwhale, and more.[1]
+It supports playback from Subsonic-compatible music servers such asa: Navidrome, Jellyfin, Airsonic, Ampache, Gonic, Funkwhale, and more.
 
 ### Key Features
 
-- MPV and web player backends for audio playback.[1]
-- Smart playlist editor (particularly for Navidrome users).[1]
-- Synchronized and unsynchronized lyrics support.[1]
-- Scrobbling playback to supported servers.[1]
-- Modern UI with theme support and lyrics fetching.[1]
+- MPV and web player backends for audio playback.
+- Smart playlist editor (particularly for Navidrome users).
+- Synchronized and unsynchronized lyrics support.
+- Scrobbling playback to supported servers.
+- Modern UI with theme support and lyrics fetching.
 
 Installation & Usage
 
-- **Desktop App:** Downloadable for all major platforms, recommended for full functionality including both player backends and built-in lyrics fetching.[1]
-- **Web App:** Available at feishin.vercel.app, limited to web backend.[1]
-- **Docker:** Can be run with the official image or Docker Compose, supporting environment variables for server configuration and user management.[1]
+- **Desktop App:** Downloadable for all major platforms, recommended for full functionality including both player backends and built-in lyrics fetching.
+- **Web App:** Available at feishin.vercel.app, limited to web backend.
+- **Docker:** Can be run with the official image or Docker Compose, supporting environment variables for server configuration and user management.
 
 
 ### Supported Servers

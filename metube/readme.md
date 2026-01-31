@@ -5,7 +5,7 @@ tags: ["Media","Youtube","Music"]
 
 You can try this together with Gonic or Jellyfin.
 
-Or use the desktop app:
+Or use the Desktop App:
 
 ```sh
 #choco install ytdownloader

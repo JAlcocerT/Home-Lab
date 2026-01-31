@@ -23,11 +23,8 @@ Here are the top alternatives to Umbrel that function in a similar way:
 ### What Makes These Platforms Similar to Umbrel?
 
 1.  **Containerization (Docker):** They all use Docker or similar technology to run apps in isolated environments, making installation and uninstallation clean and simple.
+
 2.  **App Store Model:** They feature a curated list of popular self-hosted applications (like Nextcloud, Jellyfin, Vaultwarden, etc.) that can be installed with a **single click**.
+
 3.  **Web Interface:** They provide a simple, graphical user interface (GUI) accessible via a web browser, eliminating the need to constantly use the command line (Terminal/SSH).
 4.  **Hardware Versatility:** Most support installation on a variety of hardware, including Raspberry Pi, single-board computers, and standard x86 desktops/servers.
-
-The video below offers a comparison of three popular options in this self-hosted category, including Umbrel and CasaOS.
-
-You might find it helpful to see a comparison of three major contenders in this space, including Umbrel, CasaOS, and OpenMediaVault, in [this cloud OS comparison](https://www.youtube.com/watch?v=eAWm4plNKgI).
-http://googleusercontent.com/youtube_content/1
