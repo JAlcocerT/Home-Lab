@@ -1,4 +1,7 @@
-
+---
+source_code: https://github.com/Prowlarr/Prowlarr
+tags: ["Torrent","Usenet","Indexer Manager"]
+---
 
 
 #https://docs.linuxserver.io/images/docker-prowlarr/
@@ -10,9 +13,12 @@
 
 # Prowlarr - Indexer Manager
 
-[Prowlarr](https://github.com/Prowlarr/Prowlarr) is an indexer manager/proxy built on the popular arr .net/reactjs base stack to integrate with your various PVR apps. Prowlarr supports management of both Torrent Trackers and Usenet Indexers. It integrates seamlessly with various *Arr applications (Radarr, Sonarr, etc.) and can be used to manage all your indexers in one place.
+[Prowlarr](https://github.com/Prowlarr/Prowlarr) is an indexer manager/proxy built on the popular arr .net/reactjs base stack to integrate with your various PVR apps. Prowlarr supports management of both Torrent Trackers and Usenet Indexers. 
+
+It integrates seamlessly with various *Arr applications (Radarr, Sonarr, etc.) and can be used to manage all your indexers in one place.
 
 ## Features
+
 - Manage all your indexers in one place
 - Sync with multiple *Arr applications
 - Automatic indexer search
@@ -20,6 +26,7 @@
 - Built-in proxy support
 
 ## Prerequisites
+
 - Docker
 - Docker Compose
 
@@ -66,6 +73,26 @@ To update to the latest version:
 cd /home/jalcocert/Desktop/IT/Home-Lab/prowlarr
 docker-compose pull
 docker-compose up -d
+```
+
+## Deployment
+
+```sh
+# Pull latest changes
+git pull
+
+# Deploy Prowlarr from the main stack
+sudo docker compose -f ./z-homelab-setup/evolution/2601_docker-compose.yml up -d prowlarr
+
+# Verify status
+docker ps -a | grep -i prowlarr
+```
+
+## Setup Instructions
+
+1. Access the web UI at `http://<your-ip>:9696`.
+2. Go to **Settings > Download Clients**.
+3. Add **qBittorrent** using Host: `qbittorrent`.
 ```
 
 ## Backup and Restore
