@@ -18,6 +18,8 @@ services:
       #- "/media/pi/Nowy:/data/tvshows"
       - "/home/jalcocert/Desktop/YoutubeVideos:/data/tvshows"
       - "/home/jalcocert/Desktop/P2P:/data/movies"
+    devices:
+      - /dev/dri:/dev/dri # Hardware Acceleration for AMD 5600G
     restart: unless-stopped
 
   qbittorrent:
