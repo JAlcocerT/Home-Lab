@@ -19,3 +19,6 @@ video: https://youtu.be/SASUXOV7tEQ
 * Non F/OSS: https://anakin.ai/ -->
 <!-- 
 ### How to Add Flowise Chat to Astro -->
+
+---
+
