@@ -44,9 +44,16 @@ Add the `/dev/dri` device to your service:
 ```
 
 #### 2. Jellyfin Dashboard Settings
+
 Go to **Dashboard > Playback** and set:
 *   **Hardware acceleration**: `Video Acceleration API (VAAPI)`
 *   **VA-API Device**: `/dev/dri/renderD128`
 *   **Hardware decoding**: Enable H.264, HEVC, VC1, VP9.
 *   **Hardware encoding**: Enabled.
-```
+
+---
+
+* https://gitlab.com/Linuxserver.io/docker-jellyfin/container_registry
+* https://quay.io/repository/linuxserver.io/jellyfin
+* https://hub.docker.com/r/linuxserver/jellyfin
+* https://github.com/linuxserver/docker-jellyfin/pkgs/container/jellyfin

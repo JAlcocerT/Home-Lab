@@ -18,10 +18,10 @@ services:
       #- "/media/pi/Nowy:/data/tvshows"
       - "/home/jalcocert/Desktop/YoutubeVideos:/data/tvshows"
       - "/home/jalcocert/Desktop/P2P:/data/movies"
+      - "/home/jalcocert/Desktop/YoutubeMusic:/data/music"
     devices:
       - /dev/dri:/dev/dri # Hardware Acceleration for AMD 5600G
     restart: unless-stopped
-
 
   metube:
     image: ghcr.io/alexta69/metube #ytdownloader
@@ -61,6 +61,31 @@ services:
       - /home/Docker/prowlarr/config:/config
     ports:
       - "9696:9696"
+    restart: unless-stopped
+
+  # flaresolverr:
+  #   image: ghcr.io/flaresolverr/flaresolverr:latest
+  #   container_name: flaresolverr
+  #   environment:
+  #     - LOG_LEVEL=info
+  #     - TZ=Europe/Madrid
+  #   ports:
+  #     - "8191:8191"
+  #   restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/Docker/sonarr/config:/config
+      - /home/jalcocert/Desktop/YoutubeVideos:/tv # Your TV Library
+      - /home/jalcocert/Desktop/P2P:/downloads # Your Download folder
+    ports:
+      - "8989:8989"
     restart: unless-stopped
 
   homepage-lite:
