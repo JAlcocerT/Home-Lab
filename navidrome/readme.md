@@ -10,6 +10,8 @@ For IoS, look for [Amperfy](https://github.com/BLeeEZ/amperfy)
 
 For desktop: [Aonsoku](https://github.com/victoralvesf/aonsoku) 
 
+See also https://github.com/betsha1830/navispot to  Export Spotify playlists to Navidrome. 
+
 ---
 
 ```sh

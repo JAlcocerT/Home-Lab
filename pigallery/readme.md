@@ -9,3 +9,5 @@ Pushed to Dockerhub via CI/CD: https://github.com/bpatrik/pigallery2/blob/master
 ```sh
 docker compose up -d
 ```
+
+Web Based + Map with GPX support + No database required!
