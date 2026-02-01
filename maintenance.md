@@ -48,6 +48,7 @@ docker volume ls -f dangling=true
 ```
 
 **Normal Cleanup:** (Only handles anonymous volumes)
+
 ```bash
 docker volume prune
 ```
@@ -63,11 +64,13 @@ docker volume rm $(docker volume ls -q -f dangling=true)
 ## 5. Inspection Commands (Find the Bulky ones)
 
 See which running containers are using the most space (writable layer + image size):
+
 ```bash
 docker ps -s --format "table {{.Names}}\t{{.Image}}\t{{.Size}}"
 ```
 
 See all images sorted by size:
+
 ```bash
 docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | sort -hk 3 -r
 ```
