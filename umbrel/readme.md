@@ -5,6 +5,22 @@ tags: ["OS","PaaS","OS inside container"]
 ---
 
 
+
+```sh
+#git clone https://github.com/JAlcocerT/Home-Lab
+#cd ~/Home-Lab/umbrel
+#sudo docker compose up -d
+
+docker ps -a | grep -i umbrel
+#udo docker stats umbrel 
+#sudo chown -R $USER:$USER /mnt/data1tb/umbrel
+#sudo docker compose -f /home/jalcocert/Desktop/fossengineer-hugo/Home-Lab/umbrel/docker-compose.yml restart
+sudo docker compose -f ./docker-compose.yml down
+sudo umount /mnt/data1tb
+```
+
+Go to: `http://192.168.1.2:86/`
+
 Thanks to https://github.com/dockur/umbrel we can have all these apps https://apps.umbrel.com/category/all but via container, instead of a full OS installation.
 
 ```sh

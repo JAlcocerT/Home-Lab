@@ -8,6 +8,8 @@ For Android, look for: [Ultrasonic](https://github.com/ultrasonic/ultrasonic) wh
 
 For IoS, look for [Amperfy](https://github.com/BLeeEZ/amperfy)
 
+For desktop: [Aonsoku](https://github.com/victoralvesf/aonsoku) 
+
 ---
 
 ```sh

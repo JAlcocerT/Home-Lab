@@ -9,6 +9,20 @@ tags: ["web","Status Pages","Monitoring"]
 The user and pwd is created during the first run: `http://192.168.1.2:3001/setup-database`
 
 ```sh
+#git clone https://github.com/JAlcocerT/Home-Lab
+#cd ~/Home-Lab/uptimekuma
+#sudo docker compose up -d
+
+##cd ~/Home-Lab
+#git pull
+#sudo docker compose -f ./z-homelab-setup/evolution/2601_docker-compose.yml up -d uptimekuma
+
+docker ps -a | grep -i uptimekuma
+#udo docker stats uptimekuma 
+```
+
+
+```sh
 # Default (Development)
 docker compose up -d
 

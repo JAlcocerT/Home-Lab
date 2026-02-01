@@ -179,6 +179,15 @@ services:
 #### TOOLS ###
 ##############
 
+  uptimekuma-monitoring:
+    container_name: uptimekuma
+    image: louislam/uptime-kuma:2 #'louislam/uptime-kuma:1'
+    ports:
+      - '3001:3001'
+    volumes:
+      - /home/jalcocert/DOCKER/uptime-kuma/data:/app/data
+    restart: unless-stopped
+
 #version: '3.9'
 #services:
   it-tools:

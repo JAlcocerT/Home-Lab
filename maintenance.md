@@ -3,6 +3,7 @@
 Utility commands to keep your server lean and your disk space free.
 
 ## 1. Check Space Usage
+
 Review how much space is being used by images, containers, and volumes.
 
 ```bash
@@ -15,6 +16,19 @@ Removes only "dangling" data (untagged images and stopped containers).
 
 ```bash
 docker system prune
+```
+
+### 2.1 Stopping and Removing Containers
+If you have running containers you no longer need:
+```bash
+# Stop a container
+docker stop <container_name>
+
+# Remove a container (to free up space)
+docker rm <container_name>
+
+# Stop and Remove in one go
+docker rm -f <container_name>
 ```
 
 ## 3. Full Cleanup (The ~50GB fix)
@@ -45,6 +59,52 @@ docker volume rm $(docker volume ls -q -f dangling=true)
 ```
 
 **Note:** Since most of your data is mapped to absolute paths on your Desktop (like `/home/jalcocert/Desktop/...`), those files are **perfectly safe**. This command only deletes internal Docker volumes that are no longer needed.
+
+## 5. Inspection Commands (Find the Bulky ones)
+
+See which running containers are using the most space (writable layer + image size):
+```bash
+docker ps -s --format "table {{.Names}}\t{{.Image}}\t{{.Size}}"
+```
+
+See all images sorted by size:
+```bash
+docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | sort -hk 3 -r
+```
+
+## 6. Folder Size Investigation (Find the Spacewheelers)
+
+Find the top 50 biggest folders on a specific drive/path:
+
+```bash
+sudo du -h /path/to/search | sort -hr | head -n 50
+```
+
+Interactive space browser (Highly recommended):
+
+```bash
+sudo apt install ncdu -y
+sudo ncdu /path/to/search
+```
+## 7. Safely Remove Disk
+
+To avoid data corruption (especially with Bitcoin databases), follow this sequence:
+
+1. **Stop all containers** using the disk:
+
+```bash
+sudo docker compose -f ./docker-compose.yml down
+```
+
+2. **Unmount** the disk:
+```bash
+sudo umount /mnt/data1tb
+```
+
+3. **Check** if it's gone:
+```bash
+df -h | grep sda1
+```
 
 ---
 
