@@ -1,0 +1,68 @@
+services:
+  - group: Home
+    items:
+      - name: Jellyfin
+        url: http://192.168.1.2:8096
+        description: Jellyfin
+        icon: home-assistant.png
+
+      - name: qbittorrent
+        url: http://192.168.1.2:6011/
+        description: qbittorrent
+        icon: mdi-docker
+
+      - name: MeTube
+        url: http://192.168.1.2:8081/
+        description: MeTube
+        icon: mdi-docker
+
+      - name: Navidrome
+        url: http://192.168.1.2:4533/
+        description: Navidrome
+        icon: mdi-docker
+
+      - name: Prowlarr
+        url: http://192.168.1.2:9696/
+        description: prowlarr
+        icon: mdi-docker
+
+bookmarks:
+  - group: HomeLab
+    items:
+      - name: Neko
+        url: http://192.168.1.2:8888/
+        description: Neko
+        icon: mdi-docker
+      
+      - name: UptimeKuma
+        url: http://192.168.1.2:3001/
+        description: UptimeKuma
+        icon: mdi-docker
+
+      - name: NetData
+        url: http://192.168.1.2:19999/
+        description: NetData
+        icon: mdi-docker
+
+      - name: Termix
+        url: http://192.168.1.2:8090/
+        description: Termix
+        icon: mdi-docker
+
+  - group: Developer
+    items:
+      - name: GitHub
+        url: https://github.com
+        abbr: GH
+
+      - name: PocketBase
+        url: http://192.168.1.2:8080/_/
+        description: PocketBase
+        icon: mdi-docker
+
+settings:
+  theme: nord
+  title: My Homelab
+  port: 8888
+
+# Configuration changes are detected automatically and trigger a page reload.

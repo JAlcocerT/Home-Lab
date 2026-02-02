@@ -1,0 +1,229 @@
+#https://jalcocert.github.io/JAlcocerT/selfhosted-apps-may-2025/
+
+#version: '3'
+
+services:
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin
+    container_name: jellyfin ##sudo docker compose -f 2601_docker-compose.yml up -d jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    ports:
+      - "8096:8096"
+    volumes:
+      - "/home/Docker/Jellyfin:/config"
+      #- "/media/pi/Nowy:/data/tvshows"
+      - "/home/jalcocert/Desktop/YoutubeVideos:/data/tvshows"
+      - "/home/jalcocert/Desktop/P2P:/data/movies"
+      - "/home/jalcocert/Desktop/YoutubeMusic:/data/music"
+    devices:
+      - /dev/dri:/dev/dri # Hardware Acceleration for AMD 5600G
+    restart: unless-stopped
+
+  metube:
+    image: ghcr.io/alexta69/metube #ytdownloader
+    container_name: metube
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    volumes:
+      - /home/jalcocert/Desktop/YoutubeMusic:/downloads
+
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    user: "1000:1000" # You can adjust this to your user's UID and GID for permissions
+    ports:
+      - "4533:4533"
+    environment:
+      # Optional: set timezone to your local one. Example: "Europe/Warsaw"
+      - TZ=Europe/Warsaw
+      - ND_SCANINTERVAL=1h # Scan for new music every hour
+    volumes:
+      # This is the directory where Navidrome will store its database and settings
+      - /home/jalcocert/Home-Lab/navidrome/data:/data
+      # This is the directory where your music files are located
+      - /home/jalcocert/Desktop/YoutubeMusic:/music:ro
+    restart: unless-stopped
+
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent
+    container_name: qbittorrent ##sudo docker compose -f 2601_docker-compose.yml up -d qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - WEBUI_PORT=6011
+    volumes:
+      - /home/Docker/qbittorrent/config:/config
+      - /home/jalcocert/Desktop/P2P:/downloads
+    #network_mode: "service:your_gluetun_service_name" #change gluetun to your VPN service name  
+    ports: #you wont need the ports in this configuration file, you will need to include them in the Gluetun container
+      - 6081:6881
+      - 6081:6881/udp
+      - 6011:6011  
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/Docker/prowlarr/config:/config
+    ports:
+      - "9696:9696"
+    restart: unless-stopped
+
+
+  homepage-lite:
+    image: ghcr.io/jkerdreux-imt/homepage-lite:v0.4.3 #https://github.com/jkerdreux-imt/homepage-lite/pkgs/container/homepage-lite
+    container_name: homepage-lite
+    ports:
+      - "8880:8888"
+    volumes:
+      - ./config/:/app/config/ #https://github.com/jkerdreux-imt/homepage-lite?tab=readme-ov-file#configuration
+    restart: unless-stopped
+
+  termix:
+    image: ghcr.io/lukegus/termix:latest
+    container_name: termix #https://github.com/JAlcocerT/Docker/blob/main/SelfH/Termix/docker-compose.yml
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    volumes:
+      - termix-data:/app/data
+    environment:
+      # Generate random salt here https://www.lastpass.com/features/password-generator (max 32 characters, include all characters for settings)
+      SALT: "something_generated"
+      PORT: "8080"
+
+### NEXTCLOUD
+  db:
+    image: linuxserver/mariadb
+    restart: always
+    container_name: nextclouddb
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_INITDB_SKIP_TZINFO=1
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_PASSWORD=ncpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  nextcloud-app:
+    image: nextcloud
+    container_name: nextcloud
+    restart: always
+    ports:
+      - 8080:80
+    links:
+      - db
+    volumes:
+      - /home/jalcocert/Docker/nextcloud/html:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=ncpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+      - NEXTCLOUD_TRUSTED_DOMAINS=http://192.168.1.11:8080 http://0.0.0.0:8080 https://nc.piszymszu.duckdns.org/
+    # networks:
+    #   - cloudflare_tunnel
+      # - nginx_default   
+    #restart: always   
+
+
+### PIGALLERY
+
+#https://github.com/bpatrik/pigallery2
+
+#admin/admin
+  pigallery2:
+    image: bpatrik/pigallery2:3.5.2 #latest #https://github.com/bpatrik/pigallery2
+    container_name: pigallery2
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - /home/Docker/pigallery2/config:/app/data/config
+      - /home/Docker/pigallery2/tmp:/app/data/tmp
+      - /home/Docker/pigallery2/db:/app/data/db #db_data_pigallery:/app/data/db
+      - /mnt/data2tb/Z_BackUP_HD-SDD/Z_FOTOS:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
+      #- /home/jalcocert/Desktop/pixel8pro:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
+      #- /mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro #your images folder
+      #- "/mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro"
+    ports:
+      - 8088:80
+    restart: unless-stopped
+
+#admin/admin (Change them later for something secure)
+
+### Syncthing x SFTPGo
+
+
+##############
+#### TOOLS ###
+##############
+
+  uptimekuma-monitoring:
+    container_name: uptimekuma
+    image: louislam/uptime-kuma:2 #'louislam/uptime-kuma:1'
+    ports:
+      - '3001:3001'
+    volumes:
+      - /home/jalcocert/DOCKER/uptime-kuma/data:/app/data
+    restart: unless-stopped
+
+# #services:
+#   speedtest-tracker:
+#       image: lscr.io/linuxserver/speedtest-tracker:latest
+#       restart: unless-stopped
+#       container_name: speedtest-tracker
+#       ports:
+#           - 8065:80
+#           - 8443:443
+#       environment:
+#           - PUID=1000
+#           - PGID=1000
+#           - APP_KEY="your_random_secret_key_here" #openssl rand -base64 12 #for secrets
+#           - DB_CONNECTION=sqlite
+#       volumes:
+#           - speedtestconfig:/config
+
+  neko:
+    image: "ghcr.io/m1k1o/neko/firefox:latest"
+    container_name: neko
+    restart: "unless-stopped"
+    shm_size: "2gb"
+    ports:
+      - "8888:8080"
+      - "52000-52100:52000-52100/udp"
+    volumes:
+      - /home/docker/neko:/home/neko/.mozilla/firefox # persist firexfox settings
+    environment:
+      NEKO_DESKTOP_SCREEN: '1920x1080@30'
+      NEKO_MEMBER_MULTIUSER_USER_PASSWORD: neko
+      NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD: admin
+      NEKO_WEBRTC_EPR: 52000-52100
+      NEKO_WEBRTC_ICELITE: 1
+      NEKO_WEBRTC_NAT1TO1: 192.168.1.2
+
+#############
+############
+
+volumes:
+  termix-data:
+    driver: local  
+  db:
+  #speedtestconfig:
+
+# networks:
+#   cloudflare_tunnel:
+#     external: true
+  # nginx_default:
+  #   external: true

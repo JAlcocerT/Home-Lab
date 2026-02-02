@@ -31,9 +31,10 @@ services:
 ```
 
 2. Start the service:
-   ```bash
-   docker-compose up -d
-   ```
+
+```bash
+docker-compose up -d
+```
 
 ## Access
 

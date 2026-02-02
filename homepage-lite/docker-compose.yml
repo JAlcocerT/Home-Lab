@@ -1,0 +1,8 @@
+  homepage-lite:
+    image: ghcr.io/jkerdreux-imt/homepage-lite:latest
+    container_name: homepage-lite
+    ports:
+      - "8880:8888"
+    volumes:
+      - ./config/:/app/config/ #https://github.com/jkerdreux-imt/homepage-lite?tab=readme-ov-file#configuration
+    restart: unless-stopped

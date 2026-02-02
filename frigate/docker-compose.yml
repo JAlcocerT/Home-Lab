@@ -1,0 +1,30 @@
+services: #https://github.com/DoTheEvo/selfhosted-apps-docker/blob/master/frigate/readme.md
+
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:0.13.2
+    container_name: frigate
+    hostname: frigate
+    restart: unless-stopped
+    env_file: .env
+    privileged: true
+    shm_size: "256mb"
+    devices:
+      - /dev/dri/renderD128 # for intel hwaccel, needs to be updated for your hardware
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./frigate_config:/config
+      - /mnt/frigate_hdd/frigate_media:/media/frigate
+      - type: tmpfs # 1GB of memory
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000" # Web GUI
+      - "8554:8554" # RTSP feeds
+      - "8555:8555/tcp" # WebRTC over tcp
+      - "8555:8555/udp" # WebRTC over udp
+
+networks:
+  default:
+    name: $DOCKER_MY_NETWORK
+    external: true

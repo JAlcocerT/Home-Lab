@@ -17,6 +17,16 @@ tags: ["Torrent","Usenet","Indexer Manager"]
 
 It integrates seamlessly with various *Arr applications (Radarr, Sonarr, etc.) and can be used to manage all your indexers in one place.
 
+  # flaresolverr:
+  #   image: ghcr.io/flaresolverr/flaresolverr:latest
+  #   container_name: flaresolverr
+  #   environment:
+  #     - LOG_LEVEL=info
+  #     - TZ=Europe/Madrid
+  #   ports:
+  #     - "8191:8191"
+  #   restart: unless-stopped
+
 ## Features
 
 - Manage all your indexers in one place
