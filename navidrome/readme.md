@@ -8,9 +8,7 @@ For Android, look for: [Ultrasonic](https://github.com/ultrasonic/ultrasonic) wh
 
 For IoS, look for [Amperfy](https://github.com/BLeeEZ/amperfy)
 
-For desktop: [Aonsoku](https://github.com/victoralvesf/aonsoku) 
-
-See also https://github.com/betsha1830/navispot to  Export Spotify playlists to Navidrome. 
+For desktop: [Feishin](https://github.com/JAlcocerT/Home-Lab/tree/main/feishin).
 
 ---
 

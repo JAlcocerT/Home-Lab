@@ -1,6 +1,9 @@
 ---
 source_code: https://github.com/twentyhq/twenty
-tags: ["CRM"]
+tags: ["CRM","OSS for business"]
+---
+
+
 ---
 
 # Twenty (twentyhq) – Self-hosted via Docker Compose

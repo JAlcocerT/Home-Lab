@@ -1,7 +1,4 @@
-#https://jalcocert.github.io/JAlcocerT/selfhosted-apps-may-2025/
-
-#version: '3'
-
+#
 services:
 
   jellyfin:
@@ -127,17 +124,16 @@ services:
       - db
     volumes:
       - /home/jalcocert/Docker/nextcloud/html:/var/www/html
+    restart: always
     environment:
       - MYSQL_PASSWORD=ncpass
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_HOST=db
-      - NEXTCLOUD_TRUSTED_DOMAINS=http://192.168.1.11:8080 http://0.0.0.0:8080 https://nc.piszymszu.duckdns.org/
+      - NEXTCLOUD_TRUSTED_DOMAINS= 
+    #http://192.168.1.11:8080 http://0.0.0.0:8080 https://nc.piszymszu.duckdns.org/
     # networks:
     #   - cloudflare_tunnel
-      # - nginx_default   
-    #restart: always   
-
 
 ### PIGALLERY
 

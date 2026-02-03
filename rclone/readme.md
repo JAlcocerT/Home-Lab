@@ -3,7 +3,14 @@ source_code: https://github.com/rclone/rclone
 tags: ["cloud_sync","files","Proton Drive"]
 ---
 
-You can combine rclone+ProtonDrive for sync: https://blog.otterlord.dev/posts/proton-drive-rclone/
+You can combine rclone+ProtonDrive for sync as found [here](https://blog.otterlord.dev/posts/proton-drive-rclone/).
+
+You could try and backup your nextcloud data folder towards:
+
+1. ProtonDrive: https://rclone.org/protondrive/#configurations
+
+2. Google Drive https://rclone.org/drive/ or https://rclone.org/googlephotos/
+
 
 I wrote about 
 
@@ -38,4 +45,4 @@ rclone config
 
 ---
 
-It can also be combined with object storage, like https://rclone.org/s3/#cloudflare-r2 or https://rclone.org/s3/#minio
+This can also be combined with object storage, like https://rclone.org/s3/#cloudflare-r2 or https://rclone.org/s3/#minio

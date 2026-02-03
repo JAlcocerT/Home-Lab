@@ -6,7 +6,17 @@ source_code: https://github.com/jeffvli/feishin
 
 Feishin is a modern, open-source, **self-hosted music player** that is a complete rewrite of Sonixd.
 
-It supports playback from Subsonic-compatible music servers such asa: Navidrome, Jellyfin, Airsonic, Ampache, Gonic, Funkwhale, and more.
+It supports playback from Subsonic-compatible music servers such as: **Navidrome, Jellyfin, Airsonic, Ampache, Gonic, Funkwhale, and more.**
+
+```sh
+##sudo apt install appimagelauncher
+#https://github.com/jeffvli/feishin/releases
+wget -P ~/Applications https://github.com/jeffvli/feishin/releases/download/v1.4.2/Feishin-linux-x86_64.AppImage
+
+#sonixd
+#winget install sonixd
+#wget -P ~/Applications https://github.com/jeffvli/sonixd/releases/download/v0.15.5/Sonixd-0.15.5-linux-x86_64.AppImage
+```
 
 ### Key Features
 

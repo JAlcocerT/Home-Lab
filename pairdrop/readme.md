@@ -1,6 +1,6 @@
 ---
 source_code: https://github.com/schlagmichdoch/PairDrop/
-tags: ["HomeLab Essentials","File Sharing"]
+tags: ["HomeLab Essentials","File Sharing","OSS for business"]
 ---
 
 You can use the hosted version: https://pairdrop.net/
