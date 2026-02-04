@@ -117,10 +117,11 @@ services:
       - nextcloud_internal
 
   nextcloud-app:
-    image: nextcloud
-    container_name: nextcloud
+    image: nextcloud:32.0
+    container_name: nextcloud #https://hub.docker.com/_/nextcloud/tags
     ports:
       - 8080:80
+    user: "1000:1000" # Force Nextcloud to run as YOU, skipping the chown
     links:
       - nextclouddb
     volumes:
