@@ -218,8 +218,8 @@ volumes:
   db:
   #speedtestconfig:
 
-# networks:
-#   cloudflare_tunnel:
-#     external: true
-  # nginx_default:
-  #   external: true
+networks:
+  nextcloud_internal:
+    internal: true
+  cloudflared_tunnel:
+    external: true
