@@ -81,6 +81,7 @@ Find the top 50 biggest folders on a specific drive/path:
 
 ```bash
 sudo du -h /path/to/search | sort -hr | head -n 50
+#df -h /mnt/data2tb && sudo du -h --max-depth=1 /mnt/data2tb 2>/dev/null | sort -hr
 ```
 
 Interactive space browser (Highly recommended):
@@ -105,8 +106,40 @@ sudo umount /mnt/data1tb
 ```
 
 3. **Check** if it's gone:
+
 ```bash
 df -h | grep sda1
+```
+
+## 8. System & User Space Cleanup
+
+Commands to free up space from package managers, caches, and heavy application data.
+
+### 8.1 Package Managers & Caches
+```bash
+# Clean PNPM global store
+pnpm store prune
+
+# Remove unused Flatpak runtimes/apps
+flatpak uninstall --unused
+
+# Clean APT package cache
+sudo apt clean
+```
+
+### 8.2 Application Specific Data
+```bash
+# Clear Raspberry Pi Imager download cache
+rm -rf ~/.var/app/org.raspberrypi.rpi-imager/cache/Raspberry\ Pi/Imager/lastdownload.cache
+
+# Reset Waydroid (WARNING: This will delete the Android system/data images)
+sudo waydroid container stop
+waydroid session stop
+sudo rm -rf /var/lib/waydroid/images/*.img
+# Note: You will need to run 'sudo waydroid init' to use it again.
+
+# Clear Windsurf (Codeium) embeddings database
+rm -rf ~/.codeium/windsurf/database/
 ```
 
 ---
