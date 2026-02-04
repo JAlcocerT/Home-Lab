@@ -113,11 +113,12 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
+    networks:
+      - nextcloud_internal
 
   nextcloud-app:
     image: nextcloud
     container_name: nextcloud
-    restart: always
     ports:
       - 8080:80
     links:
@@ -132,7 +133,8 @@ services:
       - MYSQL_HOST=${MYSQL_HOST}
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.11:8080}
     networks:
-      - cloudflare_tunnel
+      - nextcloud_internal
+      - cloudflared_tunnel
 
 ### PIGALLERY
 #https://github.com/bpatrik/pigallery2
