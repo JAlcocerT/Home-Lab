@@ -6,6 +6,8 @@
 # Usage: sudo ./Linux_Setup_101.sh
 # ============================================================
 
+PYTHON_VERSION="3.12"
+
 # Check for root privileges
 if [ "$(id -u)" != "0" ]; then
    echo "This script must be run as root (use sudo)." 1>&2
@@ -123,7 +125,7 @@ install_podman() {
 # ============================================================
 install_python() {
     echo "-------------------------------------------"
-    echo "Installing Python 3.12 via deadsnakes PPA..."
+    echo "Installing Python $PYTHON_VERSION via deadsnakes PPA..."
     echo "-------------------------------------------"
     
     # Add deadsnakes PPA for latest Python versions
@@ -131,16 +133,16 @@ install_python() {
     add-apt-repository -y ppa:deadsnakes/ppa
     apt-get update
     
-    # Install Python 3.12 with common packages
-    apt-get install -y python3.12 python3.12-venv python3.12-dev
+    # Install Python with common packages
+    apt-get install -y "python$PYTHON_VERSION" "python$PYTHON_VERSION-venv" "python$PYTHON_VERSION-dev"
     
-    echo "Python 3.12 installed:"
-    python3.12 --version
+    echo "Python $PYTHON_VERSION installed:"
+    "python$PYTHON_VERSION" --version
     
     # Set as default (optional)
-    if prompt_yes_no "Do you want to set Python 3.12 as the default 'python3'?"; then
-        update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
-        echo "Python 3.12 is now the default python3."
+    if prompt_yes_no "Do you want to set Python $PYTHON_VERSION as the default 'python3'?;"; then
+        update-alternatives --install /usr/bin/python3 python3 "/usr/bin/python$PYTHON_VERSION" 1
+        echo "Python $PYTHON_VERSION is now the default python3."
         python3 --version
     fi
 }
@@ -158,15 +160,15 @@ install_uv() {
     
     curl -LsSf https://astral.sh/uv/install.sh | sh
     
-    # Add to PATH for current session
+    # Add to PATH for current session and permanent
     export PATH="$HOME/.local/bin:$PATH"
+    if ! grep -q ".local/bin" "$HOME/.bashrc"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+        echo "Added uv to PATH in ~/.bashrc"
+    fi
     
     echo "uv installed:"
     "$HOME/.local/bin/uv" --version || uv --version
-    
-    echo ""
-    echo "Note: Add this to your ~/.bashrc for permanent access:"
-    echo '  export PATH="$HOME/.local/bin:$PATH"'
 }
 
 # ============================================================
@@ -249,9 +251,16 @@ if prompt_yes_no "Do you want to install desktop apps (VSCodium, LibreWolf, Brav
     codium --install-extension ms-python.python
     codium --install-extension gitlab.gitlab-workflow
 
-    echo "Installing LibreWolf, Brave, and Zen Browser via Flatpak..."
+    echo "Installing Brave Browser via native repository..."
+    apt-get install -y curl
+    rm -f /etc/apt/sources.list.d/brave-browser-release.list
+    curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+    curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
+    apt-get update
+    apt-get install -y brave-browser
+
+    echo "Installing LibreWolf and Zen Browser via Flatpak..."
     flatpak install -y flathub io.gitlab.librewolf-community
-    flatpak install -y flathub com.brave.Browser
     flatpak install -y flathub app.zen_browser.zen
 
     echo "Installed Snap packages:"
