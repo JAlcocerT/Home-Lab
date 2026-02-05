@@ -14,10 +14,17 @@ mkdir ~/Applications #place your *.AppImages there and they will integrate with 
 
 ```sh
 sudo apt install git
-# curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
-# echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-# source ~/.bashrc
-#lazydocker
+curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+# Add to current path for immediate use:
+export PATH="$HOME/.local/bin:$PATH"
+
+# Docker Permissions Fix (Avoid using sudo)
+# By default, docker requires root. To run it as your user:
+sudo usermod -aG docker $USER
+newgrp docker # Apply group changes without logging out
+
+lazydocker --version
+#sudo docker system df
 
 ###
 sudo mkdir -p /etc/apt/keyrings
@@ -31,7 +38,11 @@ sudo apt update
 sudo apt install antigravity
 ###
 
-#sudo apt install ffmpeg
+# Multimedia & Professional Players (Required for GoPro/DJI)
+sudo apt update && sudo apt install -y vlc mpv ubuntu-restricted-extras libavcodec-extra gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
+# Reset video cache if errors persist:
+rm -rf ~/.cache/gstreamer-1.0
+
 
 #https://protonvpn.com/support/official-linux-vpn-debian/
 #https://repo.protonvpn.com/debian/dists/stable/main/binary-amd64/

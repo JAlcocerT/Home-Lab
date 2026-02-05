@@ -107,6 +107,14 @@ install_docker() {
     echo "Docker service status:"
     systemctl status docker --no-pager | grep "Active" || echo "Docker service not found"
 
+    # Add current user to docker group to avoid needing sudo
+    if [ -n "$SUDO_USER" ]; then
+        groupadd -f docker
+        usermod -aG docker "$SUDO_USER"
+        echo "Added user $SUDO_USER to the 'docker' group."
+        echo "Note: You may need to log out and back in for this to take effect."
+    fi
+
     # Refresh shell paths
     hash -r
 }
@@ -124,6 +132,22 @@ install_portainer() {
       -v portainer_data:/data \
       portainer/portainer-ce:latest
     echo "Portainer is running at https://localhost:9443"
+}
+
+# ============================================================
+# LAZYDOCKER INSTALLATION
+# ============================================================
+install_lazydocker() {
+    echo "-------------------------------------------"
+    echo "Installing lazydocker (TUI for Docker)..."
+    echo "-------------------------------------------"
+    curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+    
+    # Refresh shell paths
+    hash -r
+    
+    echo "lazydocker installed:"
+    "$HOME/.local/bin/lazydocker" --version || lazydocker --version
 }
 
 # ============================================================
@@ -224,6 +248,68 @@ install_tailscale() {
 }
 
 # ============================================================
+# MULTIMEDIA CODECS
+# ============================================================
+install_codecs() {
+    echo "-------------------------------------------"
+    echo "Installing 'Nuclear' Multimedia Pack..."
+    echo "-------------------------------------------"
+    # Auto-accept EULA for MS fonts
+    echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
+    
+    # Comprehensive GStreamer and FFmpeg pack
+    apt-get install -y ubuntu-restricted-extras libavcodec-extra \
+        gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav gstreamer1.0-vaapi \
+        vlc mpv ffmpeg mesa-va-drivers-full
+    
+    echo "Setting MPV as the default player for common video formats..."
+    mkdir -p ~/.config
+    # Set MPV as default for MP4, MKV, MOV (GoPro/DJI often use these)
+    xdg-mime default mpv.desktop video/mp4
+    xdg-mime default mpv.desktop video/x-matroska
+    xdg-mime default mpv.desktop video/quicktime
+    
+    echo "Clearing GStreamer cache..."
+    rm -rf "$HOME/.cache/gstreamer-1.0"
+    
+    echo "Multimedia setup complete. Try opening your video now!"
+}
+
+# ============================================================
+# LAZYGIT INSTALLATION
+# ============================================================
+install_lazygit() {
+    echo "-------------------------------------------"
+    echo "Installing lazygit (TUI for Git)..."
+    echo "-------------------------------------------"
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    tar xf lazygit.tar.gz lazygit
+    install lazygit /usr/local/bin
+    rm lazygit.tar.gz lazygit
+    echo "lazygit installed:"
+    lazygit --version
+}
+
+# ============================================================
+# STARSHIP PROMPT
+# ============================================================
+install_starship() {
+    echo "-------------------------------------------"
+    echo "Installing Starship Prompt..."
+    echo "-------------------------------------------"
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    
+    if ! grep -q 'starship init bash' "$HOME/.bashrc"; then
+        echo 'eval "$(starship init bash)"' >> "$HOME/.bashrc"
+        echo "Added Starship to ~/.bashrc"
+    fi
+    echo "Starship installed! (Restart terminal to see effect)"
+}
+
+# ============================================================
 # MAIN MENU
 # ============================================================
 
@@ -243,6 +329,13 @@ if prompt_yes_no "Do you want to install DOCKER?"; then
         install_portainer
     else
         echo "Portainer installation skipped."
+    fi
+
+    # --- Lazydocker (Optional) ---
+    if prompt_yes_no "Do you want to install LAZYDOCKER (TUI for Docker)?"; then
+        install_lazydocker
+    else
+        echo "Lazydocker installation skipped."
     fi
 else
     echo "Docker installation skipped."
@@ -321,6 +414,23 @@ if prompt_yes_no "Do you want to install Tailscale VPN?"; then
     install_tailscale
 else
     echo "Tailscale VPN installation skipped."
+fi
+
+# --- Multimedia Codecs ---
+if prompt_yes_no "Do you want to install Multimedia Codecs (for MP4/GoPro/DJI support)?"; then
+    install_codecs
+    echo "Installing MPV (recommended for high-quality video playback)..."
+    apt-get install -y mpv
+else
+    echo "Codec installation skipped."
+fi
+
+# --- CLI Tools (Lazygit, Starship) ---
+if prompt_yes_no "Do you want to install CLI polish tools (Lazygit + Starship Prompt)?"; then
+    install_lazygit
+    install_starship
+else
+    echo "CLI polish tools skipped."
 fi
 
 # --- Package Manager Utilities ---
