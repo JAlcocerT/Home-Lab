@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/Canner/WrenAI
 post:
-tags:
+tags: ["Gen-BI"]
 ---
 
 ```sh

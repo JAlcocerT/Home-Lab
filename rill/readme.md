@@ -1,5 +1,6 @@
 ---
 source_code: https://github.com/rilldata/rill
+tags: ["Gen-BI"]
 ---
 
 ```sh
@@ -11,7 +12,6 @@ export NODE_OPTIONS="--max-old-space-size=4096"
 
 # Retry the build
 make
-
 
 # Run
 #./rill start my-project

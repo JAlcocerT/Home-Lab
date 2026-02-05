@@ -142,6 +142,31 @@ sudo rm -rf /var/lib/waydroid/images/*.img
 rm -rf ~/.codeium/windsurf/database/
 ```
 
+## 9. Data Transfer (Remote Sync)
+
+Transfer files from your local machine to your server.
+
+### 9.1 Using Rsync
+
+Rsync is the standard tool for syncing data. It's faster than simple `cp` or `scp` because it only transfers differences between files.
+
+**Example: Local Music to Server Desktop**
+```bash
+# -a: Archive (preserves attributes)
+# -v: Verbose (shows what is happening)
+# -z: Compress (faster over networks)
+# -P: Progress bar + Resume capability
+
+rsync -avzP /home/jalcocert/Downloads/Music/ jalcocert@192.168.1.2:/home/jalcocert/Desktop/YoutubeMusic
+```
+
+> [!IMPORTANT]
+> **The Trailing Slash (`/`) on the Source matters:**
+> * `/Music/` (with slash) copies the **contents** of the folder.  
+> * `/Music` (no slash) copies the **folder itself** into the destination.
+
+---
+
 ---
 
 > [!TIP]
