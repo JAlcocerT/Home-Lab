@@ -27,6 +27,20 @@ prompt_yes_no() {
 }
 
 # ============================================================
+# REPOSITORY CLEANUP
+# ============================================================
+echo "-------------------------------------------"
+echo "Cleaning up broken/duplicate repositories..."
+echo "-------------------------------------------"
+# Remove duplicate Brave list (we use .sources now)
+rm -f /etc/apt/sources.list.d/brave-browser-release.list
+# Remove broken/deprecated AppImageLauncher PPA
+if [ -f "/etc/apt/sources.list.d/appimagelauncher-team-ubuntu-stable-noble.sources" ]; then
+    rm -f /etc/apt/sources.list.d/appimagelauncher-team-ubuntu-stable-noble.sources
+    echo "Removed deprecated AppImageLauncher repository."
+fi
+
+# ============================================================
 # AUTOMATIC UPDATES
 # ============================================================
 echo "-------------------------------------------"
@@ -91,7 +105,10 @@ install_docker() {
     docker compose version
 
     echo "Docker service status:"
-    systemctl status docker --no-pager | grep "Active"
+    systemctl status docker --no-pager | grep "Active" || echo "Docker service not found"
+
+    # Refresh shell paths
+    hash -r
 }
 
 install_portainer() {
@@ -145,6 +162,15 @@ install_python() {
         echo "Python $PYTHON_VERSION is now the default python3."
         python3 --version
     fi
+
+    echo "--- Confirmation ---"
+    python3 --version || echo "python3 not found"
+
+    # Python to Python3 alias
+    if prompt_yes_no "Do you want to alias 'python' to 'python3' for convenience?"; then
+        apt-get install -y python-is-python3
+        echo "Alias 'python' -> 'python3' installed."
+    fi
 }
 
 # ============================================================
@@ -192,6 +218,9 @@ install_tailscale() {
     else
         echo "Run 'sudo tailscale up' later to activate."
     fi
+
+    # Refresh shell paths
+    hash -r
 }
 
 # ============================================================
@@ -257,7 +286,7 @@ if prompt_yes_no "Do you want to install desktop apps (VSCodium, LibreWolf, Brav
     curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
     curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
     apt-get update
-    apt-get install -y brave-browser
+    apt-get install -y brave-browser || echo "Failed to install native Brave Browser."
 
     echo "Installing LibreWolf and Zen Browser via Flatpak..."
     flatpak install -y flathub io.gitlab.librewolf-community
