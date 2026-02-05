@@ -1,6 +1,7 @@
 .env
 .venv/
 
+*.txt
 *.db*
 
 *.sql
