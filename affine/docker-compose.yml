@@ -1,0 +1,36 @@
+services:
+  affine:
+    image: ghcr.io/toeverything/affine:stable
+    container_name: affine
+    ports:
+      - "3015:3015"
+    environment:
+      - NODE_ENV=production
+      - AFFINE_CONFIG_PATH=/root/.affine/config
+      - DB_URL=postgresql://affine:affine@postgres:5432/affine
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./data/config:/root/.affine/config
+      - ./data/storage:/root/.affine/storage
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: affine-postgres
+    environment:
+      - POSTGRES_USER=affine
+      - POSTGRES_PASSWORD=affine
+      - POSTGRES_DB=affine
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: affine-redis
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
