@@ -1,6 +1,6 @@
 services:
   logseq:
-    image: ghcr.io/logseq/logseq-webapp:latest
+    image: ghcr.io/logseq/logseq-webapp:latest #https://github.com/logseq/logseq/pkgs/container/logseq-webapp
     ports:
       - "3037:80"  # Expose Logseq on port 80 (standard Nginx port in image)
     environment:

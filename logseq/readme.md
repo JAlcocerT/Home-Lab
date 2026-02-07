@@ -7,6 +7,9 @@ tags: ["Markdown Notes", "Productivity", "Knowledge Management"]
 
 > A privacy-first, open-source platform for knowledge management and collaboration. 
 
+For the container, logseq uses: https://github.com/logseq/logseq/pkgs/container/logseq-webapp
+
+
 ```sh
 docker compose -f docker-compose.yml up -d #with traefik
 #docker compose -f docker-compose.no-traefik.yml up -d
@@ -20,6 +23,7 @@ docker compose -f docker-compose.no-traefik.yml stop
 
 *   **Data Storage:** The Docker container is a static server. Your notes are **not** stored in the container or a Docker volume. They are stored in a local directory on your host machine that you select via the browser.
 *   **Browser Memory:** The browser uses the **File System Access API** and stores a "file handle" in its local storage (IndexedDB). 
+*   **Offline-capable CSR:** Since it is a **Client-Side Rendered (CSR)** app, once loaded, it runs entirely in your browser's RAM. You can stop the container and keep using Logseq; it only needs the container to *load* or *refresh* the app.
 *   **Note:** You need a Chromium-based browser (like Helium) for this to work.
 
 The official support is via desktop: https://github.com/logseq/logseq/releases
