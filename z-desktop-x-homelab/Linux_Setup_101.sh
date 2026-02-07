@@ -294,6 +294,70 @@ install_lazygit() {
 }
 
 # ============================================================
+# TELEGRAM DESKTOP INSTALLATION
+# ============================================================
+install_telegram() {
+    echo "-------------------------------------------"
+    echo "Installing Telegram Desktop via Flatpak..."
+    echo "-------------------------------------------"
+    flatpak install -y flathub org.telegram.desktop
+    echo "Telegram Desktop installed!"
+}
+
+# ============================================================
+# SIGNAL DESKTOP INSTALLATION
+# ============================================================
+install_signal() {
+    echo "-------------------------------------------"
+    echo "Installing Signal Desktop via Flatpak..."
+    echo "-------------------------------------------"
+    flatpak install -y flathub org.signal.Signal
+    echo "Signal Desktop installed!"
+}
+
+# ============================================================
+# KDENLIVE INSTALLATION
+# ============================================================
+install_kdenlive() {
+    echo "-------------------------------------------"
+    echo "Installing Kdenlive via Flatpak..."
+    echo "-------------------------------------------"
+    flatpak install -y flathub org.kde.kdenlive
+    echo "Kdenlive installed!"
+}
+
+# ============================================================
+# AUTO-CPUFREQ INSTALLATION
+# ============================================================
+install_auto_cpufreq() {
+    echo "-------------------------------------------"
+    echo "Installing auto-cpufreq (CPU Performance)..."
+    echo "-------------------------------------------"
+    # Dependencies
+    apt-get install -y git python3-pip python3-setuptools python3-dev
+    
+    # Clone and install
+    git clone https://github.com/AdnanHodzic/auto-cpufreq.git
+    cd auto-cpufreq || return
+    ./auto-cpufreq-installer --install
+    cd ..
+    rm -rf auto-cpufreq
+    
+    echo "auto-cpufreq installed! Run 'sudo auto-cpufreq --gui' to configure."
+}
+
+# ============================================================
+# MONITORING TOOLS (htop, btop)
+# ============================================================
+install_monitoring_tools() {
+    echo "-------------------------------------------"
+    echo "Installing Monitoring Tools (htop, btop)..."
+    echo "-------------------------------------------"
+    apt-get install -y htop btop
+    echo "Monitoring tools installed!"
+}
+
+# ============================================================
 # STARSHIP PROMPT
 # ============================================================
 install_starship() {
@@ -401,6 +465,25 @@ else
     echo "Video tools installation skipped."
 fi
 
+if prompt_yes_no "Do you want to install Kdenlive (Video Editor)?"; then
+    install_kdenlive
+else
+    echo "Kdenlive installation skipped."
+fi
+
+# --- Telegram ---
+if prompt_yes_no "Do you want to install Telegram Desktop?"; then
+    install_telegram
+else
+    echo "Telegram installation skipped."
+fi
+
+if prompt_yes_no "Do you want to install Signal Desktop?"; then
+    install_signal
+else
+    echo "Signal installation skipped."
+fi
+
 # --- Bitwarden ---
 if prompt_yes_no "Do you want to install Bitwarden?"; then
     echo "Installing Bitwarden..."
@@ -423,6 +506,19 @@ if prompt_yes_no "Do you want to install Multimedia Codecs (for MP4/GoPro/DJI su
     apt-get install -y mpv
 else
     echo "Codec installation skipped."
+fi
+
+# --- Performance & Monitoring ---
+if prompt_yes_no "Do you want to install auto-cpufreq (Battery/CPU optimization)?"; then
+    install_auto_cpufreq
+else
+    echo "auto-cpufreq installation skipped."
+fi
+
+if prompt_yes_no "Do you want to install Monitoring Tools (htop, btop)?"; then
+    install_monitoring_tools
+else
+    echo "Monitoring tools installation skipped."
 fi
 
 # --- CLI Tools (Lazygit, Starship) ---
