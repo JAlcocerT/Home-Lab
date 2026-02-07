@@ -351,10 +351,10 @@ install_auto_cpufreq() {
 # ============================================================
 install_monitoring_tools() {
     echo "-------------------------------------------"
-    echo "Installing Monitoring Tools (htop, btop)..."
+    echo "Installing Monitoring & Network Tools (htop, btop, net-tools)..."
     echo "-------------------------------------------"
-    apt-get install -y htop btop
-    echo "Monitoring tools installed!"
+    apt-get install -y htop btop net-tools
+    echo "Monitoring & Network tools installed!"
 }
 
 # ============================================================
