@@ -1,6 +1,7 @@
 1. Get **AppImage launcher** to use appimages as you download them.
 
 ```sh
+#flatpak install flathub it.mijorus.gearlever
 sudo add-apt-repository ppa:appimagelauncher-team/stable
 sudo apt update
 
@@ -8,7 +9,9 @@ sudo apt install appimagelauncher
 mkdir ~/Applications #place your *.AppImages there and they will integrate with your linux!
 ```
 
-> Examples at `hoppscotch` or `Sonixd`
+> Examples at `hoppscotch` or `Sonixd` or `Logseq`
+
+> > See gearlevel in case that one fails
 
 2. Docker and other goodies to get going    
 
