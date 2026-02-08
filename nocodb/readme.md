@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/nocodb/nocodb
 post: https://nocodb.com/docs/self-hosting/installation/docker-compose
-tags: ["Database", "No-code"]
+tags: ["Database", "No-code","CRM"]
 ---
 
 Bring projects, wikis, and teams together with AI
@@ -10,9 +10,12 @@ Bring projects, wikis, and teams together with AI
 
 This folder contains the Docker Compose configuration to self-host NocoDB.
 
+You can consider it an API heavy database with a web interface that can become your CRM.
+
 ## Setup and Deployment
 
 ### 1. Clone the NocoDB Repository (Alternative)
+
 If you prefer to use the official source:
 
 ```bash
