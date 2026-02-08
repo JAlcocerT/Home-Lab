@@ -3,7 +3,6 @@ name: twenty
 services:
   server:
     image: twentycrm/twenty:${TAG:-latest}
-    container_name: twenty-server
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     ports:
@@ -49,6 +48,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: curl --fail http://localhost:3000/healthz
       interval: 5s
@@ -58,7 +59,6 @@ services:
 
   worker:
     image: twentycrm/twenty:${TAG:-latest}
-    container_name: twenty-worker
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     command: ["yarn", "worker:prod"]
@@ -108,12 +108,12 @@ services:
 
   db:
     image: postgres:16
-    container_name: twenty-db
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
+      POSTGRES_DB: ${PG_DATABASE_NAME:-default}
       POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD:-postgres}
+      POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
     healthcheck:
       test: pg_isready -U ${PG_DATABASE_USER:-postgres} -h localhost -d postgres
       interval: 5s
@@ -123,9 +123,13 @@ services:
 
   redis:
     image: redis
-    container_name: twenty-redis
     restart: always
     command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   db-data:
