@@ -39,3 +39,5 @@ music/
 app/
 !/listmonk/listmonk-subscribe/app/
 slidev-sample/
+
+baserow_data/

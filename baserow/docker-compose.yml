@@ -1,0 +1,12 @@
+services:
+  baserow:
+    container_name: baserow
+    image: baserow/baserow:latest
+    environment:
+      BASEROW_PUBLIC_URL: http://localhost:82 # Change this to your domain if public
+    ports:
+      - "82:80"
+      - "442:443"
+    restart: unless-stopped
+    volumes:
+      - ./baserow_data:/baserow/data
