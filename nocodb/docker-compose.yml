@@ -1,0 +1,31 @@
+services:
+  nocodb:
+    container_name: nocodb
+    image: nocodb/nocodb:latest
+    environment:
+      # use postgres as database
+      NC_DB: "pg://db:5432?u=nocodb&p=password&d=nocodb"
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - ./nc_data:/usr/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: nocodb-pg
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: nocodb
+      POSTGRES_USER: nocodb
+      POSTGRES_PASSWORD: password
+    restart: always
+    volumes:
+      - ./pg/nocodb-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nocodb -d nocodb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
