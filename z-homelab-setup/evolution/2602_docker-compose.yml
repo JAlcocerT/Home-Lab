@@ -211,6 +211,7 @@ services:
       NEKO_WEBRTC_NAT1TO1: 192.168.1.12 #tweak this!
 
   logseq:
+    container_name: logseq
     image: ghcr.io/logseq/logseq-webapp:latest
     ports:
       - "3037:80"  # Expose Logseq on port 80 (standard Nginx port in image)

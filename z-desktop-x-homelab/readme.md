@@ -29,7 +29,7 @@ newgrp docker # Apply group changes without logging out
 lazydocker --version
 #sudo docker system df
 
-###
+###for antigravity###
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
   sudo gpg --dearmor -o /etc/apt/keyrings/antigravity-repo-key.gpg
@@ -53,5 +53,14 @@ wget https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-st
 sudo dpkg -i ./protonvpn-stable-release_1.0.8_all.deb && sudo apt update
 #echo "0b14e71586b22e498eb20926c48c7b434b751149b1f2af9902ef1cfe6b03e180 protonvpn-stable-release_1.0.8_all.deb" | sha256sum --check -
 sudo apt install proton-vpn-gnome-desktop
-sudo ./z-desktop-x-homelab/Linux_Setup_101.sh
+
+###review the script first###
+#sudo ./z-desktop-x-homelab/Linux_Setup_101.sh
+
+# 3. Virtual Machines (GNOME Boxes)
+# A simple way to try out other OSs
+sudo apt install gnome-boxes
+# To allow USB redirection:
+sudo usermod -aG kvm $USER
+# You may need to relogin for group changes to take effect
 ```
