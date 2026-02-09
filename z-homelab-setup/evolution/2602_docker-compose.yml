@@ -102,17 +102,17 @@ services:
 
 ### NEXTCLOUD
   nextclouddb:
-    image: linuxserver/mariadb
+    image: linuxserver/mariadb:11.4.8 #mariadb:lts-noble
     restart: always
     container_name: nextclouddb
     volumes:
-      - db:/var/lib/mysql
+      - /mnt/data1tb/nextcloud/db:/config #- db:/var/lib/mysql
     environment:
       - MYSQL_INITDB_SKIP_TZINFO=1
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
     networks:
       - nextcloud_internal
 
@@ -125,14 +125,15 @@ services:
     links:
       - nextclouddb
     volumes:
-      - /mnt/data2tb/nextcloud/html:/var/www/html
+      - /mnt/data1tb/nextcloud/html:/var/www/html
     restart: always
     environment:
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_HOST=${MYSQL_HOST}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.11:8080}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
+      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_HOST=${MYSQL_HOST:-nextclouddb}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.12:8099} #by default its just localhost:8099
+      #- NEXTCLOUD_TRUSTED_DOMAINS=0:cloud.example.com 1:nextcloud.lan 2:192.168.1.10
     networks:
       - nextcloud_internal
       - cloudflared_tunnel
@@ -220,16 +221,15 @@ services:
     restart: unless-stopped      
 
 #############
-############
+#############
 
 volumes:
   termix-data:
     driver: local  
-  db:
   #speedtestconfig:
 
 networks:
   nextcloud_internal:
-    internal: true
+    #internal: true
   cloudflared_tunnel:
     external: true
