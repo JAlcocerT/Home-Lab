@@ -1,0 +1,41 @@
+#Thanks to #https://github.com/JamesTurland/JimsGarage/blob/main/Piholev6/docker-compose.yaml
+
+# More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+
+services:
+  pihole:
+    container_name: pihole 
+    image: pihole/pihole:2025.11.0 #latest https://hub.docker.com/r/pihole/pihole
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    #  - "67:67/udp" DHCP - uncomment if using it
+      - "500:80/tcp"
+    #  - "443:443/tcp"
+    networks:
+      pihole_internal:
+        ipv4_address: 172.70.9.3
+    environment:
+      TZ: 'Europe/Madrid'
+      # Set a password to access the web interface. Not setting one will result in a random password being assigned
+      FTLCONF_webserver_api_password: 'correct horse battery staple'
+      # If using Docker's default `bridge` network setting the dns listening mode should be set to 'all'3
+      FTLCONF_dns_listeningMode: 'all'
+      # Use Cloudflare (or any other) since cloudflared service is removed
+      FTLCONF_dns_upstreams: '1.1.1.1' #'172.70.9.2#5053'
+    # Volumes store your data between container upgrades
+    volumes:
+      - './pihole_data/:/etc/pihole/'
+      - './pihole_data/etc-dnsmasq.d/:/etc/dnsmasq.d/'
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    #cap_add:
+    #  - NET_ADMIN
+    restart: unless-stopped
+
+networks:
+  pihole_internal:
+     ipam:
+       config:
+         - subnet: 172.70.9.0/29
+     name: pihole_internal

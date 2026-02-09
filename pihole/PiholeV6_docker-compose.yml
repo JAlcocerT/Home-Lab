@@ -1,6 +1,4 @@
 # ### https://hub.docker.com/r/pihole/pihole
-
-
 #https://github.com/JamesTurland/JimsGarage/blob/main/Piholev6/docker-compose.yaml
 
 # More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
@@ -13,20 +11,16 @@ services:
     command: proxy-dns
     environment:
       - "TUNNEL_DNS_UPSTREAM=https://1.1.1.1/dns-query,https://1.0.0.1/dns-query,https://9.9.9.9/dns-query,https://149.112.112.9/dns-query"
-
       # Listen on an unprivileged port
       - "TUNNEL_DNS_PORT=5053"
-
       # Listen on all interfaces
       - "TUNNEL_DNS_ADDRESS=0.0.0.0"
-
     # Attach cloudflared only to the private network
     networks:
       pihole_internal:
         ipv4_address: 172.70.9.2
     security_opt:
       - no-new-privileges:true
-
 
   pihole:
     container_name: pihole
