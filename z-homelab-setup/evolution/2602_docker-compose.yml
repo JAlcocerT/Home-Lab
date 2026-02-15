@@ -121,7 +121,7 @@ services:
     container_name: nextcloud #https://hub.docker.com/_/nextcloud/tags
     ports:
       - 8099:80
-    user: "1000:1000" # Force Nextcloud to run as YOU, skipping the chown
+    # Do NOT set user: here — the entrypoint must run as root to fix permissions
     links:
       - nextclouddb
     volumes:
@@ -132,8 +132,9 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
       - MYSQL_USER=${MYSQL_USER:-nextcloud}
       - MYSQL_HOST=${MYSQL_HOST:-nextclouddb}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.12:8099} #by default its just localhost:8099
-      #- NEXTCLOUD_TRUSTED_DOMAINS=0:cloud.example.com 1:nextcloud.lan 2:192.168.1.10
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-nube.jalcocertech.com 192.168.1.2}
+      - OVERWRITEPROTOCOL=https
+      - OVERWRITECLIURL=https://nube.jalcocertech.com
     networks:
       - nextcloud_internal
       - cloudflared_tunnel
