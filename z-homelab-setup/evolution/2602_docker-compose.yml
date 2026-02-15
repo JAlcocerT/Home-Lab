@@ -132,9 +132,9 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
       - MYSQL_USER=${MYSQL_USER:-nextcloud}
       - MYSQL_HOST=${MYSQL_HOST:-nextclouddb}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-nube.jalcocertech.com 192.168.1.2}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-whatever.jalcocertech.com 192.168.1.2}
       - OVERWRITEPROTOCOL=https
-      - OVERWRITECLIURL=https://nube.jalcocertech.com
+      - OVERWRITECLIURL=https://whatever.jalcocertech.com
     networks:
       - nextcloud_internal
       - cloudflared_tunnel

@@ -59,14 +59,15 @@ Three changes were applied to `2602_docker-compose.yml` in the `nextcloud-app` s
 |--------|--------|-------|-----|
 | `user` directive | `user: "1000:1000"` | *(removed)* | Entrypoint must run as root to set up www-data ownership |
 | `OVERWRITEPROTOCOL` | *(missing)* | `https` | Forces Nextcloud to generate `https://` URLs |
-| `OVERWRITECLIURL` | *(missing)* | `https://nube.jalcocertech.com` | Canonical URL for client discovery |
-| `NEXTCLOUD_TRUSTED_DOMAINS` | `http://192.168.1.12:8099` | `nube.jalcocertech.com 192.168.1.12` | Must be bare hostnames, space-separated |
+| `OVERWRITECLIURL` | *(missing)* | `https://whatever.jalcocertech.com` | Canonical URL for client discovery |
+| `NEXTCLOUD_TRUSTED_DOMAINS` | `http://192.168.1.12:8099` | `whatever.jalcocertech.com 192.168.1.12` | Must be bare hostnames, space-separated |
 
 ## Step 5 — Start Everything Fresh
 
 ```bash
 cd /home/jalcocert/Desktop/Home-Lab/z-homelab-setup/evolution
 docker compose -f 2602_docker-compose.yml up -d
+docker compose -f 2602_docker-compose.yml logs nextcloud-app --tail 50
 ```
 
 ## Step 6 — Verify
@@ -82,7 +83,7 @@ docker exec -u www-data nextcloud php occ config:system:get overwriteprotocol
 docker ps --filter "name=nextcloud"
 ```
 
-Then connect with the Nextcloud Desktop Client using `https://nube.jalcocertech.com`.
+Then connect with the Nextcloud Desktop Client using `https://whatever.jalcocertech.com`.
 
 ---
 
@@ -96,3 +97,35 @@ Any Nextcloud behind a reverse proxy (Traefik, Cloudflare Tunnels, NGINX) that t
 ```
 
 And the container must **not** have `user:` set — let the entrypoint run as root so it can manage `www-data` permissions.
+
+---
+
+## TL;DR — What Actually Fixed It
+
+The desktop client error was caused by **one missing environment variable**: `OVERWRITEPROTOCOL=https`. Cloudflare Tunnels strip SSL before the request hits the container, so Nextcloud thinks it's running on HTTP and returns `http://` URLs. The desktop client (unlike the browser) refuses to accept that.
+
+The `user: "1000:1000"` line made things worse by breaking the entrypoint's ability to set file permissions, causing restart loops when trying to apply the fix via `occ`.
+
+**The fix in two lines of docker-compose:**
+
+```yaml
+- OVERWRITEPROTOCOL=https
+- OVERWRITECLIURL=https://whatever.jalcocertech.com
+```
+
+---
+
+## Pro Tip: Starting Specific Services
+
+If you only want to restart Nextcloud (and not everything else in the compose file), just add the service name to the end of the command:
+
+```bash
+# Start ONLY Nextcloud and its database
+docker compose -f 2602_docker-compose.yml up -d nextcloud-app nextclouddb
+
+# Start ONLY Jellyfin
+docker compose -f 2602_docker-compose.yml up -d jellyfin
+
+# Start ALL Media & Tools services (Everything EXCEPT Nextcloud)
+docker compose -f 2602_docker-compose.yml up -d jellyfin metube navidrome qbittorrent prowlarr homepage-lite termix pigallery2 uptimekuma-monitoring neko logseq
+```

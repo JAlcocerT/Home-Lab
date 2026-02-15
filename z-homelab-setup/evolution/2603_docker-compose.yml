@@ -159,11 +159,6 @@ services:
       - 8088:80
     restart: unless-stopped
 
-#admin/admin (Change them later for something secure)
-
-### Syncthing x SFTPGo
-
-
 ##############
 #### TOOLS ###
 ##############
