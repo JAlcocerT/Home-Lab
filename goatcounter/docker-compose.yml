@@ -1,0 +1,29 @@
+#version: '3.8'
+
+services:
+  goatcounter:
+    image: arp242/goatcounter:latest
+    container_name: goatcounter
+    restart: always
+    ports:
+      - "8018:8080"
+    environment:
+      # Connect string format: postgresql://user:password@host:port/dbname
+      - GOATCOUNTER_DB=postgresql://goat_user:goat_pass@db:5432/goatcounter?sslmode=disable
+    volumes:
+      - ./data:/home/goatcounter/goatcounter-data
+    depends_on:
+      - db
+    # The first time you run this, you need to create the site (see steps below)
+    command: serve -listen :8080 -tls none
+
+  db:
+    image: postgres:15-alpine
+    container_name: goatcounter-db
+    restart: always
+    environment:
+      - POSTGRES_USER=goat_user
+      - POSTGRES_PASSWORD=goat_pass
+      - POSTGRES_DB=goatcounter
+    volumes:
+      - ./db-data:/var/lib/postgresql/data

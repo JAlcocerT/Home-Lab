@@ -1,0 +1,31 @@
+#version: '3'
+
+services:
+  db:
+    image: mariadb:10.11
+    command: --max-allowed-packet=64MB
+    restart: always
+    volumes:
+      - ./db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_root_pass
+      - MYSQL_DATABASE=matomo
+      - MYSQL_USER=matomo
+      - MYSQL_PASSWORD=matomo_pass
+
+  matomo:
+    image: matomo:latest
+    restart: always
+    volumes:
+      - ./matomo_data:/var/www/html
+    environment:
+      - MATOMO_DATABASE_HOST=db
+      - MATOMO_DATABASE_ADAPTER=mysql
+      - MATOMO_DATABASE_TABLES_PREFIX=matomo_
+      - MATOMO_DATABASE_USERNAME=matomo
+      - MATOMO_DATABASE_PASSWORD=matomo_pass
+      - MATOMO_DATABASE_DBNAME=matomo
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
