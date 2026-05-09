@@ -5,7 +5,7 @@ export
         list-repos migrate-repo migrate-all \
         sync-repo sync-all \
         list-github-repos \
-        create-user add-collaborator list-users
+        create-user add-collaborator list-users list-user-repos
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,7 @@ help:
 	@echo "    list-users        List all users on Forgejo"
 	@echo "    create-user       Create a user with write-only access (NEW_USER= NEW_USER_EMAIL= NEW_USER_PASSWORD=)"
 	@echo "    add-collaborator  Add NEW_USER as write collaborator on REPO_NAME"
+	@echo "    list-user-repos   Show repos owned/accessible by NEW_USER"
 	@echo ""
 
 # ── Stack ──────────────────────────────────────────────────────────────────────
@@ -127,6 +128,25 @@ create-user:
 	  -H "Content-Type: application/json" \
 	  -d "{\"username\":\"$(NEW_USER)\",\"email\":\"$(NEW_USER_EMAIL)\",\"password\":\"$(NEW_USER_PASSWORD)\",\"must_change_password\":true,\"send_notify\":false,\"source_id\":0,\"login_name\":\"$(NEW_USER)\"}" \
 	  | jq '{login: .login, email: .email, is_admin: .is_admin, error: .message}'
+
+list-user-repos:
+	@test -n "$(NEW_USER)" || (echo "ERROR: NEW_USER is not set"; exit 1)
+	@echo "==> Repos owned by $(NEW_USER):"
+	@curl -s "$(FORGEJO_URL)/api/v1/users/$(NEW_USER)/repos?limit=50" \
+	  -H "Authorization: token $(FORGEJO_TOKEN)" \
+	  | jq -r '.[] | "\(.name)\towner\t\(if .private then "private" else "public" end)"' \
+	  | column -t
+	@echo ""
+	@echo "==> Repos $(NEW_USER) is an explicit collaborator on:"
+	@all_repos=$$(curl -s "$(FORGEJO_URL)/api/v1/user/repos?limit=50" \
+	  -H "Authorization: token $(FORGEJO_TOKEN)" \
+	  | jq -r '.[] | "\(.owner.login)/\(.name)"'); \
+	for repo in $$all_repos; do \
+	  status=$$(curl -s -o /dev/null -w "%{http_code}" \
+	    "$(FORGEJO_URL)/api/v1/repos/$$repo/collaborators/$(NEW_USER)" \
+	    -H "Authorization: token $(FORGEJO_TOKEN)"); \
+	  [ "$$status" = "204" ] && echo "$$repo\tcollaborator" || true; \
+	done | column -t
 
 # Permission levels: read | write | admin
 # "write" = push access, cannot delete repo or change settings (no admin)

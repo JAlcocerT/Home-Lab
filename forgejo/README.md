@@ -86,9 +86,19 @@ Paste it as `GITHUB_TOKEN` in your `.env`.
 
 1. Log in to your Forgejo instance at `http://localhost:3034`
    - First time: click **Register** to create your admin account
-2. Go to **Settings** (top-right avatar menu) → **Applications** - `http://localhost:3034/user/settings/applications`
-3. Under **Manage Access Tokens**, enter a token name (e.g. `cli`) and click **Generate Token**
-4. Copy the token — it is only shown once
+2. Go to **Settings** (top-right avatar menu) → **Applications** — `http://localhost:3034/user/settings/applications`
+3. Enter a token name (e.g. `cli`) and set the following permissions:
+
+| Permission | Level |
+|---|---|
+| **Issues** | Read and Write |
+| **Repository** | Read and Write |
+| **User** | Read and Write |
+| **Admin** | Read and Write |
+
+> The `write:admin` scope is required for user management targets (`create-user`, `list-users`). Without it those calls will return a scope error.
+
+4. Click **Generate Token** and copy it — it is only shown once
 
 Paste it as `FORGEJO_TOKEN` in your `.env`.
 
@@ -131,6 +141,7 @@ make help
 | `list-users` | List all users on Forgejo |
 | `create-user` | Create a non-admin user |
 | `add-collaborator` | Add a user as write collaborator on a repo |
+| `list-user-repos` | Show repos owned/accessible by `NEW_USER` |
 
 > If you have more than 100 repos on GitHub, paginate by running `migrate-all` with `&page=2` — or extend the script in the Makefile.
 
@@ -159,6 +170,9 @@ make add-collaborator NEW_USER=alice REPO_OWNER=JAlcocerT REPO_NAME=my-repo
 
 # List all users
 make list-users
+
+# Show all repos a user owns or is a collaborator on
+make list-user-repos NEW_USER=alice
 ```
 
 ### Permission levels
