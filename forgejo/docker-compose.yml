@@ -1,0 +1,53 @@
+#version: "3"
+
+networks:
+  forgejo:
+    external: false
+
+services:
+  forgejo-server:
+    image: codeberg.org/forgejo/forgejo:11
+    container_name: forgejo
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=mysql
+      - GITEA__database__HOST=forgejo-db:3306
+      - GITEA__database__NAME=forgejo
+      - GITEA__database__USER=forgejo
+      - GITEA__database__PASSWD=forgejo
+      - GITEA__security__INSTALL_LOCK=true
+      - GITEA__server__DOMAIN=localhost
+      - GITEA__server__ROOT_URL=http://localhost:3034/
+    restart: always
+    networks:
+      - forgejo
+    volumes:
+      - /srv/confs/forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3034:3000" #UI
+      - "2235:22"   #SSH
+    depends_on:
+      forgejo-db:
+        condition: service_healthy
+
+  forgejo-db:
+    image: mysql:9.0
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=forgejo
+      - MYSQL_USER=forgejo
+      - MYSQL_PASSWORD=forgejo
+      - MYSQL_DATABASE=forgejo
+    networks:
+      - forgejo
+    volumes:
+      - /srv/databases/forgejo/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
