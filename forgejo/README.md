@@ -2,7 +2,33 @@
 
 Self-hosted Git service — a fork of Gitea. Compatible with the Gitea API.
 
+## Setup
+
+Copy the sample env file and fill in your credentials:
+
+```bash
+cp .env.sample .env
+```
+
+| Variable | Description |
+|---|---|
+| `GITHUB_USER` | Your GitHub username |
+| `GITHUB_TOKEN` | GitHub PAT with `repo` scope |
+| `FORGEJO_URL` | URL of your Forgejo instance |
+| `FORGEJO_TOKEN` | Forgejo API token (UI → Settings → Applications) |
+| `REPO_OWNER` | Owner for single-repo targets |
+| `REPO_NAME` | Repo name for single-repo targets |
+
 ## Running
+
+```bash
+make up      # start stack
+make down    # stop stack
+make logs    # follow logs
+make status  # show container state
+```
+
+Or directly with Docker:
 
 ```bash
 docker compose up -d
@@ -27,49 +53,123 @@ Data is persisted at `/srv/confs/forgejo` and `/srv/databases/forgejo/mysql`.
    - **Token**: a GitHub PAT with `repo` scope
    - **Mirror**: enable to keep it in sync with GitHub automatically
 
-### GitHub PAT
+### Getting the tokens
 
-Generate at: GitHub → Settings → Developer settings → Personal access tokens → Generate new token (classic)
+#### 1. GitHub PAT (`GITHUB_TOKEN`)
 
-Required scope: `repo` (full access to private repos)
+This is a single **account-level** token — one token covers all your repos (public and private). You do not need one per repo.
 
-### Full profile — all repos via API
+**Option A — Classic PAT (simpler)**
 
-Requires `jq`. Generate a Forgejo API token first: Forgejo UI → Settings → Applications → Generate Token.
+1. Go to **GitHub → Settings** (top-right avatar menu)
+2. Scroll down to **Developer settings** (bottom of the left sidebar)
+3. **Personal access tokens → Tokens (classic)**
+4. Click **Generate new token (classic)**
+5. Give it a name (e.g. `forgejo-mirror`) and set an expiry
+6. Under **Select scopes**, tick **`repo`** (required to read private repos)
+7. Click **Generate token** and copy it — you won't see it again
+
+**Option B — Fine-grained PAT (recommended, read-only)**
+
+1. **Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Set **Resource owner** to your account - `https://github.com/settings/tokens`
+4. Under **Repository access** → select **All repositories** (or pick specific ones) 
+5. Under **Permissions → Repository permissions** → set **Contents** to `Read-only`
+6. Generate and copy the token
+
+> Fine-grained tokens are safer for mirroring — they cannot push, delete, or modify anything.
+
+Paste it as `GITHUB_TOKEN` in your `.env`.
+
+#### 2. Forgejo API token (`FORGEJO_TOKEN`)
+
+1. Log in to your Forgejo instance at `http://localhost:3034`
+   - First time: click **Register** to create your admin account
+2. Go to **Settings** (top-right avatar menu) → **Applications** - `http://localhost:3034/user/settings/applications`
+3. Under **Manage Access Tokens**, enter a token name (e.g. `cli`) and click **Generate Token**
+4. Copy the token — it is only shown once
+
+Paste it as `FORGEJO_TOKEN` in your `.env`.
+
+### Full profile — all repos via Makefile
+
+With `.env` populated, run:
 
 ```bash
-GITHUB_USER="your-github-username"
-GITHUB_TOKEN="ghp_yourGitHubPAT"
-FORGEJO_URL="http://localhost:3034"
-FORGEJO_TOKEN="your-forgejo-token"
-
-repos=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-  "https://api.github.com/user/repos?per_page=100&type=all" \
-  | jq -r '.[].clone_url')
-
-for repo in $repos; do
-  repo_name=$(basename "$repo" .git)
-  echo "Migrating $repo_name..."
-  curl -s -X POST "$FORGEJO_URL/api/v1/repos/migrate" \
-    -H "Authorization: token $FORGEJO_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{
-      \"clone_addr\": \"$repo\",
-      \"auth_token\": \"$GITHUB_TOKEN\",
-      \"repo_name\": \"$repo_name\",
-      \"private\": true,
-      \"mirror\": true,
-      \"wiki\": true,
-      \"issues\": true,
-      \"pull_requests\": true,
-      \"releases\": true,
-      \"labels\": true,
-      \"milestones\": true
-    }"
-done
+make migrate-all   # migrate every repo in your GitHub profile
+make sync-all      # trigger mirror sync on all mirrored repos
 ```
 
-> If you have more than 100 repos, paginate with `&page=2`, `&page=3`, etc.
+### Single repo via Makefile
+
+```bash
+make migrate-repo REPO_OWNER=your-user REPO_NAME=my-repo
+make sync-repo    REPO_OWNER=your-user REPO_NAME=my-repo
+```
+
+Or set `REPO_OWNER` / `REPO_NAME` in `.env` and just run `make migrate-repo`.
+
+### Available Makefile targets
+
+```
+make help
+```
+
+| Target | Description |
+|---|---|
+| `up` | Start Forgejo + DB |
+| `down` | Stop and remove containers |
+| `logs` | Follow container logs |
+| `status` | Show running containers |
+| `list-github-repos` | List repos visible to `GITHUB_TOKEN` |
+| `list-repos` | List all repos on Forgejo |
+| `migrate-repo` | Migrate one GitHub repo |
+| `migrate-all` | Migrate all repos for `GITHUB_USER` |
+| `sync-repo` | Trigger mirror sync for one repo |
+| `sync-all` | Trigger mirror sync for every mirror |
+| `list-users` | List all users on Forgejo |
+| `create-user` | Create a non-admin user |
+| `add-collaborator` | Add a user as write collaborator on a repo |
+
+> If you have more than 100 repos on GitHub, paginate by running `migrate-all` with `&page=2` — or extend the script in the Makefile.
+
+---
+
+## User management
+
+### Create a user
+
+Users are created as non-admin with `must_change_password: true` — they set their own password on first login.
+
+```bash
+make create-user \
+  NEW_USER=alice \
+  NEW_USER_EMAIL=alice@example.com \
+  NEW_USER_PASSWORD=changeme123
+```
+
+Or set `NEW_USER`, `NEW_USER_EMAIL`, `NEW_USER_PASSWORD` in `.env` and run `make create-user`.
+
+### Grant repo access
+
+```bash
+# Give write access to a specific repo
+make add-collaborator NEW_USER=alice REPO_OWNER=JAlcocerT REPO_NAME=my-repo
+
+# List all users
+make list-users
+```
+
+### Permission levels
+
+| Level | Push | Delete repo | Change settings |
+|---|---|---|---|
+| `read` | no | no | no |
+| `write` | yes | no | no |
+| `admin` | yes | yes | yes |
+
+`write` is the recommended level for collaborators — full read/write on code, issues and PRs, but no destructive or admin actions. `add-collaborator` always assigns `write`.
 
 ---
 
