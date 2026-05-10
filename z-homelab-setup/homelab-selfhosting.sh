@@ -35,28 +35,75 @@ apt-get install -y unattended-upgrades
 dpkg-reconfigure -plow unattended-upgrades
 
 
-### BETTER DNS ###
+### DNS CONFIGURATION ###
 
-if command_exists resolvectl; then
-    log "Configuring DNS with resolvectl..."
-    interface=$(resolvectl status | grep -A 1 'Link 2' | awk -F '[()]' '/Link 2/{print $2}' || echo "")
-
-    if [ -n "$interface" ]; then
-        log "Initial DNS settings for interface: $interface"
-        resolvectl status "$interface"
-
-        log "Changing DNS to Quad9 (9.9.9.9, 149.112.112.112)..."
-        resolvectl dns "$interface" 9.9.9.9 149.112.112.112
-
-        log "Updated DNS settings:"
-        resolvectl status "$interface"
-        resolvectl status | grep 'DNS Servers'
-    else
-        log "Warning: could not determine active interface, skipping DNS configuration"
+configure_dns_public() {
+    local primary="$1" secondary="$2" name="$3"
+    if ! command_exists resolvectl; then
+        log "Warning: resolvectl not found — set DNS manually in /etc/resolv.conf"
+        return 1
     fi
-else
-    log "Warning: resolvectl not found, skipping DNS configuration"
-fi
+    local interface
+    interface=$(resolvectl status | grep -A 1 'Link 2' | awk -F '[()]' '/Link 2/{print $2}' || echo "")
+    if [ -z "$interface" ]; then
+        log "Warning: could not determine active interface, skipping DNS"
+        return 1
+    fi
+    log "Setting DNS to $name ($primary, $secondary) on $interface..."
+    resolvectl dns "$interface" "$primary" "$secondary"
+    resolvectl status "$interface"
+}
+
+install_pihole() {
+    if ! command_exists docker; then
+        log "Error: Pi-hole requires Docker. Install Docker first, then re-run."
+        return 1
+    fi
+
+    # Disable systemd-resolved stub listener to free port 53
+    if systemctl is-active --quiet systemd-resolved; then
+        log "Disabling systemd-resolved stub listener to free port 53..."
+        if grep -q '^DNSStubListener=' /etc/systemd/resolved.conf; then
+            sed -i 's/^DNSStubListener=.*/DNSStubListener=no/' /etc/systemd/resolved.conf
+        else
+            echo 'DNSStubListener=no' >> /etc/systemd/resolved.conf
+        fi
+        systemctl restart systemd-resolved
+        ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+    fi
+
+    local pihole_password
+    pihole_password=$(openssl rand -base64 12)
+
+    log "Starting Pi-hole..."
+    docker run -d \
+        --name pihole \
+        --restart=unless-stopped \
+        -p 127.0.0.1:53:53/tcp \
+        -p 127.0.0.1:53:53/udp \
+        -p 127.0.0.1:8053:80 \
+        -e TZ="$(cat /etc/timezone 2>/dev/null || echo 'UTC')" \
+        -e WEBPASSWORD="$pihole_password" \
+        -e PIHOLE_DNS_="9.9.9.9;149.112.112.112" \
+        -v pihole_data:/etc/pihole \
+        -v pihole_dnsmasq:/etc/dnsmasq.d \
+        pihole/pihole:latest \
+        || { log "Error: Pi-hole container failed to start"; return 1; }
+
+    log "Pi-hole admin: http://127.0.0.1:8053/admin (SSH tunnel for remote access)"
+    log "Pi-hole password: $pihole_password  <-- save this now"
+
+    # Set Quad9 as fallback so DNS still resolves if the Pi-hole container is down
+    if grep -q '^FallbackDNS=' /etc/systemd/resolved.conf; then
+        sed -i 's/^FallbackDNS=.*/FallbackDNS=9.9.9.9 149.112.112.112/' /etc/systemd/resolved.conf
+    else
+        echo 'FallbackDNS=9.9.9.9 149.112.112.112' >> /etc/systemd/resolved.conf
+    fi
+    systemctl restart systemd-resolved
+    log "Fallback DNS set to Quad9 (active when Pi-hole container is unreachable)"
+
+    configure_dns_public "127.0.0.1" "9.9.9.9" "Pi-hole"
+}
 
 
 ### CONTAINERS SETUP ###
@@ -68,7 +115,7 @@ install_docker() {
     install -m 0755 -d /etc/apt/keyrings
     . /etc/os-release
     curl -fsSL "https://download.docker.com/linux/${ID}/gpg" \
-        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
     chmod a+r /etc/apt/keyrings/docker.gpg
 
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
@@ -135,7 +182,20 @@ read -r install_docker_answer
 case $install_docker_answer in
     [yY] | [yY][eE][sS])
         install_docker || { log "Error: Docker installation failed"; exit 1; }
-        install_podman || log "Warning: Podman installation failed, continuing"
+
+        log "Do you want to install Podman (OCI container runtime, runs alongside Docker)? (yes/no)"
+        read -r install_podman_answer
+        case $install_podman_answer in
+            [yY] | [yY][eE][sS])
+                install_podman || log "Warning: Podman installation failed, continuing"
+                ;;
+            [nN] | [nN][oO])
+                log "Podman installation skipped."
+                ;;
+            *)
+                log "Invalid response. Skipping Podman."
+                ;;
+        esac
 
         log "Do you want to install Portainer (Docker web UI)? (yes/no)"
         read -r install_portainer_answer
@@ -158,6 +218,26 @@ case $install_docker_answer in
         log "Invalid response. Exiting."
         exit 1
         ;;
+esac
+
+
+### DNS SETUP ###
+
+log "Configure DNS? Choose an option:"
+log "  1) Pi-hole    — local ad/tracker blocking (requires Docker, see about-dns.md)"
+log "  2) Quad9      — 9.9.9.9        privacy, malware blocking, non-profit (CH)"
+log "  3) Cloudflare — 1.1.1.1        fastest, commercial (US)"
+log "  4) AdGuard    — 94.140.14.14   ad + tracker blocking"
+log "  5) Mullvad    — 194.242.2.2    no logging, no filtering"
+log "  6) Skip"
+read -r dns_choice
+case $dns_choice in
+    1) install_pihole || log "Pi-hole setup failed; DNS unchanged." ;;
+    2) configure_dns_public "9.9.9.9"      "149.112.112.112" "Quad9" ;;
+    3) configure_dns_public "1.1.1.1"      "1.0.0.1"         "Cloudflare" ;;
+    4) configure_dns_public "94.140.14.14" "94.140.15.15"    "AdGuard DNS" ;;
+    5) configure_dns_public "194.242.2.2"  "194.242.2.3"     "Mullvad DNS" ;;
+    *) log "DNS configuration skipped." ;;
 esac
 
 
@@ -282,18 +362,22 @@ esac
 
 ### SECURITY HARDENING ###
 
+detect_ssh_port() {
+    local port
+    port=$(grep -E '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null \
+        | awk '{print $2}' | tail -1)
+    if [ -z "$port" ]; then
+        port=$(ss -tlnp 2>/dev/null \
+            | awk '/sshd/{match($4, /:([0-9]+)$/, a); if (a[1]) print a[1]}' | head -1)
+    fi
+    echo "${port:-22}"
+}
+
 harden_firewall() {
     log "Installing UFW..."
     apt-get install -y ufw
 
-    # Detect SSH port from config; fall back to what sshd is listening on, then 22
-    ssh_port=$(grep -E '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null \
-        | awk '{print $2}' | tail -1)
-    if [ -z "$ssh_port" ]; then
-        ssh_port=$(ss -tlnp 2>/dev/null \
-            | awk '/sshd/{match($4, /:([0-9]+)$/, a); if (a[1]) print a[1]}' | head -1)
-    fi
-    ssh_port="${ssh_port:-22}"
+    ssh_port=$(detect_ssh_port)
     log "SSH port: $ssh_port"
 
     if ufw status | grep -q "Status: active"; then
@@ -313,10 +397,15 @@ harden_firewall() {
 harden_fail2ban() {
     log "Installing fail2ban..."
     apt-get install -y fail2ban
-    cat > /etc/fail2ban/jail.d/sshd.local <<'EOF'
+
+    local ssh_port
+    ssh_port=$(detect_ssh_port)
+    log "fail2ban: watching SSH on port $ssh_port"
+
+    cat > /etc/fail2ban/jail.d/sshd.local <<EOF
 [sshd]
 enabled = true
-port    = ssh
+port    = $ssh_port
 maxretry = 4
 bantime  = 1h
 findtime = 10m
