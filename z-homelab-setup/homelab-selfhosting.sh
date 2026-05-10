@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-# Check for root privileges
 if [ "$(id -u)" != "0" ]; then
    echo "This script must be run as root" 1>&2
    exit 1
@@ -16,20 +15,19 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-retry_curl_sh() {
-    local url="$1"
-    local max="${2:-3}"
-    local i=0
-    while [ "$i" -lt "$max" ]; do
-        if curl -fsSL "$url" | sh; then
-            return 0
-        fi
-        i=$((i + 1))
-        log "Attempt $i/$max for $url failed, retrying..."
-        sleep 5
-    done
-    return 1
-}
+# Determine the non-root user to configure
+if [ -n "${SUDO_USER:-}" ]; then
+    TARGET_USER="$SUDO_USER"
+else
+    log "SUDO_USER is unset. Enter the non-root username to configure:"
+    read -r TARGET_USER
+    if ! id "$TARGET_USER" >/dev/null 2>&1; then
+        log "Error: user '$TARGET_USER' does not exist. Exiting."
+        exit 1
+    fi
+fi
+log "Target user: $TARGET_USER"
+TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
 
 log "Adding automatic updates..."
 apt-get update -qq
@@ -64,28 +62,27 @@ fi
 ### CONTAINERS SETUP ###
 
 install_docker() {
-    log "Downloading Docker installation script..."
-    local max_retries=3
-    local retry=0
+    log "Installing Docker via official apt repository..."
+    apt-get install -y ca-certificates curl gnupg
 
-    while [ "$retry" -lt "$max_retries" ]; do
-        if curl -fsSL https://get.docker.com -o get-docker.sh 2>/dev/null \
-           && head -1 get-docker.sh | grep -q '^#!/' \
-           && sh get-docker.sh; then
-            rm -f get-docker.sh
-            break
-        fi
-        retry=$((retry + 1))
-        log "Docker install attempt $retry/$max_retries failed, retrying..."
-        sleep 5
-    done
-    rm -f get-docker.sh
+    install -m 0755 -d /etc/apt/keyrings
+    . /etc/os-release
+    curl -fsSL "https://download.docker.com/linux/${ID}/gpg" \
+        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" \
+        | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    apt-get update -qq
+    apt-get install -y docker-ce docker-ce-cli containerd.io \
+        docker-buildx-plugin docker-compose-plugin
 
     if ! command_exists docker; then
         log "Error: Docker installation failed"
         return 1
     fi
-
     log "Docker installed: $(docker --version)"
 
     if ! systemctl is-active --quiet docker; then
@@ -93,9 +90,8 @@ install_docker() {
         systemctl start docker
     fi
 
-    # Compose plugin ships with get.docker.com — skip deprecated docker-compose package
     if docker compose version >/dev/null 2>&1; then
-        log "Docker Compose plugin available: $(docker compose version --short)"
+        log "Docker Compose plugin: $(docker compose version --short)"
     else
         log "Warning: Docker Compose plugin not detected"
     fi
@@ -106,13 +102,20 @@ install_docker() {
     else
         log "Docker test passed"
     fi
+}
 
-    log "Launching Portainer..."
-    docker run -d -p 8000:8000 -p 9000:9000 \
+install_portainer() {
+    log "Starting Portainer (bound to 127.0.0.1 only)..."
+    docker run -d \
+        -p 127.0.0.1:8000:8000 \
+        -p 127.0.0.1:9000:9000 \
         --name=portainer --restart=always \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v portainer_data:/data \
-        portainer/portainer-ce || log "Warning: Portainer launch failed (already running?)"
+        portainer/portainer-ce \
+        || log "Warning: Portainer launch failed (already running?)"
+    log "Portainer: http://127.0.0.1:9000 — localhost only."
+    log "Remote access via SSH tunnel: ssh -L 9000:127.0.0.1:9000 user@host"
 }
 
 install_podman() {
@@ -127,13 +130,26 @@ install_podman() {
     fi
 }
 
-# Ask user if they want to install Docker - https://jalcocert.github.io/RPi/posts/selfhosting-with-docker/#install-docker
-log "Do you want to install Containers on your system? (yes/no)"
+log "Do you want to install Docker on your system? (yes/no)"
 read -r install_docker_answer
 case $install_docker_answer in
     [yY] | [yY][eE][sS])
         install_docker || { log "Error: Docker installation failed"; exit 1; }
         install_podman || log "Warning: Podman installation failed, continuing"
+
+        log "Do you want to install Portainer (Docker web UI)? (yes/no)"
+        read -r install_portainer_answer
+        case $install_portainer_answer in
+            [yY] | [yY][eE][sS])
+                install_portainer || log "Warning: Portainer launch failed, continuing"
+                ;;
+            [nN] | [nN][oO])
+                log "Portainer installation skipped."
+                ;;
+            *)
+                log "Invalid response. Skipping Portainer."
+                ;;
+        esac
         ;;
     [nN] | [nN][oO])
         log "Container installation skipped."
@@ -147,14 +163,19 @@ esac
 
 ### TAILSCALE VPN ###
 
-# Function to install Tailscale VPN - https://jalcocert.github.io/Linux/docs/debian/linux_vpn_setup/#tailscale
 install_tailscale() {
-    log "Installing Tailscale VPN..."
+    log "Installing Tailscale via official apt repository..."
+    apt-get install -y curl gnupg
 
-    if ! retry_curl_sh "https://tailscale.com/install.sh" 3; then
-        log "Error: Tailscale installation failed after retries"
-        return 1
-    fi
+    . /etc/os-release
+    curl -fsSL "https://pkgs.tailscale.com/stable/${ID}/${VERSION_CODENAME}.noarmor.gpg" \
+        | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+    echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] \
+https://pkgs.tailscale.com/stable/${ID} ${VERSION_CODENAME} main" \
+        | tee /etc/apt/sources.list.d/tailscale.list
+
+    apt-get update -qq
+    apt-get install -y tailscale
 
     if ! command_exists tailscale; then
         log "Error: tailscale not found after installation"
@@ -170,7 +191,6 @@ install_tailscale() {
     fi
 }
 
-# Ask user if they want to install Tailscale VPN
 log "Do you want to install Tailscale VPN on your system? (yes/no)"
 read -r install_tailscale_answer
 case $install_tailscale_answer in
@@ -190,7 +210,12 @@ esac
 ### SHELL ALIASES ###
 
 setup_aliases() {
-    local BASHRC="$HOME/.bashrc"
+    local BASHRC="${TARGET_HOME}/.bashrc"
+
+    if [ ! -f "$BASHRC" ]; then
+        log "Warning: $BASHRC not found, skipping aliases."
+        return 1
+    fi
 
     log "Adding shell aliases to $BASHRC..."
 
@@ -228,7 +253,7 @@ alias dcl='docker compose logs -f'
 EOF
 
     echo ""
-    log "Aliases added. Run 'source $BASHRC' or open a new terminal to apply them."
+    log "Aliases added to $BASHRC. Run 'source $BASHRC' or open a new terminal to apply."
     echo ""
     echo "Available aliases:"
     echo "  ll / la / l   -- ls variants"
@@ -260,12 +285,19 @@ esac
 harden_firewall() {
     log "Installing UFW..."
     apt-get install -y ufw
-    ufw --force reset
+
+    if ufw status | grep -q "Status: active"; then
+        log "WARNING: UFW is already active with existing rules:"
+        ufw status numbered
+        log "Existing rules will be preserved. Adding defaults and SSH rule only."
+    fi
+
     ufw default deny incoming
     ufw default allow outgoing
     ufw allow 22/tcp comment 'SSH'
     ufw --force enable
     ufw status verbose
+    log "Note: Docker-published ports bypass UFW via iptables. Bind services to 127.0.0.1 to keep them local-only."
 }
 
 harden_fail2ban() {
@@ -303,18 +335,23 @@ harden_ssh() {
     set_sshd ChallengeResponseAuthentication no
     set_sshd KbdInteractiveAuthentication no
 
-    target_user="${SUDO_USER:-jalcocert}"
-    auth_keys="/home/${target_user}/.ssh/authorized_keys"
+    auth_keys="${TARGET_HOME}/.ssh/authorized_keys"
     if [ -s "$auth_keys" ]; then
-        log "Authorized key found for ${target_user}. Disabling password auth."
+        log "Authorized key found for ${TARGET_USER}. Disabling password auth."
         set_sshd PasswordAuthentication no
     else
-        log "WARNING: no authorized_keys for ${target_user} at ${auth_keys}."
+        log "WARNING: no authorized_keys for ${TARGET_USER} at ${auth_keys}."
         log "Leaving PasswordAuthentication enabled to prevent lockout."
-        log "Add a key, then re-run: sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' ${SSHD} && systemctl reload ssh"
+        log "Add a key, then run: sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' ${SSHD} && systemctl reload ssh"
     fi
 
-    sshd -t && systemctl reload ssh
+    if ! sshd -t; then
+        log "Error: sshd config test failed. Restoring backup."
+        latest_bak=$(ls -t "${SSHD}.bak."* 2>/dev/null | head -1)
+        [ -n "$latest_bak" ] && cp "$latest_bak" "$SSHD"
+        return 1
+    fi
+    systemctl reload ssh
 }
 
 harden_sysctl() {
@@ -342,8 +379,16 @@ EOF
 
 harden_tmp_noexec() {
     log "Setting noexec on /tmp..."
+    log "Note: noexec on /tmp can break some installers and build tools on low-memory systems."
+
+    if grep -qE '^\s*tmpfs\s+/tmp\s.*noexec' /etc/fstab; then
+        log "/tmp already has noexec in fstab, skipping."
+        return 0
+    fi
+
     if grep -qE '^\s*tmpfs\s+/tmp\s' /etc/fstab; then
-        sed -i -E 's|^(\s*tmpfs\s+/tmp\s+tmpfs\s+)([^[:space:]]+)|\1rw,nosuid,nodev,noexec|' /etc/fstab
+        awk '/^\s*tmpfs\s+\/tmp\s/ { if ($4 !~ /noexec/) $4 = $4 ",noexec" } { print }' \
+            /etc/fstab > /etc/fstab.tmp && mv /etc/fstab.tmp /etc/fstab
     else
         echo 'tmpfs /tmp tmpfs rw,nosuid,nodev,noexec 0 0' >> /etc/fstab
     fi
@@ -359,8 +404,7 @@ harden_journald() {
 
 harden_cron() {
     log "Restricting cron..."
-    target_user="${SUDO_USER:-jalcocert}"
-    { echo "root"; echo "$target_user"; } > /etc/cron.allow
+    { echo "root"; echo "$TARGET_USER"; } > /etc/cron.allow
     chmod 644 /etc/cron.allow
 }
 
@@ -420,7 +464,8 @@ EOF
     if command_exists python3; then
         if ! python3 -c "import json; json.load(open('$daemon_json'))" 2>/dev/null; then
             log "Error: $daemon_json invalid JSON. Restoring backup."
-            mv "${daemon_json}.bak."* "$daemon_json" 2>/dev/null || true
+            latest_bak=$(ls -t "${daemon_json}.bak."* 2>/dev/null | head -1)
+            [ -n "$latest_bak" ] && mv "$latest_bak" "$daemon_json" || true
             return 1
         fi
     fi
@@ -493,7 +538,8 @@ harden_docker_isolation() {
     if command_exists python3; then
         if ! python3 -c "import json; json.load(open('$daemon_json'))" 2>/dev/null; then
             log "Error: $daemon_json invalid JSON. Restoring backup."
-            mv "${daemon_json}.bak."* "$daemon_json" 2>/dev/null || true
+            latest_bak=$(ls -t "${daemon_json}.bak."* 2>/dev/null | head -1)
+            [ -n "$latest_bak" ] && mv "$latest_bak" "$daemon_json" || true
             return 1
         fi
     fi
@@ -612,5 +658,7 @@ fi
 
 echo ""
 log "Tailscale: run 'tailscale up' to authenticate if not already"
-log "Portainer: http://localhost:9000"
+if docker ps --filter name=portainer --format '{{.Names}}' 2>/dev/null | grep -q portainer; then
+    log "Portainer: http://127.0.0.1:9000 (localhost only — SSH tunnel for remote: ssh -L 9000:127.0.0.1:9000 user@host)"
+fi
 log "Reboot recommended to apply hardening (sysctl/tmpfs/Bluetooth)"
