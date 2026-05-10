@@ -44,9 +44,9 @@ configure_dns_public() {
         return 1
     fi
     local interface
-    interface=$(resolvectl status | grep -A 1 'Link 2' | awk -F '[()]' '/Link 2/{print $2}' || echo "")
+    interface=$(ip route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}')
     if [ -z "$interface" ]; then
-        log "Warning: could not determine active interface, skipping DNS"
+        log "Warning: could not determine default route interface, skipping DNS"
         return 1
     fi
     log "Setting DNS to $name ($primary, $secondary) on $interface..."
@@ -60,23 +60,61 @@ install_pihole() {
         return 1
     fi
 
+    # Preflight: container name conflict
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^pihole$'; then
+        log "Error: a container named 'pihole' already exists. Remove it first: docker rm -f pihole"
+        return 1
+    fi
+
+    local resolved_conf=/etc/systemd/resolved.conf
+    local resolved_bak="${resolved_conf}.bak.$(date +%s)"
+    local resolv_conf=/etc/resolv.conf
+    local resolv_symlink_target=""
+
+    # Back up resolved.conf and record resolv.conf state for rollback
+    cp "$resolved_conf" "$resolved_bak"
+    log "Backed up $resolved_conf → $resolved_bak"
+    if [ -L "$resolv_conf" ]; then
+        resolv_symlink_target=$(readlink "$resolv_conf")
+    fi
+
+    rollback_dns() {
+        log "Rolling back Pi-hole DNS changes..."
+        cp "$resolved_bak" "$resolved_conf"
+        if [ -n "$resolv_symlink_target" ]; then
+            ln -sf "$resolv_symlink_target" "$resolv_conf"
+        fi
+        systemctl restart systemd-resolved
+        log "DNS configuration restored."
+    }
+
     # Disable systemd-resolved stub listener to free port 53
     if systemctl is-active --quiet systemd-resolved; then
         log "Disabling systemd-resolved stub listener to free port 53..."
-        if grep -q '^DNSStubListener=' /etc/systemd/resolved.conf; then
-            sed -i 's/^DNSStubListener=.*/DNSStubListener=no/' /etc/systemd/resolved.conf
+        if grep -q '^DNSStubListener=' "$resolved_conf"; then
+            sed -i 's/^DNSStubListener=.*/DNSStubListener=no/' "$resolved_conf"
         else
-            echo 'DNSStubListener=no' >> /etc/systemd/resolved.conf
+            echo 'DNSStubListener=no' >> "$resolved_conf"
         fi
         systemctl restart systemd-resolved
-        ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+        ln -sf /run/systemd/resolve/resolv.conf "$resolv_conf"
+    fi
+
+    # Preflight: confirm port 53 is now free
+    if ss -tlnp | grep -q ':53 ' || ss -ulnp | grep -q ':53 '; then
+        log "Error: port 53 still in use after disabling stub listener:"
+        ss -lnp | grep ':53 ' || true
+        rollback_dns
+        return 1
     fi
 
     local pihole_password
     pihole_password=$(openssl rand -base64 12)
 
+    # Pin to a specific release for reproducibility
+    # Check latest: https://github.com/pi-hole/docker-pi-hole/releases
     log "Starting Pi-hole..."
-    docker run -d \
+    if ! docker run -d \
         --name pihole \
         --restart=unless-stopped \
         -p 127.0.0.1:53:53/tcp \
@@ -87,17 +125,20 @@ install_pihole() {
         -e PIHOLE_DNS_="9.9.9.9;149.112.112.112" \
         -v pihole_data:/etc/pihole \
         -v pihole_dnsmasq:/etc/dnsmasq.d \
-        pihole/pihole:latest \
-        || { log "Error: Pi-hole container failed to start"; return 1; }
+        pihole/pihole:latest; then
+        log "Error: Pi-hole container failed to start."
+        rollback_dns
+        return 1
+    fi
 
     log "Pi-hole admin: http://127.0.0.1:8053/admin (SSH tunnel for remote access)"
     log "Pi-hole password: $pihole_password  <-- save this now"
 
     # Set Quad9 as fallback so DNS still resolves if the Pi-hole container is down
-    if grep -q '^FallbackDNS=' /etc/systemd/resolved.conf; then
-        sed -i 's/^FallbackDNS=.*/FallbackDNS=9.9.9.9 149.112.112.112/' /etc/systemd/resolved.conf
+    if grep -q '^FallbackDNS=' "$resolved_conf"; then
+        sed -i 's/^FallbackDNS=.*/FallbackDNS=9.9.9.9 149.112.112.112/' "$resolved_conf"
     else
-        echo 'FallbackDNS=9.9.9.9 149.112.112.112' >> /etc/systemd/resolved.conf
+        echo 'FallbackDNS=9.9.9.9 149.112.112.112' >> "$resolved_conf"
     fi
     systemctl restart systemd-resolved
     log "Fallback DNS set to Quad9 (active when Pi-hole container is unreachable)"
@@ -223,21 +264,34 @@ esac
 
 ### DNS SETUP ###
 
-log "Configure DNS? Choose an option:"
-log "  1) Pi-hole    — local ad/tracker blocking (requires Docker, see about-dns.md)"
-log "  2) Quad9      — 9.9.9.9        privacy, malware blocking, non-profit (CH)"
-log "  3) Cloudflare — 1.1.1.1        fastest, commercial (US)"
-log "  4) AdGuard    — 94.140.14.14   ad + tracker blocking"
-log "  5) Mullvad    — 194.242.2.2    no logging, no filtering"
-log "  6) Skip"
-read -r dns_choice
-case $dns_choice in
-    1) install_pihole || log "Pi-hole setup failed; DNS unchanged." ;;
-    2) configure_dns_public "9.9.9.9"      "149.112.112.112" "Quad9" ;;
-    3) configure_dns_public "1.1.1.1"      "1.0.0.1"         "Cloudflare" ;;
-    4) configure_dns_public "94.140.14.14" "94.140.15.15"    "AdGuard DNS" ;;
-    5) configure_dns_public "194.242.2.2"  "194.242.2.3"     "Mullvad DNS" ;;
-    *) log "DNS configuration skipped." ;;
+log "Do you want to configure DNS? (yes/no)"
+log "  WARNING: This is an advanced step. It changes system-level DNS settings."
+log "  Pi-hole additionally modifies systemd-resolved and /etc/resolv.conf."
+log "  Skip this on existing servers unless you know what you are changing."
+log "  See about-dns.md for full details before proceeding."
+read -r dns_configure_answer
+case $dns_configure_answer in
+    [yY] | [yY][eE][sS])
+        log "Choose a DNS option:"
+        log "  1) Pi-hole    — local ad/tracker blocking (requires Docker, see about-dns.md)"
+        log "  2) Quad9      — 9.9.9.9        privacy, malware blocking, non-profit (CH)"
+        log "  3) Cloudflare — 1.1.1.1        fastest, commercial (US)"
+        log "  4) AdGuard    — 94.140.14.14   ad + tracker blocking"
+        log "  5) Mullvad    — 194.242.2.2    no logging, no filtering"
+        log "  6) Skip"
+        read -r dns_choice
+        case $dns_choice in
+            1) install_pihole || log "Pi-hole setup failed; DNS unchanged." ;;
+            2) configure_dns_public "9.9.9.9"      "149.112.112.112" "Quad9" ;;
+            3) configure_dns_public "1.1.1.1"      "1.0.0.1"         "Cloudflare" ;;
+            4) configure_dns_public "94.140.14.14" "94.140.15.15"    "AdGuard DNS" ;;
+            5) configure_dns_public "194.242.2.2"  "194.242.2.3"     "Mullvad DNS" ;;
+            *) log "DNS configuration skipped." ;;
+        esac
+        ;;
+    *)
+        log "DNS configuration skipped."
+        ;;
 esac
 
 
