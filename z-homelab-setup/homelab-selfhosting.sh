@@ -485,7 +485,6 @@ harden_docker_isolation() {
         return 0
     fi
 
-    apt-get install -y jq
     if ! command_exists jq; then
         log "Error: jq required for safe daemon.json merge. Aborting isolation step."
         return 1
@@ -572,23 +571,132 @@ harden_bluetooth() {
     systemctl disable --now bluetooth.service hciuart.service 2>/dev/null || true
 }
 
+preflight_check() {
+    log "=== PREFLIGHT SUMMARY ==="
+    echo ""
+    echo "System : $(. /etc/os-release && echo "$PRETTY_NAME")"
+    echo "User   : $TARGET_USER (home: $TARGET_HOME)"
+    echo ""
+
+    # Firewall
+    if command_exists ufw && ufw status | grep -q "Status: active"; then
+        rule_count=$(ufw status numbered 2>/dev/null | grep -c '^\[' || echo 0)
+        echo "Firewall  : UFW active, $rule_count rule(s) — existing rules will be PRESERVED"
+    else
+        echo "Firewall  : UFW not active"
+    fi
+
+    # SSH
+    pw_auth=$(grep -E '^\s*PasswordAuthentication\s' /etc/ssh/sshd_config 2>/dev/null \
+        | awk '{print $2}' | tail -1 || echo "default(yes)")
+    echo "SSH passwd: PasswordAuthentication = ${pw_auth}"
+    auth_keys="${TARGET_HOME}/.ssh/authorized_keys"
+    if [ -s "$auth_keys" ]; then
+        key_count=$(grep -cE '^(ssh-|ecdsa-|sk-)' "$auth_keys" 2>/dev/null || echo "?")
+        echo "SSH keys  : $key_count key(s) for $TARGET_USER — safe to disable password auth"
+    else
+        echo "SSH keys  : NONE for $TARGET_USER — password auth will NOT be disabled (lockout prevention)"
+    fi
+
+    # /tmp
+    if grep -qE '^\s*tmpfs\s+/tmp\s.*noexec' /etc/fstab 2>/dev/null; then
+        echo "/tmp noexec: already set"
+    else
+        mem_mb=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo)
+        warn=""
+        [ "$mem_mb" -lt 512 ] && warn=" — WARNING: low memory (${mem_mb}MB), tmpfs may cause OOM"
+        echo "/tmp noexec: not set — can break build tools and installers${warn}"
+    fi
+
+    # Docker
+    if command_exists docker; then
+        running=$(docker ps -q 2>/dev/null | wc -l)
+        daemon_note="no daemon.json"
+        [ -f /etc/docker/daemon.json ] && daemon_note="daemon.json exists (jq merge)"
+        echo "Docker    : $(docker --version | awk '{print $3}' | tr -d ','), $running running container(s), $daemon_note"
+    else
+        echo "Docker    : not installed — Docker hardening will be skipped"
+    fi
+
+    # Cron
+    if [ -f /etc/cron.allow ]; then
+        current=$(tr '\n' ' ' < /etc/cron.allow)
+        echo "Cron allow: already set ($current)"
+    else
+        echo "Cron allow: not set — will restrict to root + $TARGET_USER only"
+    fi
+
+    echo ""
+    log "==========================="
+    echo ""
+}
+
 apply_hardening() {
-    harden_firewall
+    preflight_check
+
+    log "Proceed with hardening? (yes/no)"
+    read -r proceed
+    case $proceed in
+        [yY]|[yY][eE][sS]) ;;
+        *) log "Hardening cancelled."; return 0 ;;
+    esac
+
+    # Safe steps — no individual prompts
     harden_fail2ban
-    harden_ssh
     harden_sysctl
-    harden_tmp_noexec
     harden_journald
     harden_logrotate
-    harden_docker_logs
-    harden_docker_isolation
-    harden_cron
     harden_pwquality
     harden_auditd
+
+    # Risky: firewall
+    log "Configure UFW (deny incoming, allow outgoing, keep SSH open)? (yes/no)"
+    read -r fw_answer
+    case $fw_answer in
+        [yY]|[yY][eE][sS]) harden_firewall ;;
+        *) log "Firewall skipped." ;;
+    esac
+
+    # Risky: SSH
+    log "Harden SSH (PermitRootLogin no, disable password auth if keys exist)? (yes/no)"
+    read -r ssh_answer
+    case $ssh_answer in
+        [yY]|[yY][eE][sS]) harden_ssh ;;
+        *) log "SSH hardening skipped." ;;
+    esac
+
+    # Risky: /tmp noexec
+    log "Mount /tmp as noexec? Can break build tools and some installers. (yes/no)"
+    read -r tmp_answer
+    case $tmp_answer in
+        [yY]|[yY][eE][sS]) harden_tmp_noexec ;;
+        *) log "/tmp noexec skipped." ;;
+    esac
+
+    # Risky: Docker daemon (jq installed once for both functions)
+    log "Apply Docker daemon hardening (log caps + isolation options)? Restarts Docker. (yes/no)"
+    read -r docker_harden_answer
+    case $docker_harden_answer in
+        [yY]|[yY][eE][sS])
+            apt-get install -y jq
+            harden_docker_logs
+            harden_docker_isolation
+            ;;
+        *) log "Docker daemon hardening skipped." ;;
+    esac
+
+    # Risky: cron
+    log "Restrict cron to root and $TARGET_USER only (/etc/cron.allow)? (yes/no)"
+    read -r cron_answer
+    case $cron_answer in
+        [yY]|[yY][eE][sS]) harden_cron ;;
+        *) log "Cron restriction skipped." ;;
+    esac
+
     log "Hardening done. Reboot recommended."
 }
 
-log "Apply security hardening (UFW, fail2ban, SSH, sysctl, /tmp, journald, cron, pwquality, auditd)? (yes/no)"
+log "Apply security hardening? (yes/no)"
 read -r harden_answer
 case $harden_answer in
     [yY] | [yY][eE][sS])
