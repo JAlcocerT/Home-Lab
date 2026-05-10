@@ -286,6 +286,16 @@ harden_firewall() {
     log "Installing UFW..."
     apt-get install -y ufw
 
+    # Detect SSH port from config; fall back to what sshd is listening on, then 22
+    ssh_port=$(grep -E '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null \
+        | awk '{print $2}' | tail -1)
+    if [ -z "$ssh_port" ]; then
+        ssh_port=$(ss -tlnp 2>/dev/null \
+            | awk '/sshd/{match($4, /:([0-9]+)$/, a); if (a[1]) print a[1]}' | head -1)
+    fi
+    ssh_port="${ssh_port:-22}"
+    log "SSH port: $ssh_port"
+
     if ufw status | grep -q "Status: active"; then
         log "WARNING: UFW is already active with existing rules:"
         ufw status numbered
@@ -294,7 +304,7 @@ harden_firewall() {
 
     ufw default deny incoming
     ufw default allow outgoing
-    ufw allow 22/tcp comment 'SSH'
+    ufw allow "${ssh_port}/tcp" comment 'SSH'
     ufw --force enable
     ufw status verbose
     log "Note: Docker-published ports bypass UFW via iptables. Bind services to 127.0.0.1 to keep them local-only."
@@ -387,7 +397,7 @@ harden_tmp_noexec() {
     fi
 
     if grep -qE '^\s*tmpfs\s+/tmp\s' /etc/fstab; then
-        awk '/^\s*tmpfs\s+\/tmp\s/ { if ($4 !~ /noexec/) $4 = $4 ",noexec" } { print }' \
+        awk '/^[[:space:]]*tmpfs[[:space:]]+\/tmp[[:space:]]/ { if ($4 !~ /noexec/) $4 = $4 ",noexec" } { print }' \
             /etc/fstab > /etc/fstab.tmp && mv /etc/fstab.tmp /etc/fstab
     else
         echo 'tmpfs /tmp tmpfs rw,nosuid,nodev,noexec 0 0' >> /etc/fstab
@@ -404,8 +414,18 @@ harden_journald() {
 
 harden_cron() {
     log "Restricting cron..."
-    { echo "root"; echo "$TARGET_USER"; } > /etc/cron.allow
-    chmod 644 /etc/cron.allow
+    local cron_allow=/etc/cron.allow
+
+    if [ -f "$cron_allow" ]; then
+        cp "$cron_allow" "${cron_allow}.bak.$(date +%s)"
+        grep -qxF 'root'         "$cron_allow" || echo 'root'         >> "$cron_allow"
+        grep -qxF "$TARGET_USER" "$cron_allow" || echo "$TARGET_USER" >> "$cron_allow"
+        log "Merged into existing $cron_allow"
+    else
+        { echo "root"; echo "$TARGET_USER"; } > "$cron_allow"
+        log "Created $cron_allow with root and $TARGET_USER"
+    fi
+    chmod 644 "$cron_allow"
 }
 
 harden_pwquality() {
@@ -643,11 +663,18 @@ apply_hardening() {
 
     # Safe steps — no individual prompts
     harden_fail2ban
-    harden_sysctl
     harden_journald
     harden_logrotate
     harden_pwquality
     harden_auditd
+
+    # Prompted: sysctl (rp_filter affects VPN/subnet routing; ptrace_scope=2 blocks strace/gdb)
+    log "Apply sysctl hardening (rp_filter, ptrace_scope=2, syncookies, kptr_restrict)? Can affect VPN routing and debugging. (yes/no)"
+    read -r sysctl_answer
+    case $sysctl_answer in
+        [yY]|[yY][eE][sS]) harden_sysctl ;;
+        *) log "sysctl hardening skipped." ;;
+    esac
 
     # Risky: firewall
     log "Configure UFW (deny incoming, allow outgoing, keep SSH open)? (yes/no)"
