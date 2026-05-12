@@ -26,25 +26,41 @@ echo "Generating $ENV_FILE from $SAMPLE_FILE..."
 # Generate random passwords
 ROOT_PASS=$(generate_password)
 USER_PASS=$(generate_password)
+TERMIX_SALT=$(openssl rand -base64 24 | tr -d '=+/' | cut -c1-32)
+NEKO_USER_PASS=$(generate_password)
+NEKO_ADMIN_PASS=$(generate_password)
 
-# Prompt for Trusted Domains
+# Prompt for Nextcloud Trusted Domains
 read -p "Enter Nextcloud Trusted Domains (space separated, e.g. 'http://[IP_ADDRESS] https://nc.example.com'): " TRUSTED_DOMAINS
 if [ -z "$TRUSTED_DOMAINS" ]; then
     TRUSTED_DOMAINS="http://192.168.1.2"
     echo "No domains entered, defaulting to 'http://192.168.1.2'"
 fi
 
-# Create .env file by replacing placeholders or specific values
-# Using a temp file to avoid partial writes
+# Prompt for Neko host IP
+read -p "Enter the LAN IP of this Docker host for Neko WebRTC [192.168.1.12]: " NEKO_HOST_IP
+if [ -z "$NEKO_HOST_IP" ]; then
+    NEKO_HOST_IP="192.168.1.12"
+fi
+
+# Create .env file by replacing placeholders — using a temp file to avoid partial writes
 sed -e "s|^MYSQL_ROOT_PASSWORD=.*|MYSQL_ROOT_PASSWORD=$ROOT_PASS|" \
     -e "s|^MYSQL_PASSWORD=.*|MYSQL_PASSWORD=$USER_PASS|" \
     -e "s|^NEXTCLOUD_TRUSTED_DOMAINS=.*|NEXTCLOUD_TRUSTED_DOMAINS=$TRUSTED_DOMAINS|" \
+    -e "s|^TERMIX_SALT=.*|TERMIX_SALT=$TERMIX_SALT|" \
+    -e "s|^NEKO_USER_PASSWORD=.*|NEKO_USER_PASSWORD=$NEKO_USER_PASS|" \
+    -e "s|^NEKO_ADMIN_PASSWORD=.*|NEKO_ADMIN_PASSWORD=$NEKO_ADMIN_PASS|" \
+    -e "s|^NEKO_HOST_IP=.*|NEKO_HOST_IP=$NEKO_HOST_IP|" \
     "$SAMPLE_FILE" > "$ENV_FILE"
 
-echo "Done! $ENV_FILE has been created with random passwords and your domains."
+echo "Done! $ENV_FILE has been created."
 echo "------------------------------------------------"
 echo "MYSQL_ROOT_PASSWORD: $ROOT_PASS"
 echo "MYSQL_PASSWORD:      $USER_PASS"
 echo "TRUSTED_DOMAINS:     $TRUSTED_DOMAINS"
+echo "TERMIX_SALT:         $TERMIX_SALT"
+echo "NEKO_USER_PASSWORD:  $NEKO_USER_PASS"
+echo "NEKO_ADMIN_PASSWORD: $NEKO_ADMIN_PASS"
+echo "NEKO_HOST_IP:        $NEKO_HOST_IP"
 echo "------------------------------------------------"
 echo "Please review $ENV_FILE and adjust other variables if needed."

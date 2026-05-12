@@ -1,115 +1,942 @@
-##!/bin/sh
+#!/bin/bash
 
-# Check for root privileges
+set -euo pipefail
+
 if [ "$(id -u)" != "0" ]; then
    echo "This script must be run as root" 1>&2
    exit 1
 fi
 
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
+}
 
-echo "Adding automatic updates..."
-sudo apt install unattended-upgrades -y
-sudo dpkg-reconfigure -plow unattended-upgrades
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Determine the non-root user to configure
+if [ -n "${SUDO_USER:-}" ]; then
+    TARGET_USER="$SUDO_USER"
+else
+    log "SUDO_USER is unset. Enter the non-root username to configure:"
+    read -r TARGET_USER
+    if ! id "$TARGET_USER" >/dev/null 2>&1; then
+        log "Error: user '$TARGET_USER' does not exist. Exiting."
+        exit 1
+    fi
+fi
+log "Target user: $TARGET_USER"
+TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+
+log "Adding automatic updates..."
+apt-get update -qq
+apt-get install -y unattended-upgrades
+dpkg-reconfigure -plow unattended-upgrades
 
 
-### BETTER DNS ###
+### DNS CONFIGURATION ###
 
-### Changes the DNS for the active interface and shows the status before and after ###
+configure_dns_public() {
+    local primary="$1" secondary="$2" name="$3"
+    if ! command_exists resolvectl; then
+        log "Warning: resolvectl not found — set DNS manually in /etc/resolv.conf"
+        return 1
+    fi
+    local interface
+    interface=$(ip route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}')
+    if [ -z "$interface" ]; then
+        log "Warning: could not determine default route interface, skipping DNS"
+        return 1
+    fi
+    log "Setting DNS to $name ($primary, $secondary) on $interface..."
+    resolvectl dns "$interface" "$primary" "$secondary"
+    resolvectl status "$interface"
+}
 
-# Display initial DNS status
-echo "Initial DNS settings for the active interface:"
-interface=$(resolvectl status | grep -A 1 'Link 2' | awk -F '[()]' '/Link 2/{print $2}') ##enp2s0 // ##wlx984827ec3e41
-resolvectl status $interface
+install_pihole() {
+    if ! command_exists docker; then
+        log "Error: Pi-hole requires Docker. Install Docker first, then re-run."
+        return 1
+    fi
 
-# Change DNS servers to Quad9
-echo "Changing DNS to Quad9 (9.9.9.9, 149.112.112.112) for interface $interface."
-resolvectl dns $interface 9.9.9.9 149.112.112.112 ##https://www.quad9.net/
+    # Preflight: container name conflict
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^pihole$'; then
+        log "Error: a container named 'pihole' already exists. Remove it first: docker rm -f pihole"
+        return 1
+    fi
 
-# Display new DNS settings
-echo "Updated DNS settings for interface $interface:"
-resolvectl status $interface
+    local resolved_conf=/etc/systemd/resolved.conf
+    local resolved_bak="${resolved_conf}.bak.$(date +%s)"
+    local resolv_conf=/etc/resolv.conf
+    local resolv_symlink_target=""
 
-echo "Confirming the Updated DNS settings for: $interface:"
-resolvectl status | grep 'DNS Servers'
+    # Back up resolved.conf and record resolv.conf state for rollback
+    cp "$resolved_conf" "$resolved_bak"
+    log "Backed up $resolved_conf → $resolved_bak"
+    if [ -L "$resolv_conf" ]; then
+        resolv_symlink_target=$(readlink "$resolv_conf")
+    fi
+
+    rollback_dns() {
+        log "Rolling back Pi-hole DNS changes..."
+        cp "$resolved_bak" "$resolved_conf"
+        if [ -n "$resolv_symlink_target" ]; then
+            ln -sf "$resolv_symlink_target" "$resolv_conf"
+        fi
+        systemctl restart systemd-resolved
+        log "DNS configuration restored."
+    }
+
+    # Disable systemd-resolved stub listener to free port 53
+    if systemctl is-active --quiet systemd-resolved; then
+        log "Disabling systemd-resolved stub listener to free port 53..."
+        if grep -q '^DNSStubListener=' "$resolved_conf"; then
+            sed -i 's/^DNSStubListener=.*/DNSStubListener=no/' "$resolved_conf"
+        else
+            echo 'DNSStubListener=no' >> "$resolved_conf"
+        fi
+        systemctl restart systemd-resolved
+        ln -sf /run/systemd/resolve/resolv.conf "$resolv_conf"
+    fi
+
+    # Preflight: confirm port 53 is now free
+    if ss -tlnp | grep -q ':53 ' || ss -ulnp | grep -q ':53 '; then
+        log "Error: port 53 still in use after disabling stub listener:"
+        ss -lnp | grep ':53 ' || true
+        rollback_dns
+        return 1
+    fi
+
+    local pihole_password
+    pihole_password=$(openssl rand -base64 12)
+
+    # Pin to a specific release for reproducibility
+    # Check latest: https://github.com/pi-hole/docker-pi-hole/releases
+    log "Starting Pi-hole..."
+    if ! docker run -d \
+        --name pihole \
+        --restart=unless-stopped \
+        -p 127.0.0.1:53:53/tcp \
+        -p 127.0.0.1:53:53/udp \
+        -p 127.0.0.1:8053:80 \
+        -e TZ="$(cat /etc/timezone 2>/dev/null || echo 'UTC')" \
+        -e WEBPASSWORD="$pihole_password" \
+        -e PIHOLE_DNS_="9.9.9.9;149.112.112.112" \
+        -v pihole_data:/etc/pihole \
+        -v pihole_dnsmasq:/etc/dnsmasq.d \
+        pihole/pihole:latest; then
+        log "Error: Pi-hole container failed to start."
+        rollback_dns
+        return 1
+    fi
+
+    log "Pi-hole admin: http://127.0.0.1:8053/admin (SSH tunnel for remote access)"
+    log "Pi-hole password: $pihole_password  <-- save this now"
+
+    # Set Quad9 as fallback so DNS still resolves if the Pi-hole container is down
+    if grep -q '^FallbackDNS=' "$resolved_conf"; then
+        sed -i 's/^FallbackDNS=.*/FallbackDNS=9.9.9.9 149.112.112.112/' "$resolved_conf"
+    else
+        echo 'FallbackDNS=9.9.9.9 149.112.112.112' >> "$resolved_conf"
+    fi
+    systemctl restart systemd-resolved
+    log "Fallback DNS set to Quad9 (active when Pi-hole container is unreachable)"
+
+    configure_dns_public "127.0.0.1" "9.9.9.9" "Pi-hole"
+}
 
 
 ### CONTAINERS SETUP ###
 
-
-
-# Function to install Docker and Docker Compose
 install_docker() {
-    echo "Updating system and installing required packages..."
-    apt-get update && apt-get upgrade -y
-    echo "Downloading Docker installation script..."
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    echo "Docker installed successfully. Checking Docker version..."
-    docker version
-    echo "Testing Docker installation with 'hello-world' image..."
-    docker run hello-world
-    echo "Installing Docker Compose..."
-    apt install docker-compose -y
-    echo "Docker Compose installed successfully. Checking version..."
-    docker-compose --version
-    echo "Checking status of Docker service..."
-    #systemctl status docker
-    systemctl status docker | grep "Active"
-    docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
+    log "Installing Docker via official apt repository..."
+    apt-get install -y ca-certificates curl gnupg
 
+    install -m 0755 -d /etc/apt/keyrings
+    . /etc/os-release
+    curl -fsSL "https://download.docker.com/linux/${ID}/gpg" \
+        | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" \
+        | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    apt-get update -qq
+    apt-get install -y docker-ce docker-ce-cli containerd.io \
+        docker-buildx-plugin docker-compose-plugin
+
+    if ! command_exists docker; then
+        log "Error: Docker installation failed"
+        return 1
+    fi
+    log "Docker installed: $(docker --version)"
+
+    if ! systemctl is-active --quiet docker; then
+        log "Starting Docker service..."
+        systemctl start docker
+    fi
+
+    if docker compose version >/dev/null 2>&1; then
+        log "Docker Compose plugin: $(docker compose version --short)"
+    else
+        log "Warning: Docker Compose plugin not detected"
+    fi
+
+    log "Testing Docker with hello-world..."
+    if ! timeout 30 docker run --rm hello-world >/dev/null 2>&1; then
+        log "Warning: hello-world test failed (network?), continuing"
+    else
+        log "Docker test passed"
+    fi
+}
+
+install_portainer() {
+    log "Starting Portainer (bound to 127.0.0.1 only)..."
+    docker run -d \
+        -p 127.0.0.1:8000:8000 \
+        -p 127.0.0.1:9000:9000 \
+        --name=portainer --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v portainer_data:/data \
+        portainer/portainer-ce \
+        || log "Warning: Portainer launch failed (already running?)"
+    log "Portainer: http://127.0.0.1:9000 — localhost only."
+    log "Remote access via SSH tunnel: ssh -L 9000:127.0.0.1:9000 user@host"
 }
 
 install_podman() {
-    echo "Installing Podman OCI..."
-    apt install podman
-    podman --version
+    log "Installing Podman OCI..."
+    apt-get install -y podman
+
+    if command_exists podman; then
+        log "Podman installed: $(podman --version)"
+    else
+        log "Error: Podman installation failed"
+        return 1
+    fi
 }
 
-
-
-# Ask user if they want to install Docker - https://jalcocert.github.io/RPi/posts/selfhosting-with-docker/#install-docker
-echo "Do you want to install Containers on your system? (yes/no)"
-read install_docker_answer
+log "Do you want to install Docker on your system? (yes/no)"
+read -r install_docker_answer
 case $install_docker_answer in
     [yY] | [yY][eE][sS])
-        install_docker #Docker Containers
-        install_podman #Podman Containers
+        install_docker || { log "Error: Docker installation failed"; exit 1; }
+
+        log "Do you want to install Podman (OCI container runtime, runs alongside Docker)? (yes/no)"
+        read -r install_podman_answer
+        case $install_podman_answer in
+            [yY] | [yY][eE][sS])
+                install_podman || log "Warning: Podman installation failed, continuing"
+                ;;
+            [nN] | [nN][oO])
+                log "Podman installation skipped."
+                ;;
+            *)
+                log "Invalid response. Skipping Podman."
+                ;;
+        esac
+
+        log "Do you want to install Portainer (Docker web UI)? (yes/no)"
+        read -r install_portainer_answer
+        case $install_portainer_answer in
+            [yY] | [yY][eE][sS])
+                install_portainer || log "Warning: Portainer launch failed, continuing"
+                ;;
+            [nN] | [nN][oO])
+                log "Portainer installation skipped."
+                ;;
+            *)
+                log "Invalid response. Skipping Portainer."
+                ;;
+        esac
         ;;
     [nN] | [nN][oO])
-        echo "Docker installation skipped."
+        log "Container installation skipped."
         ;;
     *)
-        echo "Invalid response. Exiting."
+        log "Invalid response. Exiting."
         exit 1
         ;;
 esac
+
+
+### DNS SETUP ###
+
+log "Do you want to configure DNS? (yes/no)"
+log "  WARNING: This is an advanced step. It changes system-level DNS settings."
+log "  Pi-hole additionally modifies systemd-resolved and /etc/resolv.conf."
+log "  Skip this on existing servers unless you know what you are changing."
+log "  See about-dns.md for full details before proceeding."
+read -r dns_configure_answer
+case $dns_configure_answer in
+    [yY] | [yY][eE][sS])
+        log "Choose a DNS option:"
+        log "  1) Pi-hole    — local ad/tracker blocking (requires Docker, see about-dns.md)"
+        log "  2) Quad9      — 9.9.9.9        privacy, malware blocking, non-profit (CH)"
+        log "  3) Cloudflare — 1.1.1.1        fastest, commercial (US)"
+        log "  4) AdGuard    — 94.140.14.14   ad + tracker blocking"
+        log "  5) Mullvad    — 194.242.2.2    no logging, no filtering"
+        log "  6) Skip"
+        read -r dns_choice
+        case $dns_choice in
+            1) install_pihole || log "Pi-hole setup failed; DNS unchanged." ;;
+            2) configure_dns_public "9.9.9.9"      "149.112.112.112" "Quad9" ;;
+            3) configure_dns_public "1.1.1.1"      "1.0.0.1"         "Cloudflare" ;;
+            4) configure_dns_public "94.140.14.14" "94.140.15.15"    "AdGuard DNS" ;;
+            5) configure_dns_public "194.242.2.2"  "194.242.2.3"     "Mullvad DNS" ;;
+            *) log "DNS configuration skipped." ;;
+        esac
+        ;;
+    *)
+        log "DNS configuration skipped."
+        ;;
+esac
+
 
 ### TAILSCALE VPN ###
 
-# Function to install Tailscale VPN - https://jalcocert.github.io/Linux/docs/debian/linux_vpn_setup/#tailscale
 install_tailscale() {
-    echo "Installing Tailscale VPN..."
-    curl -fsSL https://tailscale.com/install.sh | sh
-    sudo tailscale up
-    echo "Tailscale VPN installed and activated."
+    log "Installing Tailscale via official apt repository..."
+    apt-get install -y curl gnupg
 
-    ip_address=$(tailscale ip -4)
-    echo "The IP address assigned by Tailscale is: $ip_address"
+    . /etc/os-release
+    curl -fsSL "https://pkgs.tailscale.com/stable/${ID}/${VERSION_CODENAME}.noarmor.gpg" \
+        | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+    echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] \
+https://pkgs.tailscale.com/stable/${ID} ${VERSION_CODENAME} main" \
+        | tee /etc/apt/sources.list.d/tailscale.list
+
+    apt-get update -qq
+    apt-get install -y tailscale
+
+    if ! command_exists tailscale; then
+        log "Error: tailscale not found after installation"
+        return 1
+    fi
+
+    log "Bringing Tailscale up (auth in browser if prompted)..."
+    tailscale up || log "Warning: 'tailscale up' returned non-zero (manual auth may be needed)"
+
+    if tailscale status >/dev/null 2>&1; then
+        ip_address=$(tailscale ip -4 2>/dev/null || echo "not assigned yet")
+        log "Tailscale IP: $ip_address"
+    fi
 }
 
-
-# Ask user if they want to install Tailscale VPN
-echo "Do you want to install Tailscale VPN on your system? (yes/no)"
-read install_tailscale_answer
+log "Do you want to install Tailscale VPN on your system? (yes/no)"
+read -r install_tailscale_answer
 case $install_tailscale_answer in
     [yY] | [yY][eE][sS])
-        install_tailscale
+        install_tailscale || { log "Error: Tailscale installation failed"; exit 1; }
         ;;
     [nN] | [nN][oO])
-        echo "Tailscale VPN installation skipped."
+        log "Tailscale VPN installation skipped."
         ;;
     *)
-        echo "Invalid response. Exiting."
+        log "Invalid response. Exiting."
         exit 1
         ;;
 esac
+
+
+### SHELL ALIASES ###
+
+setup_aliases() {
+    local BASHRC="${TARGET_HOME}/.bashrc"
+
+    if [ ! -f "$BASHRC" ]; then
+        log "Warning: $BASHRC not found, skipping aliases."
+        return 1
+    fi
+
+    log "Adding shell aliases to $BASHRC..."
+
+    if grep -q "# === homelab aliases ===" "$BASHRC"; then
+        log "Aliases already present in $BASHRC. Skipping."
+        return
+    fi
+
+    cat >> "$BASHRC" <<'EOF'
+
+# === homelab aliases ===
+
+# ls shortcuts
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# git: stage all, commit with message, and push
+gcp() {
+  if [ -z "$1" ]; then
+    echo 'Usage: gcp "commit message"'
+    return 1
+  fi
+  git add -A && git commit -m "$1" && git push
+}
+
+# alert: notify when a long-running command finishes
+# Usage: sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# docker compose shortcuts
+alias dcu='docker compose up -d'
+alias dcd='docker compose down'
+alias dcl='docker compose logs -f'
+EOF
+
+    echo ""
+    log "Aliases added to $BASHRC. Run 'source $BASHRC' or open a new terminal to apply."
+    echo ""
+    echo "Available aliases:"
+    echo "  ll / la / l   -- ls variants"
+    echo "  gcp \"msg\"     -- git add -A && commit && push"
+    echo "  alert         -- desktop notification when a long command finishes"
+    echo "  dcu           -- docker compose up -d"
+    echo "  dcd           -- docker compose down"
+    echo "  dcl           -- docker compose logs -f"
+}
+
+log "Do you want to set up shell aliases (ll, la, l, gcp, alert, dcu, dcd, dcl)? (yes/no)"
+read -r setup_aliases_answer
+case $setup_aliases_answer in
+    [yY] | [yY][eE][sS])
+        setup_aliases
+        ;;
+    [nN] | [nN][oO])
+        log "Alias setup skipped."
+        ;;
+    *)
+        log "Invalid response. Exiting."
+        exit 1
+        ;;
+esac
+
+
+### SECURITY HARDENING ###
+
+detect_ssh_port() {
+    local port
+    port=$(grep -E '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null \
+        | awk '{print $2}' | tail -1)
+    if [ -z "$port" ]; then
+        port=$(ss -tlnp 2>/dev/null \
+            | awk '/sshd/{match($4, /:([0-9]+)$/, a); if (a[1]) print a[1]}' | head -1)
+    fi
+    echo "${port:-22}"
+}
+
+harden_firewall() {
+    log "Installing UFW..."
+    apt-get install -y ufw
+
+    ssh_port=$(detect_ssh_port)
+    log "SSH port: $ssh_port"
+
+    if ufw status | grep -q "Status: active"; then
+        log "WARNING: UFW is already active with existing rules:"
+        ufw status numbered
+        log "Existing rules will be preserved. Adding defaults and SSH rule only."
+    fi
+
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw allow "${ssh_port}/tcp" comment 'SSH'
+    ufw --force enable
+    ufw status verbose
+    log "Note: Docker-published ports bypass UFW via iptables. Bind services to 127.0.0.1 to keep them local-only."
+}
+
+harden_fail2ban() {
+    log "Installing fail2ban..."
+    apt-get install -y fail2ban
+
+    local ssh_port
+    ssh_port=$(detect_ssh_port)
+    log "fail2ban: watching SSH on port $ssh_port"
+
+    cat > /etc/fail2ban/jail.d/sshd.local <<EOF
+[sshd]
+enabled = true
+port    = $ssh_port
+maxretry = 4
+bantime  = 1h
+findtime = 10m
+EOF
+    systemctl enable --now fail2ban
+    systemctl restart fail2ban
+}
+
+harden_ssh() {
+    log "Hardening SSH config..."
+    SSHD=/etc/ssh/sshd_config
+    cp -n "$SSHD" "${SSHD}.bak.$(date +%s)"
+
+    set_sshd() {
+        key="$1"; val="$2"
+        if grep -qE "^\s*#?\s*${key}\b" "$SSHD"; then
+            sed -i -E "s|^\s*#?\s*${key}\b.*|${key} ${val}|" "$SSHD"
+        else
+            echo "${key} ${val}" >> "$SSHD"
+        fi
+    }
+
+    set_sshd PermitRootLogin no
+    set_sshd PubkeyAuthentication yes
+    set_sshd X11Forwarding no
+    set_sshd ChallengeResponseAuthentication no
+    set_sshd KbdInteractiveAuthentication no
+
+    auth_keys="${TARGET_HOME}/.ssh/authorized_keys"
+    if [ -s "$auth_keys" ]; then
+        log "Authorized key found for ${TARGET_USER}. Disabling password auth."
+        set_sshd PasswordAuthentication no
+    else
+        log "WARNING: no authorized_keys for ${TARGET_USER} at ${auth_keys}."
+        log "Leaving PasswordAuthentication enabled to prevent lockout."
+        log "Add a key, then run: sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' ${SSHD} && systemctl reload ssh"
+    fi
+
+    if ! sshd -t; then
+        log "Error: sshd config test failed. Restoring backup."
+        latest_bak=$(ls -t "${SSHD}.bak."* 2>/dev/null | head -1)
+        [ -n "$latest_bak" ] && cp "$latest_bak" "$SSHD"
+        return 1
+    fi
+    systemctl reload ssh
+}
+
+harden_sysctl() {
+    log "Applying kernel sysctl hardening..."
+    cat > /etc/sysctl.d/99-hardening.conf <<'EOF'
+# Network
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.all.secure_redirects = 0
+net.ipv4.conf.default.secure_redirects = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.tcp_syncookies = 1
+# Kernel
+kernel.kptr_restrict = 2
+kernel.dmesg_restrict = 1
+kernel.yama.ptrace_scope = 2
+kernel.sysrq = 0
+EOF
+    sysctl --system
+}
+
+harden_tmp_noexec() {
+    log "Setting noexec on /tmp..."
+    log "Note: noexec on /tmp can break some installers and build tools on low-memory systems."
+
+    if grep -qE '^\s*tmpfs\s+/tmp\s.*noexec' /etc/fstab; then
+        log "/tmp already has noexec in fstab, skipping."
+        return 0
+    fi
+
+    if grep -qE '^\s*tmpfs\s+/tmp\s' /etc/fstab; then
+        awk '/^[[:space:]]*tmpfs[[:space:]]+\/tmp[[:space:]]/ { if ($4 !~ /noexec/) $4 = $4 ",noexec" } { print }' \
+            /etc/fstab > /etc/fstab.tmp && mv /etc/fstab.tmp /etc/fstab
+    else
+        echo 'tmpfs /tmp tmpfs rw,nosuid,nodev,noexec 0 0' >> /etc/fstab
+    fi
+    log "Reboot or 'mount -o remount /tmp' to apply."
+}
+
+harden_journald() {
+    log "Limiting journald size..."
+    sed -i -E 's|^#?SystemMaxUse=.*|SystemMaxUse=100M|' /etc/systemd/journald.conf
+    grep -q '^SystemMaxUse=' /etc/systemd/journald.conf || echo 'SystemMaxUse=100M' >> /etc/systemd/journald.conf
+    systemctl restart systemd-journald
+}
+
+harden_cron() {
+    log "Restricting cron..."
+    local cron_allow=/etc/cron.allow
+
+    if [ -f "$cron_allow" ]; then
+        cp "$cron_allow" "${cron_allow}.bak.$(date +%s)"
+        grep -qxF 'root'         "$cron_allow" || echo 'root'         >> "$cron_allow"
+        grep -qxF "$TARGET_USER" "$cron_allow" || echo "$TARGET_USER" >> "$cron_allow"
+        log "Merged into existing $cron_allow"
+    else
+        { echo "root"; echo "$TARGET_USER"; } > "$cron_allow"
+        log "Created $cron_allow with root and $TARGET_USER"
+    fi
+    chmod 644 "$cron_allow"
+}
+
+harden_pwquality() {
+    log "Installing libpam-pwquality..."
+    apt-get install -y libpam-pwquality
+    sed -i -E 's|^#?\s*minlen\s*=.*|minlen = 12|' /etc/security/pwquality.conf 2>/dev/null || true
+    sed -i -E 's|^#?\s*retry\s*=.*|retry = 3|' /etc/security/pwquality.conf 2>/dev/null || true
+}
+
+harden_auditd() {
+    log "Installing auditd..."
+    apt-get install -y auditd audispd-plugins
+    systemctl enable --now auditd
+}
+
+harden_docker_logs() {
+    if ! command_exists docker; then
+        log "Docker not installed, skipping log caps."
+        return 0
+    fi
+
+    local daemon_json=/etc/docker/daemon.json
+    mkdir -p /etc/docker
+
+    if [ -f "$daemon_json" ]; then
+        cp -n "$daemon_json" "${daemon_json}.bak.$(date +%s)"
+        if command_exists jq; then
+            log "Merging log caps into existing $daemon_json..."
+            tmp=$(mktemp)
+            jq '. + {
+                "log-driver": "json-file",
+                "log-opts": { "max-size": "10m", "max-file": "3" },
+                "live-restore": true
+            }' "$daemon_json" > "$tmp" && mv "$tmp" "$daemon_json"
+        else
+            log "Warning: jq not found. $daemon_json exists; skipping merge to avoid clobber."
+            log "Install jq (apt-get install -y jq) and re-run, or edit manually."
+            return 0
+        fi
+    else
+        log "Writing fresh $daemon_json with log caps..."
+        cat > "$daemon_json" <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "live-restore": true
+}
+EOF
+    fi
+
+    chmod 644 "$daemon_json"
+
+    if command_exists python3; then
+        if ! python3 -c "import json; json.load(open('$daemon_json'))" 2>/dev/null; then
+            log "Error: $daemon_json invalid JSON. Restoring backup."
+            latest_bak=$(ls -t "${daemon_json}.bak."* 2>/dev/null | head -1)
+            [ -n "$latest_bak" ] && mv "$latest_bak" "$daemon_json" || true
+            return 1
+        fi
+    fi
+
+    if systemctl is-active --quiet docker; then
+        log "Restarting Docker to apply log caps..."
+        systemctl restart docker
+    fi
+
+    log "Note: log caps apply to NEW containers. Recreate existing ones to take effect:"
+    log "  cd <compose-dir> && docker compose up -d --force-recreate"
+}
+
+harden_docker_isolation() {
+    if ! command_exists docker; then
+        log "Docker not installed, skipping isolation hardening."
+        return 0
+    fi
+
+    if ! command_exists jq; then
+        log "Error: jq required for safe daemon.json merge. Aborting isolation step."
+        return 1
+    fi
+
+    local daemon_json=/etc/docker/daemon.json
+    mkdir -p /etc/docker
+    [ -f "$daemon_json" ] || echo '{}' > "$daemon_json"
+    cp -n "$daemon_json" "${daemon_json}.bak.$(date +%s)"
+
+    apply_jq() {
+        local expr="$1"
+        local tmp
+        tmp=$(mktemp)
+        jq "$expr" "$daemon_json" > "$tmp" && mv "$tmp" "$daemon_json"
+    }
+
+    log "Enable 'no-new-privileges' (blocks setuid escalation in containers)? Risk: NONE for typical workloads. (yes/no)"
+    read -r nnp_answer
+    case $nnp_answer in
+        [yY]|[yY][eE][sS])
+            apply_jq '. + {"no-new-privileges": true}'
+            log "no-new-privileges enabled."
+            ;;
+        *) log "no-new-privileges skipped." ;;
+    esac
+
+    log "Disable inter-container communication on default bridge ('icc: false')? Risk: containers on default bridge stop talking. Mitigation: use per-stack networks. (yes/no)"
+    read -r icc_answer
+    case $icc_answer in
+        [yY]|[yY][eE][sS])
+            apply_jq '. + {"icc": false}'
+            log "icc=false applied. Remember: per-stack networks required."
+            ;;
+        *) log "icc left at default (true)." ;;
+    esac
+
+    log "Enable userns-remap? Risk: HIGH on existing systems — volumes need chown. Recommended ONLY for fresh installs. (yes/no)"
+    read -r userns_answer
+    case $userns_answer in
+        [yY]|[yY][eE][sS])
+            apply_jq '. + {"userns-remap": "default"}'
+            log "userns-remap=default applied. WARNING: existing volumes may be inaccessible until chowned to dockremap UID."
+            ;;
+        *) log "userns-remap skipped." ;;
+    esac
+
+    chmod 644 "$daemon_json"
+
+    if command_exists python3; then
+        if ! python3 -c "import json; json.load(open('$daemon_json'))" 2>/dev/null; then
+            log "Error: $daemon_json invalid JSON. Restoring backup."
+            latest_bak=$(ls -t "${daemon_json}.bak."* 2>/dev/null | head -1)
+            [ -n "$latest_bak" ] && mv "$latest_bak" "$daemon_json" || true
+            return 1
+        fi
+    fi
+
+    if systemctl is-active --quiet docker; then
+        log "Restarting Docker to apply isolation flags..."
+        systemctl restart docker
+    fi
+
+    log "Final daemon.json:"
+    cat "$daemon_json"
+}
+
+harden_logrotate() {
+    apt-get install -y logrotate
+    if [ -f /etc/logrotate.d/rsyslog ]; then
+        log "logrotate rsyslog config present (defaults are sane)."
+    fi
+    logrotate -f /etc/logrotate.conf || log "Warning: logrotate run returned non-zero"
+}
+
+harden_bluetooth() {
+    log "Disabling Bluetooth via boot overlay..."
+    for cfg in /boot/firmware/config.txt /boot/config.txt; do
+        if [ -f "$cfg" ]; then
+            grep -q '^dtoverlay=disable-bt' "$cfg" || echo 'dtoverlay=disable-bt' >> "$cfg"
+            log "Updated $cfg"
+        fi
+    done
+    systemctl disable --now bluetooth.service hciuart.service 2>/dev/null || true
+}
+
+preflight_check() {
+    log "=== PREFLIGHT SUMMARY ==="
+    echo ""
+    echo "System : $(. /etc/os-release && echo "$PRETTY_NAME")"
+    echo "User   : $TARGET_USER (home: $TARGET_HOME)"
+    echo ""
+
+    # Firewall
+    if command_exists ufw && ufw status | grep -q "Status: active"; then
+        rule_count=$(ufw status numbered 2>/dev/null | grep -c '^\[' || echo 0)
+        echo "Firewall  : UFW active, $rule_count rule(s) — existing rules will be PRESERVED"
+    else
+        echo "Firewall  : UFW not active"
+    fi
+
+    # SSH
+    pw_auth=$(grep -E '^\s*PasswordAuthentication\s' /etc/ssh/sshd_config 2>/dev/null \
+        | awk '{print $2}' | tail -1 || echo "default(yes)")
+    echo "SSH passwd: PasswordAuthentication = ${pw_auth}"
+    auth_keys="${TARGET_HOME}/.ssh/authorized_keys"
+    if [ -s "$auth_keys" ]; then
+        key_count=$(grep -cE '^(ssh-|ecdsa-|sk-)' "$auth_keys" 2>/dev/null || echo "?")
+        echo "SSH keys  : $key_count key(s) for $TARGET_USER — safe to disable password auth"
+    else
+        echo "SSH keys  : NONE for $TARGET_USER — password auth will NOT be disabled (lockout prevention)"
+    fi
+
+    # /tmp
+    if grep -qE '^\s*tmpfs\s+/tmp\s.*noexec' /etc/fstab 2>/dev/null; then
+        echo "/tmp noexec: already set"
+    else
+        mem_mb=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo)
+        warn=""
+        [ "$mem_mb" -lt 512 ] && warn=" — WARNING: low memory (${mem_mb}MB), tmpfs may cause OOM"
+        echo "/tmp noexec: not set — can break build tools and installers${warn}"
+    fi
+
+    # Docker
+    if command_exists docker; then
+        running=$(docker ps -q 2>/dev/null | wc -l)
+        daemon_note="no daemon.json"
+        [ -f /etc/docker/daemon.json ] && daemon_note="daemon.json exists (jq merge)"
+        echo "Docker    : $(docker --version | awk '{print $3}' | tr -d ','), $running running container(s), $daemon_note"
+    else
+        echo "Docker    : not installed — Docker hardening will be skipped"
+    fi
+
+    # Cron
+    if [ -f /etc/cron.allow ]; then
+        current=$(tr '\n' ' ' < /etc/cron.allow)
+        echo "Cron allow: already set ($current)"
+    else
+        echo "Cron allow: not set — will restrict to root + $TARGET_USER only"
+    fi
+
+    echo ""
+    log "==========================="
+    echo ""
+}
+
+apply_hardening() {
+    preflight_check
+
+    log "Proceed with hardening? (yes/no)"
+    read -r proceed
+    case $proceed in
+        [yY]|[yY][eE][sS]) ;;
+        *) log "Hardening cancelled."; return 0 ;;
+    esac
+
+    # Safe steps — no individual prompts
+    harden_fail2ban
+    harden_journald
+    harden_logrotate
+    harden_pwquality
+    harden_auditd
+
+    # Prompted: sysctl (rp_filter affects VPN/subnet routing; ptrace_scope=2 blocks strace/gdb)
+    log "Apply sysctl hardening (rp_filter, ptrace_scope=2, syncookies, kptr_restrict)? Can affect VPN routing and debugging. (yes/no)"
+    read -r sysctl_answer
+    case $sysctl_answer in
+        [yY]|[yY][eE][sS]) harden_sysctl ;;
+        *) log "sysctl hardening skipped." ;;
+    esac
+
+    # Risky: firewall
+    log "Configure UFW (deny incoming, allow outgoing, keep SSH open)? (yes/no)"
+    read -r fw_answer
+    case $fw_answer in
+        [yY]|[yY][eE][sS]) harden_firewall ;;
+        *) log "Firewall skipped." ;;
+    esac
+
+    # Risky: SSH
+    log "Harden SSH (PermitRootLogin no, disable password auth if keys exist)? (yes/no)"
+    read -r ssh_answer
+    case $ssh_answer in
+        [yY]|[yY][eE][sS]) harden_ssh ;;
+        *) log "SSH hardening skipped." ;;
+    esac
+
+    # Risky: /tmp noexec
+    log "Mount /tmp as noexec? Can break build tools and some installers. (yes/no)"
+    read -r tmp_answer
+    case $tmp_answer in
+        [yY]|[yY][eE][sS]) harden_tmp_noexec ;;
+        *) log "/tmp noexec skipped." ;;
+    esac
+
+    # Risky: Docker daemon (jq installed once for both functions)
+    log "Apply Docker daemon hardening (log caps + isolation options)? Restarts Docker. (yes/no)"
+    read -r docker_harden_answer
+    case $docker_harden_answer in
+        [yY]|[yY][eE][sS])
+            apt-get install -y jq
+            harden_docker_logs
+            harden_docker_isolation
+            ;;
+        *) log "Docker daemon hardening skipped." ;;
+    esac
+
+    # Risky: cron
+    log "Restrict cron to root and $TARGET_USER only (/etc/cron.allow)? (yes/no)"
+    read -r cron_answer
+    case $cron_answer in
+        [yY]|[yY][eE][sS]) harden_cron ;;
+        *) log "Cron restriction skipped." ;;
+    esac
+
+    log "Hardening done. Reboot recommended."
+}
+
+log "Apply security hardening? (yes/no)"
+read -r harden_answer
+case $harden_answer in
+    [yY] | [yY][eE][sS])
+        apply_hardening
+        ;;
+    [nN] | [nN][oO])
+        log "Security hardening skipped."
+        ;;
+    *)
+        log "Invalid response. Exiting."
+        exit 1
+        ;;
+esac
+
+
+### DISABLE BLUETOOTH (RPi) ###
+
+log "Disable Bluetooth (RPi only, edits boot overlay, requires reboot)? (yes/no)"
+read -r bt_answer
+case $bt_answer in
+    [yY] | [yY][eE][sS])
+        harden_bluetooth
+        log "Bluetooth disabled. Reboot to take effect."
+        ;;
+    [nN] | [nN][oO])
+        log "Bluetooth left untouched."
+        ;;
+    *)
+        log "Invalid response. Exiting."
+        exit 1
+        ;;
+esac
+
+
+### INSTALLATION SUMMARY ###
+
+log "Homelab setup complete! Installed versions:"
+echo ""
+
+if command_exists unattended-upgrade; then
+    echo "✓ unattended-upgrades: $(dpkg -l | awk '/^ii  unattended-upgrades/ {print $3}')"
+fi
+
+if command_exists docker; then
+    echo "✓ Docker: $(docker --version | awk '{print $3}' | sed 's/,//')"
+fi
+
+if docker compose version >/dev/null 2>&1; then
+    echo "✓ Docker Compose (plugin): $(docker compose version --short)"
+fi
+
+if command_exists podman; then
+    echo "✓ Podman: $(podman --version | awk '{print $3}')"
+fi
+
+if command_exists tailscale; then
+    echo "✓ Tailscale: $(tailscale version | head -1)"
+fi
+
+if command_exists ufw; then
+    echo "✓ UFW: $(ufw status | head -1)"
+fi
+
+if command_exists fail2ban-client; then
+    echo "✓ fail2ban: $(fail2ban-client --version 2>/dev/null | head -1)"
+fi
+
+echo ""
+log "Tailscale: run 'tailscale up' to authenticate if not already"
+if docker ps --filter name=portainer --format '{{.Names}}' 2>/dev/null | grep -q portainer; then
+    log "Portainer: http://127.0.0.1:9000 (localhost only — SSH tunnel for remote: ssh -L 9000:127.0.0.1:9000 user@host)"
+fi
+log "Reboot recommended to apply hardening (sysctl/tmpfs/Bluetooth)"
