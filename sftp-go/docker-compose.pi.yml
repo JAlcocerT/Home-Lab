@@ -1,0 +1,16 @@
+services:
+  sftpgo:
+    image: drakkan/sftpgo:latest
+    container_name: sftpgo
+    restart: unless-stopped
+    # Port mappings:
+    # 8066 (Host) -> 8080 (Container): web admin panel + WebDAV
+    # 2022 (Host) -> 2022 (Container): SFTP/FTP/FTPS
+    ports:
+      - "8066:8080"
+      - "2022:2022"
+    # Mount the whole home folder so SFTP/WebDAV users can browse everything
+    # under /home/jalcocert. Scope per-user visibility in the sftp-go admin
+    # panel by setting each user's home directory to a subpath of /srv.
+    volumes:
+      - /home/jalcocert:/srv
