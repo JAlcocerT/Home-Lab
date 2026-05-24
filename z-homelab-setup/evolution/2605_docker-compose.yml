@@ -30,10 +30,10 @@ services:
       - /mnt/data1tb/nextcloud/db:/config #- db:/var/lib/mysql
     environment:
       - MYSQL_INITDB_SKIP_TZINFO=1
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
-      - MYSQL_USER=${MYSQL_USER:-nextcloud}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD_SYNC:-rootpassword-sync}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD_SYNC:-password-sync}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SYNC:-nextcloud_sync}
+      - MYSQL_USER=${MYSQL_USER_SYNC:-nextcloud_sync}
     networks:
       - nextcloud_internal
 
@@ -55,11 +55,54 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-nextcloud}
       - MYSQL_USER=${MYSQL_USER:-nextcloud}
       - MYSQL_HOST=${MYSQL_HOST:-nextclouddb}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.12:8099} #by default its just localhost:8099
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-http://192.168.1.2:8099} #by default its just localhost:8099
       #- NEXTCLOUD_TRUSTED_DOMAINS=0:cloud.example.com 1:nextcloud.lan 2:192.168.1.10
     networks:
       - nextcloud_internal
       - cloudflared_tunnel
+
+
+### NEXTCLOUD SYNC
+  nextclouddb-sync:
+    image: mariadb:lts-noble #mariadb:11.4.8 #mariadb:lts-noble
+    restart: always
+    container_name: nextclouddb-sync
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /mnt/data2tb/nextcloud/db:/config #- db:/var/lib/mysql
+    environment:
+      - MYSQL_INITDB_SKIP_TZINFO=1
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD_SYNC:-rootpassword-sync}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD_SYNC:-password-sync}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SYNC:-nextcloud_sync}
+      - MYSQL_USER=${MYSQL_USER_SYNC:-nextcloud_sync}
+    networks:
+      - nextcloud_int
+
+  nextcloud-app-sync:
+    image: nextcloud:33.0
+    container_name: nextcloud-sync #https://hub.docker.com/_/nextcloud/tags
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 8069:80
+    user: "1000:1000" # Force Nextcloud to run as YOU, skipping the chown
+    depends_on:
+      - nextclouddb-sync
+    volumes:
+      - /mnt/data2tb/nextcloud/html:/var/www/html
+    restart: always
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD_SYNC:-password-sync}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SYNC:-nextcloud_sync}
+      - MYSQL_USER=${MYSQL_USER_SYNC:-nextcloud_sync}
+      - MYSQL_HOST=${MYSQL_HOST_SYNC:-nextclouddb-sync}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS_SYNC:-http://192.168.1.2:8069} #default its just localhost
+    networks:
+      - nextcloud_int
+      - cloudflared_tunnel
+
 
   jellyfin:
     image: lscr.io/linuxserver/jellyfin
@@ -162,24 +205,24 @@ services:
   #https://github.com/bpatrik/pigallery2
 
   #admin/admin
-  pigallery2:
-    image: bpatrik/pigallery2:3.5.2 #https://github.com/bpatrik/pigallery2
-    container_name: pigallery2
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - /home/Docker/pigallery2/config:/app/data/config
-      - /home/Docker/pigallery2/tmp:/app/data/tmp
-      - /home/Docker/pigallery2/db:/app/data/db #db_data_pigallery:/app/data/db
-      - /mnt/data2tb/Z_BackUP_HD-SDD/Z_FOTOS:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
-      #- /home/jalcocert/Desktop/pixel8pro:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
-      #- /mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro #your images folder
-      #- "/mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro"
-    ports:
-      - 8088:80
-    restart: unless-stopped
+  # pigallery2:
+  #   image: bpatrik/pigallery2:3.5.2 #https://github.com/bpatrik/pigallery2
+  #   container_name: pigallery2
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #     - /home/Docker/pigallery2/config:/app/data/config
+  #     - /home/Docker/pigallery2/tmp:/app/data/tmp
+  #     - /home/Docker/pigallery2/db:/app/data/db #db_data_pigallery:/app/data/db
+  #     - /mnt/data2tb/Z_BackUP_HD-SDD/Z_FOTOS:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
+  #     #- /home/jalcocert/Desktop/pixel8pro:/app/data/images:ro #your images folder #CHANGE THIS ONE!!!!!
+  #     #- /mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro #your images folder
+  #     #- "/mnt/ext4_drive/Syncthing_Pixel8:/app/data/images:ro"
+  #   ports:
+  #     - 8088:80
+  #   restart: unless-stopped
 
   ##############
   #### TOOLS ###
@@ -244,6 +287,20 @@ services:
   #     - LOGSEQ_SERVER_PORT=80  # Match the Nginx listen port
   #   restart: unless-stopped
 
+  wireshark:
+    image: lscr.io/linuxserver/wireshark:latest #https://github.com/linuxserver/docker-wireshark
+    container_name: wireshark
+    cap_add:
+      - NET_ADMIN # Access to read network configuration
+    network_mode: host
+    environment:
+      - PUID=1000 # User ID - find yours with `id your_user_name`
+      - PGID=1000 # Group ID - find yours with `id your_user_name`
+      - TZ=Europe/Rome # Set your timezone
+    volumes:
+      - /home/jalcocert/DOCKER/wireshark/data:/config # Persistent storage for configurations and captures
+    restart: unless-stopped
+
 #############
 #############
 
@@ -255,5 +312,7 @@ volumes:
 networks:
   nextcloud_internal:
     internal: true # DB has no internet access; nextcloud-app reaches out via cloudflared_tunnel
+  nextcloud_int:
+    internal: true # DB has no internet access; nextcloud-app-sync reaches out via cloudflared_tunnel
   cloudflared_tunnel:
     external: true

@@ -1,6 +1,7 @@
 ---
 source_code: https://github.com/postgres/postgres
 official_docs: https://www.postgresql.org/docs/16/index.html
+tags: ["D&A"]
 ---
 
 Selfhost PGsql as an alternative to cloud services, as commented [here](https://jalcocert.github.io/JAlcocerT/creating-a-diy-paas-service/#selfhost-postgres).

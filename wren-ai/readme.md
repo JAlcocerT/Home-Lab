@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/Canner/WrenAI
 post:
-tags: ["Gen-BI"]
+tags: ["Gen-BI","D&A","Analytics"]
 ---
 
 Forked it:
