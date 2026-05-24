@@ -101,7 +101,7 @@ services:
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS_SYNC:-http://192.168.1.2:8069} #default its just localhost
     networks:
       - nextcloud_int
-      - cloudflared_tunnel
+      #- cloudflared_tunnel
 
 
   jellyfin:
@@ -300,6 +300,22 @@ services:
     volumes:
       - /home/jalcocert/DOCKER/wireshark/data:/config # Persistent storage for configurations and captures
     restart: unless-stopped
+
+  # wireshark:
+  #   image: lscr.io/linuxserver/wireshark:latest #https://github.com/linuxserver/docker-wireshark
+  #   container_name: wireshark
+  #   cap_add:
+  #     - NET_ADMIN # Access to read network configuration
+  #   ports:
+  #     - 3000:3000 # Web UI
+  #     - 3001:3001 # Desktop GUI HTTPS
+  #   environment:
+  #     - PUID=1000 # User ID - find yours with `id your_user_name`
+  #     - PGID=1000 # Group ID - find yours with `id your_user_name`
+  #     - TZ=Europe/Rome # Set your timezone
+  #   volumes:
+  #     - /home/jalcocert/DOCKER/wireshark/data:/config # Persistent storage for configurations and captures
+  #   restart: unless-stopped
 
 #############
 #############
