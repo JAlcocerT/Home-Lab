@@ -46,3 +46,7 @@ slidev-sample/
 
 baserow_data/
 pihole_data/
+
+# Runtime data and secrets
+sftp-go/sftpgo-data/
+sftp-go/sftpgo-data.backup-before-data2tb-format-*/

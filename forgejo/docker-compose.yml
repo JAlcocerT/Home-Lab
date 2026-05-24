@@ -18,7 +18,7 @@ services:
       - GITEA__database__PASSWD=forgejo
       - GITEA__security__INSTALL_LOCK=true
       - GITEA__server__DOMAIN=localhost
-      - GITEA__server__ROOT_URL=http://localhost:3034/
+      - GITEA__server__ROOT_URL=http://192.168.1.2:3034/
     restart: always
     networks:
       - forgejo

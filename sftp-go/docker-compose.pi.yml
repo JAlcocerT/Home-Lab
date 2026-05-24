@@ -13,4 +13,7 @@ services:
     # under /home/jalcocert. Scope per-user visibility in the sftp-go admin
     # panel by setting each user's home directory to a subpath of /srv.
     volumes:
-      - /home/jalcocert:/srv
+      - ./sftpgo-data:/var/lib/sftpgo # persists users
+      - /home:/srv/home
+      - /mnt/data1tb:/srv/data1tb
+      - /mnt/data2tb:/srv/data2tb

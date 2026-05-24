@@ -70,7 +70,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - /mnt/data2tb/nextcloud/db:/config #- db:/var/lib/mysql
+      - /mnt/data2tb/nextcloud/db:/var/lib/mysql
     environment:
       - MYSQL_INITDB_SKIP_TZINFO=1
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD_SYNC:-rootpassword-sync}
@@ -101,7 +101,7 @@ services:
       - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS_SYNC:-http://192.168.1.2:8069} #default its just localhost
     networks:
       - nextcloud_int
-      #- cloudflared_tunnel
+      - cloudflared_tunnel
 
 
   jellyfin:
