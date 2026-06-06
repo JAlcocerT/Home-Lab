@@ -1,0 +1,17 @@
+services:
+  hermes-agent:
+    image: nousresearch/hermes-agent:v2026.6.5
+    container_name: hermes-agent
+    restart: unless-stopped
+    volumes:
+      - ${HERMES_DATA_DIR:-./data}:/opt/data
+    ports:
+      - "${HERMES_API_BIND:-127.0.0.1}:${HERMES_API_PORT:-8642}:8642"
+    environment:
+      HERMES_UID: ${HERMES_UID:-10000}
+      HERMES_GID: ${HERMES_GID:-10000}
+      API_SERVER_ENABLED: ${API_SERVER_ENABLED:-false}
+      API_SERVER_KEY: ${API_SERVER_KEY:-}
+      API_SERVER_HOST: ${API_SERVER_HOST:-127.0.0.1}
+      API_SERVER_CORS_ORIGINS: ${API_SERVER_CORS_ORIGINS:-}
+    command: ["gateway", "run"]

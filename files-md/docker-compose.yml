@@ -1,0 +1,19 @@
+services:
+  files-md:
+    container_name: files-md
+    build:
+      context: https://github.com/zakirullin/files.md.git#dcda6fcfc1759868922785e7c5b2381ba85acfc0
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${FILES_MD_BIND:-127.0.0.1}:${FILES_MD_PORT:-8088}:8080"
+    environment:
+      APP_URL: "${FILES_MD_PUBLIC_URL:-http://localhost:8088}"
+      API_URL: "${FILES_MD_PUBLIC_URL:-http://localhost:8088}"
+      STORAGE_DIR: "/app/storage"
+      TOKENS_DIR: "/app/tokens"
+      CERT_DIR: ""
+      STORAGE_QUOTA_KB: "${FILES_MD_STORAGE_QUOTA_KB:-102400}"
+    volumes:
+      - ./storage:/app/storage
+      - ./tokens:/app/tokens

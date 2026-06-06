@@ -1,0 +1,35 @@
+services:
+  voicebox:
+    build:
+      context: https://github.com/jamiepine/voicebox.git#main
+    container_name: voicebox
+    restart: unless-stopped
+    ports:
+      # Localhost-only by default because Voicebox stores voice samples,
+      # generated audio, transcripts, and model state.
+      - "127.0.0.1:17493:17493"
+    volumes:
+      # Generated audio is easy to inspect and back up from the host.
+      - ./output:/app/data/generations
+      # App database, profiles, captures, and internal data.
+      - voicebox-data:/app/data
+      # Hugging Face cache so models are not downloaded after every rebuild.
+      - huggingface-cache:/home/voicebox/.cache/huggingface
+    environment:
+      LOG_LEVEL: info
+      NUMBA_CACHE_DIR: /tmp/numba_cache
+    networks:
+      - voicebox-net
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+
+networks:
+  voicebox-net:
+    driver: bridge
+
+volumes:
+  voicebox-data:
+  huggingface-cache:

@@ -1,0 +1,30 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: zigbee2mqtt-mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto-data:/mosquitto/data
+      - ./mosquitto-log:/mosquitto/log
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+
+  zigbee2mqtt:
+    image: ghcr.io/koenkk/zigbee2mqtt:${ZIGBEE2MQTT_TAG:-latest}
+    container_name: zigbee2mqtt
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./data:/app/data
+      - /run/udev:/run/udev:ro
+    devices:
+      - ${ZIGBEE_ADAPTER:?Set ZIGBEE_ADAPTER in .env to your /dev/serial/by-id/... path}:/dev/ttyACM0
+    ports:
+      - "${ZIGBEE2MQTT_FRONTEND_PORT:-8080}:8080"
+    environment:
+      TZ: ${TZ:-Etc/UTC}
+      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
+      ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
+      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyACM0
