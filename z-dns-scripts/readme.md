@@ -19,3 +19,32 @@ https://github.com/cloudflare/cloudflare-python
 
 **Porkbun**
 https://porkbun.com/api
+## Google Workspace DNS check
+
+Use `google_workspace_dns_check.py` to inspect a domain before connecting it to Google Workspace.
+
+Example:
+
+```sh
+python3 google_workspace_dns_check.py getslubnechwile.com
+```
+
+What it checks:
+
+- NS records
+- MX records
+- SPF at the root domain
+- DKIM for `google` and `default` selectors by default
+- DMARC at `_dmarc.<domain>`
+
+If you want JSON output:
+
+```sh
+python3 google_workspace_dns_check.py getslubnechwile.com --json
+```
+
+If your DKIM selector is different, repeat `--selector`:
+
+```sh
+python3 google_workspace_dns_check.py getslubnechwile.com --selector google --selector mail
+```
