@@ -1,0 +1,114 @@
+# https://github.com/tess1o/geopulse
+# https://tess1o.github.io/geopulse/docs/getting-started/deployment/docker-compose
+# Validated with: GEOPULSE_POSTGRES_PASSWORD=replace-me GEOPULSE_MQTT_PASSWORD=replace-me docker compose config
+
+name: geopulse
+
+services:
+  geopulse-keygen:
+    image: alpine:3.22
+    container_name: geopulse-keygen
+    restart: "no"
+    volumes:
+      - ./keys:/keys
+    command:
+      - sh
+      - -ec
+      - |
+        set -e
+        mkdir -p /keys
+        if [ ! -f /keys/jwt-private-key.pem ] || [ ! -f /keys/jwt-public-key.pem ]; then
+          command -v openssl >/dev/null 2>&1 || apk add --no-cache openssl
+          openssl genpkey -algorithm RSA -out /keys/jwt-private-key.pem
+          openssl rsa -pubout -in /keys/jwt-private-key.pem -out /keys/jwt-public-key.pem
+          chmod 644 /keys/jwt-private-key.pem /keys/jwt-public-key.pem
+        fi
+        if [ ! -f /keys/ai-encryption-key.txt ]; then
+          command -v openssl >/dev/null 2>&1 || apk add --no-cache openssl
+          openssl rand -base64 32 > /keys/ai-encryption-key.txt
+          chmod 644 /keys/ai-encryption-key.txt
+        fi
+
+  geopulse-postgres:
+    image: postgis/postgis:17-3.5
+    container_name: geopulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${GEOPULSE_POSTGRES_USERNAME:-geopulse}
+      POSTGRES_PASSWORD: ${GEOPULSE_POSTGRES_PASSWORD:?Set GEOPULSE_POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${GEOPULSE_POSTGRES_DB:-geopulse}
+    volumes:
+      - geopulse-postgres-data:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c timezone=UTC
+      -c shared_buffers=${GEOPULSE_POSTGRES_SHARED_BUFFERS:-256MB}
+      -c work_mem=${GEOPULSE_POSTGRES_WORK_MEM:-8MB}
+      -c maintenance_work_mem=${GEOPULSE_POSTGRES_MAINTENANCE_WORK_MEM:-64MB}
+      -c effective_cache_size=${GEOPULSE_POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      -c max_wal_size=${GEOPULSE_POSTGRES_MAX_WAL_SIZE:-512MB}
+      -c checkpoint_completion_target=${GEOPULSE_POSTGRES_CHECKPOINT_TARGET:-0.9}
+      -c wal_buffers=${GEOPULSE_POSTGRES_WAL_BUFFERS:-16MB}
+      -c random_page_cost=${GEOPULSE_POSTGRES_RANDOM_PAGE_COST:-1.1}
+      -c effective_io_concurrency=${GEOPULSE_POSTGRES_IO_CONCURRENCY:-100}
+      -c autovacuum_naptime=${GEOPULSE_POSTGRES_AUTOVACUUM_NAPTIME:-60s}
+      -c autovacuum_vacuum_scale_factor=${GEOPULSE_POSTGRES_VACUUM_SCALE_FACTOR:-0.2}
+      -c log_min_duration_statement=${GEOPULSE_POSTGRES_LOG_SLOW_QUERIES:-5000}
+      -c track_io_timing=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  geopulse-backend:
+    image: tess1o/geopulse-backend:${GEOPULSE_VERSION:-1.35.0}-native
+    container_name: geopulse-backend
+    mem_limit: ${GEOPULSE_BACKEND_MEM_LIMIT:-512m}
+    mem_reservation: ${GEOPULSE_BACKEND_MEM_RESERVATION:-128m}
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      GEOPULSE_POSTGRES_HOST: geopulse-postgres
+      GEOPULSE_POSTGRES_PORT: 5432
+      GEOPULSE_POSTGRES_DB: ${GEOPULSE_POSTGRES_DB:-geopulse}
+      GEOPULSE_POSTGRES_USERNAME: ${GEOPULSE_POSTGRES_USERNAME:-geopulse}
+      GEOPULSE_POSTGRES_PASSWORD: ${GEOPULSE_POSTGRES_PASSWORD:?Set GEOPULSE_POSTGRES_PASSWORD in .env}
+      GEOPULSE_POSTGRES_URL: jdbc:postgresql://geopulse-postgres:5432/${GEOPULSE_POSTGRES_DB:-geopulse}
+      GEOPULSE_BACKEND_URL: http://geopulse-backend:8080
+    volumes:
+      - ./keys:/app/keys
+      - ./import-drop:/data/geopulse-import
+    depends_on:
+      geopulse-keygen:
+        condition: service_completed_successfully
+      geopulse-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  geopulse-ui:
+    image: tess1o/geopulse-ui:${GEOPULSE_VERSION:-1.35.0}
+    container_name: geopulse-ui
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${GEOPULSE_HTTP_PORT:-5555}:80"
+    depends_on:
+      geopulse-backend:
+        condition: service_healthy
+
+  # Optional MQTT broker for OwnTracks MQTT mode. If enabled, set
+  # GEOPULSE_MQTT_ENABLED=true and use docker-compose-complete.yml upstream
+  # or extend this stack with a Mosquitto service.
+
+volumes:
+  geopulse-postgres-data:

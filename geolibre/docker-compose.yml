@@ -1,0 +1,20 @@
+services:
+  geolibre:
+    image: ghcr.io/opengeos/geolibre@sha256:e0c30a4191dcfec48eee4ed7d2839311ddde353f87afce21f2639358ea2c623a
+    container_name: geolibre
+    restart: unless-stopped
+    ports:
+      - "${GEOLIBRE_PORT:-127.0.0.1:8097}:80"
+    environment:
+      GEOLIBRE_AUTH_USER: "${GEOLIBRE_AUTH_USER:-}"
+      GEOLIBRE_AUTH_PASSWORD: "${GEOLIBRE_AUTH_PASSWORD:-}"
+      GEOLIBRE_DISABLE_SIDECAR: "${GEOLIBRE_DISABLE_SIDECAR:-0}"
+      GEOLIBRE_CONVERSION_ROOTS: "${GEOLIBRE_CONVERSION_ROOTS:-/data}"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1/healthz', timeout=4).status==200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

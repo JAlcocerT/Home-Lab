@@ -1,0 +1,132 @@
+# https://github.com/Freika/dawarich
+# https://dawarich.app/docs/intro
+# Validated with: POSTGRES_PASSWORD=replace-me SECRET_KEY_BASE=replace-me docker compose config
+
+name: dawarich
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: dawarich_redis
+    command: >
+      redis-server
+      --save 900 1
+      --save 300 10
+      --appendonly no
+    restart: unless-stopped
+    volumes:
+      - dawarich_shared:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: dawarich_db
+    shm_size: 1g
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dawarich}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-dawarich_production}
+    volumes:
+      - dawarich_db_data:/var/lib/postgresql/data
+      - dawarich_shared:/var/shared
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  app:
+    image: freikin/dawarich:${DAWARICH_VERSION:-1.10.0}
+    container_name: dawarich_app
+    restart: unless-stopped
+    entrypoint: web-entrypoint.sh
+    command: ["bin/rails", "server", "-p", "3000", "-b", "::"]
+    ports:
+      - "${DAWARICH_APP_PORT:-3000}:3000"
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://redis:6379
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER:-dawarich}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DATABASE_NAME: ${POSTGRES_DB:-dawarich_production}
+      APPLICATION_HOSTS: ${APPLICATION_HOSTS:-localhost,127.0.0.1,::1}
+      APPLICATION_PROTOCOL: ${APPLICATION_PROTOCOL:-http}
+      TIME_ZONE: ${TIME_ZONE:-Europe/London}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in .env}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: ${STORE_GEODATA:-true}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+      PROMETHEUS_EXPORTER_ENABLED: ${PROMETHEUS_EXPORTER_ENABLED:-false}
+    volumes:
+      - dawarich_public:/var/app/public
+      - dawarich_watched:/var/app/tmp/imports/watched
+      - dawarich_storage:/var/app/storage
+      - dawarich_db_data:/dawarich_db_data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO - http://127.0.0.1:3000/api/v1/health | grep -q '\"status\"[[:space:]]*:[[:space:]]*\"ok\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  sidekiq:
+    image: freikin/dawarich:${DAWARICH_VERSION:-1.10.0}
+    container_name: dawarich_sidekiq
+    restart: unless-stopped
+    entrypoint: sidekiq-entrypoint.sh
+    command: ["sidekiq"]
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://redis:6379
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER:-dawarich}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DATABASE_NAME: ${POSTGRES_DB:-dawarich_production}
+      APPLICATION_HOSTS: ${APPLICATION_HOSTS:-localhost,127.0.0.1,::1}
+      APPLICATION_PROTOCOL: ${APPLICATION_PROTOCOL:-http}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in .env}
+      RAILS_LOG_TO_STDOUT: "true"
+      SELF_HOSTED: "true"
+      STORE_GEODATA: ${STORE_GEODATA:-true}
+      BACKGROUND_PROCESSING_CONCURRENCY: ${BACKGROUND_PROCESSING_CONCURRENCY:-3}
+      PROMETHEUS_EXPORTER_ENABLED: ${PROMETHEUS_EXPORTER_ENABLED:-false}
+    volumes:
+      - dawarich_public:/var/app/public
+      - dawarich_watched:/var/app/tmp/imports/watched
+      - dawarich_storage:/var/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sidekiq"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  dawarich_db_data:
+  dawarich_shared:
+  dawarich_public:
+  dawarich_watched:
+  dawarich_storage:
