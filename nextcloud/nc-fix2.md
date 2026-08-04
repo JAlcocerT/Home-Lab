@@ -41,3 +41,6 @@ docker start nextcloud
 ## Key Takeaway
 
 Any Nextcloud behind a reverse proxy (Traefik, Cloudflare Tunnels, NGINX) that terminates SSL needs `overwriteprotocol` set to `https` in `config.php` for desktop/mobile clients to work.
+
+This recovery history is now consolidated in
+[`recovery.md`](/home/jalcocert/Home-Lab/nextcloud/recovery.md).

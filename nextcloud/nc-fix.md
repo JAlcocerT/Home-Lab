@@ -129,3 +129,6 @@ docker compose -f 2602_docker-compose.yml up -d jellyfin
 # Start ALL Media & Tools services (Everything EXCEPT Nextcloud)
 docker compose -f 2602_docker-compose.yml up -d jellyfin metube navidrome qbittorrent prowlarr homepage-lite termix pigallery2 uptimekuma-monitoring neko logseq
 ```
+
+This recovery history is now consolidated in
+[`recovery.md`](/home/jalcocert/Home-Lab/nextcloud/recovery.md).
