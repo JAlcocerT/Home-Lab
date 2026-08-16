@@ -1,0 +1,13 @@
+services:
+  hammer:
+    image: ghcr.io/darkrock-studios/hammer-editor/server:latest
+    container_name: hammer-server
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${HAMMER_HTTP_BIND:-127.0.0.1}:${HAMMER_HTTP_PORT:-8080}:8080"
+    volumes:
+      - hammer-data:/data
+
+volumes:
+  hammer-data:
