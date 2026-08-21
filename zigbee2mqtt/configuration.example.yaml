@@ -1,0 +1,23 @@
+version: 5
+
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mosquitto:1883
+
+serial:
+  port: /dev/ttyACM0
+  # Set this when auto-detection is wrong, for example:
+  # adapter: ember
+  # adapter: zstack
+
+frontend:
+  enabled: true
+
+homeassistant:
+  enabled: false
+
+advanced:
+  channel: 11
+  network_key: GENERATE
+  pan_id: GENERATE
+  ext_pan_id: GENERATE
