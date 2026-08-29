@@ -1,0 +1,18 @@
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_WEB_PORT:-127.0.0.1:8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-127.0.0.1:1025}:1025"
+    environment:
+      MP_MAX_MESSAGES: ${MP_MAX_MESSAGES:-5000}
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: ${MP_SMTP_AUTH_ACCEPT_ANY:-1}
+      MP_SMTP_AUTH_ALLOW_INSECURE: ${MP_SMTP_AUTH_ALLOW_INSECURE:-1}
+    volumes:
+      - mailpit-data:/data
+
+volumes:
+  mailpit-data:

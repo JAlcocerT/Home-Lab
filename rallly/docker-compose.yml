@@ -1,0 +1,95 @@
+services:
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    profiles: ["bundled-proxy"]
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json"
+    environment:
+      DOCKER_API_VERSION: "1.40"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme-data:/acme
+
+  web:
+    image: ${RALLLY_IMAGE:-lukevella/rallly:4}
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://${DOMAIN}}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/rallly}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://garage:3900}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-rallly}
+      S3_REGION: ${S3_REGION:-garage}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID in .env}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY in .env}
+    volumes:
+      - type: bind
+        source: ${CA_CERT_FILE:-/dev/null}
+        target: /etc/ssl/certs/rallly-custom-ca.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+
+  db:
+    image: postgres:${POSTGRES_VERSION:-18}-alpine
+    restart: unless-stopped
+    profiles: ["bundled-db"]
+    volumes:
+      - ${POSTGRES_VOLUME:-db-data}:${POSTGRES_DATA_MOUNT:-/var/lib/postgresql}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: rallly
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    restart: unless-stopped
+    profiles: ["bundled-storage"]
+    volumes:
+      - ./config/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?Set GARAGE_RPC_SECRET in .env}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?Set S3_ACCESS_KEY_ID in .env}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:?Set S3_SECRET_ACCESS_KEY in .env}
+      GARAGE_DEFAULT_BUCKET: rallly
+    command: /garage server --single-node --default-bucket
+    healthcheck:
+      test: ["CMD", "/garage", "stats", "-a"]
+      interval: 1h
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 5s
+
+volumes:
+  db-data:
+  garage-meta:
+  garage-data:
+  acme-data:

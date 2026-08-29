@@ -1,0 +1,29 @@
+services:
+  inbucket:
+    image: inbucket/inbucket:latest
+    container_name: inbucket
+    restart: unless-stopped
+    ports:
+      - "${INBUCKET_WEB_BIND:-127.0.0.1:9000}:9000"
+      - "${INBUCKET_SMTP_BIND:-127.0.0.1:2500}:2500"
+      - "${INBUCKET_POP3_BIND:-127.0.0.1:1100}:1100"
+    environment:
+      TZ: ${TZ:-Europe/Warsaw}
+      INBUCKET_LOGLEVEL: ${INBUCKET_LOGLEVEL:-info}
+      INBUCKET_WEB_ADDR: 0.0.0.0:9000
+      INBUCKET_SMTP_ADDR: 0.0.0.0:2500
+      INBUCKET_POP3_ADDR: 0.0.0.0:1100
+      INBUCKET_WEB_COOKIEAUTHKEY: ${INBUCKET_WEB_COOKIEAUTHKEY:?Set INBUCKET_WEB_COOKIEAUTHKEY in .env}
+      INBUCKET_STORAGE_TYPE: file
+      INBUCKET_STORAGE_PARAMS: path:/storage
+      INBUCKET_STORAGE_RETENTIONPERIOD: ${INBUCKET_STORAGE_RETENTIONPERIOD:-72h}
+      INBUCKET_STORAGE_MAILBOXMSGCAP: ${INBUCKET_STORAGE_MAILBOXMSGCAP:-300}
+      INBUCKET_SMTP_MAXMESSAGEBYTES: ${INBUCKET_SMTP_MAXMESSAGEBYTES:-10240000}
+      INBUCKET_SMTP_DISCARDDOMAINS: ${INBUCKET_SMTP_DISCARDDOMAINS:-bitbucket.local}
+    volumes:
+      - inbucket-config:/config
+      - inbucket-storage:/storage
+
+volumes:
+  inbucket-config:
+  inbucket-storage:

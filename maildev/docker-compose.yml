@@ -1,0 +1,16 @@
+services:
+  maildev:
+    image: maildev/maildev:latest
+    container_name: maildev
+    restart: unless-stopped
+    ports:
+      - "${MAILDEV_WEB_PORT:-127.0.0.1:1080}:1080"
+      - "${MAILDEV_SMTP_PORT:-127.0.0.1:1025}:1025"
+    environment:
+      TZ: ${TZ:-Europe/Warsaw}
+      MAILDEV_WEB_PORT: 1080
+      MAILDEV_SMTP_PORT: 1025
+      MAILDEV_WEB_IP: 0.0.0.0
+      MAILDEV_IP: 0.0.0.0
+      MAILDEV_MAX_EMAILS: ${MAILDEV_MAX_EMAILS:-1000}
+      MAILDEV_MAX_MESSAGE_SIZE: ${MAILDEV_MAX_MESSAGE_SIZE:-52428800}
