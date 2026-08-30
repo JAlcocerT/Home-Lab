@@ -1,0 +1,59 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${CB_DB_NAME:?Set CB_DB_NAME in .env}
+      MYSQL_USER: ${CB_DB_USERNAME:?Set CB_DB_USERNAME in .env}
+      MYSQL_PASSWORD: ${CB_DB_PASSWORD:?Set CB_DB_PASSWORD in .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_DEFAULT_AUTH: caching_sha2_password
+    volumes:
+      - chartbrew-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+
+  chartbrew:
+    image: razvanilin/chartbrew:latest
+    restart: unless-stopped
+    environment:
+      CB_BULLMQ_USERNAME: ${CB_BULLMQ_USERNAME:?Set CB_BULLMQ_USERNAME in .env}
+      CB_BULLMQ_PASSWORD: ${CB_BULLMQ_PASSWORD:?Set CB_BULLMQ_PASSWORD in .env}
+      CB_DB_NAME: ${CB_DB_NAME:?Set CB_DB_NAME in .env}
+      CB_DB_USERNAME: ${CB_DB_USERNAME:?Set CB_DB_USERNAME in .env}
+      CB_DB_PASSWORD: ${CB_DB_PASSWORD:?Set CB_DB_PASSWORD in .env}
+      CB_DB_HOST: db
+      CB_DB_PORT: 3306
+      CB_DB_DIALECT: mysql
+      CB_REDIS_HOST: redis
+      CB_REDIS_PORT: 6379
+      CB_REDIS_PASSWORD: ""
+      CB_SECRET: ${CB_SECRET:?Set CB_SECRET in .env}
+      CB_ENCRYPTION_KEY: ${CB_ENCRYPTION_KEY:?Set CB_ENCRYPTION_KEY in .env}
+      CB_API_HOST: 0.0.0.0
+      CB_API_PORT: 4019
+      VITE_APP_CLIENT_HOST: ${VITE_APP_CLIENT_HOST:-http://localhost:4018}
+      VITE_APP_CLIENT_PORT: 4018
+      VITE_APP_API_HOST: ${VITE_APP_API_HOST:-http://localhost:4019}
+      CB_ADMIN_MAIL: ${CB_ADMIN_MAIL:-hello@example.com}
+      CB_RESTRICT_TEAMS: ${CB_RESTRICT_TEAMS:-0}
+      CB_RESTRICT_SIGNUP: ${CB_RESTRICT_SIGNUP:-0}
+      CB_ALLOW_PRIVATE_NETWORK_CALLS: "false"
+    ports:
+      - "${CHARTBREW_CLIENT_PORT:-4018}:4018"
+      - "${CHARTBREW_API_PORT:-4019}:4019"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  chartbrew-db:

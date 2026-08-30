@@ -1,0 +1,7 @@
+name: hyperswitch
+
+# This Home-Lab helper intentionally wraps the official Hyperswitch compose file.
+# The upstream compose mounts repo-local config, scripts, and migrations, so clone
+# Hyperswitch first and point HYPERSWITCH_REPO at that checkout.
+include:
+  - path: ${HYPERSWITCH_REPO:?Clone https://github.com/juspay/hyperswitch and set HYPERSWITCH_REPO}/docker-compose.yml

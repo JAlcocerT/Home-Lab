@@ -1,0 +1,28 @@
+services:
+  slink:
+    image: anirdev/slink:latest
+    container_name: slink
+    restart: unless-stopped
+    ports:
+      - "${SLINK_HTTP_PORT:-3000}:3000"
+    environment:
+      TZ: ${TZ:-UTC}
+      API_ENABLED: "true"
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      USER_ALLOW_REGISTRATION: ${USER_ALLOW_REGISTRATION:-true}
+      USER_APPROVAL_REQUIRED: ${USER_APPROVAL_REQUIRED:-true}
+      USER_ALLOW_UNAUTHENTICATED_ACCESS: ${USER_ALLOW_UNAUTHENTICATED_ACCESS:-true}
+      USER_ALLOW_GUEST_UPLOADS: ${USER_ALLOW_GUEST_UPLOADS:-false}
+      IMAGE_MAX_SIZE: ${IMAGE_MAX_SIZE:-15M}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - slink-data:/app/var/data
+      - slink-images:/app/slink/images
+      - slink-cache:/app/slink/cache
+
+volumes:
+  slink-data:
+  slink-images:
+  slink-cache:

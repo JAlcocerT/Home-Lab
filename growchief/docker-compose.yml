@@ -1,118 +1,130 @@
 services:
-  # -----------------------
-  # Growchief Application
-  # -----------------------
   growchief:
-    image: ghcr.io/growchief/growchief:latest
+    image: ghcr.io/growchief/growchief:${GROWCHIEF_VERSION:-v0.3.0}
     container_name: growchief
-    restart: always
+    restart: unless-stopped
+    command:
+      - bash
+      - -lc
+      - |
+        sed -i 's/pnpm dlx prisma db push/pnpm dlx prisma@6.13.0 db push/' package.json
+        nginx && pnpm run pm2
     environment:
-      DATABASE_URL: "postgresql://growchief-user:growchief-password@growchief-postgres:5432/growchief-db-local"
-      STORAGE_PROVIDER: "local"
+      DATABASE_URL: "postgresql://${GROWCHIEF_DB_USER:-growchief}:${GROWCHIEF_DB_PASSWORD:?Set GROWCHIEF_DB_PASSWORD in .env}@growchief-postgres:5432/${GROWCHIEF_DB_NAME:-growchief}"
+      STORAGE_PROVIDER: "${STORAGE_PROVIDER:-local}"
       UPLOAD_DIRECTORY: "/uploads"
       NEXT_PUBLIC_UPLOAD_DIRECTORY: "/uploads"
-      AUTH_SECRET: "YourSpecialString!@#111"
-      GOOGLE_CLIENT_ID: "For Login With Google Client ID"
-      GOOGLE_CLIENT_SECRET: "For Login With Google Client Secret"
+      AUTH_SECRET: "${AUTH_SECRET:?Set AUTH_SECRET in .env}"
+      FRONTEND_URL: "${FRONTEND_URL:-http://localhost:5002}"
+      VITE_BACKEND_URL: "${VITE_BACKEND_URL:-/api}"
+      VITE_PUBLIC_WS: "${VITE_PUBLIC_WS:-http://localhost:5002}"
       TEMPORAL_ADDRESS: "temporal:7233"
-      APOLLO_API_KEY: ""
-      DATAGMA_API_KEY: ""
+      TEMPORAL_NAMESPACE: "${TEMPORAL_NAMESPACE:-default}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
+      APOLLO_API_KEY: "${APOLLO_API_KEY:-}"
+      DATAGMA_API_KEY: "${DATAGMA_API_KEY:-}"
+      BRIGHTDATA_CUSTOMER: "${BRIGHTDATA_CUSTOMER:-}"
+      BRIGHTDATA_API_KEY: "${BRIGHTDATA_API_KEY:-}"
+      OPENAI_KEY: "${OPENAI_KEY:-}"
+      DISABLE_REGISTRATION: "${DISABLE_REGISTRATION:-}"
     volumes:
       - growchief-config:/config/
       - growchief-uploads:/uploads/
     ports:
-      - "5002:5000"
+      - "${GROWCHIEF_HTTP_PORT:-5002}:5000"
     networks:
       - growchief-network
       - temporal-network
     depends_on:
       growchief-postgres:
         condition: service_healthy
+      temporal:
+        condition: service_started
 
   growchief-postgres:
     image: postgres:16
     container_name: growchief-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: growchief-password
-      POSTGRES_USER: growchief-user
-      POSTGRES_DB: growchief-db-local
+      POSTGRES_PASSWORD: "${GROWCHIEF_DB_PASSWORD:?Set GROWCHIEF_DB_PASSWORD in .env}"
+      POSTGRES_USER: "${GROWCHIEF_DB_USER:-growchief}"
+      POSTGRES_DB: "${GROWCHIEF_DB_NAME:-growchief}"
     volumes:
       - postgres-volume:/var/lib/postgresql/data
     networks:
       - growchief-network
     healthcheck:
-      test: pg_isready -U growchief-user -d growchief-db-local
+      test: ["CMD-SHELL", "pg_isready -U ${GROWCHIEF_DB_USER:-growchief} -d ${GROWCHIEF_DB_NAME:-growchief}"]
       interval: 10s
       timeout: 3s
-      retries: 3
+      retries: 5
 
-  # -----------------------
-  # Temporal Stack
-  # -----------------------
   temporal-elasticsearch:
-    container_name: temporal-elasticsearch
     image: elasticsearch:7.17.27
+    container_name: temporal-elasticsearch
+    restart: unless-stopped
     environment:
-      - cluster.routing.allocation.disk.threshold_enabled=true
-      - cluster.routing.allocation.disk.watermark.low=512mb
-      - cluster.routing.allocation.disk.watermark.high=256mb
-      - cluster.routing.allocation.disk.watermark.flood_stage=128mb
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms256m -Xmx256m
-      - xpack.security.enabled=false
+      cluster.routing.allocation.disk.threshold_enabled: "true"
+      cluster.routing.allocation.disk.watermark.low: "512mb"
+      cluster.routing.allocation.disk.watermark.high: "256mb"
+      cluster.routing.allocation.disk.watermark.flood_stage: "128mb"
+      discovery.type: "single-node"
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      xpack.security.enabled: "false"
     networks:
       - temporal-network
     expose:
-      - 9200
+      - "9200"
     volumes:
-      - /var/lib/elasticsearch/data
+      - temporal-elasticsearch-data:/usr/share/elasticsearch/data
 
   temporal-postgresql:
-    container_name: temporal-postgresql
     image: postgres:16
+    container_name: temporal-postgresql
+    restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: "${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD in .env}"
+      POSTGRES_USER: "${TEMPORAL_POSTGRES_USER:-temporal}"
     networks:
       - temporal-network
     expose:
-      - 5432
+      - "5432"
     volumes:
-      - /var/lib/postgresql/data
+      - temporal-postgresql-data:/var/lib/postgresql/data
 
   temporal:
-    container_name: temporal
-    ports:
-      - "7233:7233"
     image: temporalio/auto-setup:1.28.1
+    container_name: temporal
+    restart: unless-stopped
     depends_on:
       - temporal-postgresql
       - temporal-elasticsearch
     environment:
-      - DB=postgres12
-      - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
-      - POSTGRES_SEEDS=temporal-postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - ENABLE_ES=true
-      - ES_SEEDS=temporal-elasticsearch
-      - ES_VERSION=v7
-      - TEMPORAL_NAMESPACE=default
+      DB: "postgres12"
+      DB_PORT: "5432"
+      POSTGRES_USER: "${TEMPORAL_POSTGRES_USER:-temporal}"
+      POSTGRES_PWD: "${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD in .env}"
+      POSTGRES_SEEDS: "temporal-postgresql"
+      DYNAMIC_CONFIG_FILE_PATH: "config/dynamicconfig/development-sql.yaml"
+      ENABLE_ES: "true"
+      ES_SEEDS: "temporal-elasticsearch"
+      ES_VERSION: "v7"
+      TEMPORAL_NAMESPACE: "${TEMPORAL_NAMESPACE:-default}"
     networks:
       - temporal-network
+    ports:
+      - "${TEMPORAL_GRPC_PORT:-7233}:7233"
     volumes:
-      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
-    labels:
-      kompose.volume.type: configMap
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig:ro
 
   temporal-admin-tools:
-    container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
+    container_name: temporal-admin-tools
+    restart: unless-stopped
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
+      TEMPORAL_ADDRESS: "temporal:7233"
+      TEMPORAL_CLI_ADDRESS: "temporal:7233"
     networks:
       - temporal-network
     stdin_open: true
@@ -121,33 +133,25 @@ services:
     tty: true
 
   temporal-ui:
-    container_name: temporal-ui
     image: temporalio/ui:2.34.0
+    container_name: temporal-ui
+    restart: unless-stopped
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://127.0.0.1:3000
+      TEMPORAL_ADDRESS: "temporal:7233"
+      TEMPORAL_CORS_ORIGINS: "${TEMPORAL_CORS_ORIGINS:-http://127.0.0.1:3000,http://localhost:5002}"
     networks:
       - temporal-network
     ports:
-      - "8080:8080"
+      - "${TEMPORAL_UI_PORT:-8080}:8080"
 
-# -----------------------
-# Volumes
-# -----------------------
 volumes:
   postgres-volume:
-    external: false
   growchief-config:
-    external: false
   growchief-uploads:
-    external: false
+  temporal-elasticsearch-data:
+  temporal-postgresql-data:
 
-# -----------------------
-# Networks
-# -----------------------
 networks:
   growchief-network:
-    external: false
   temporal-network:
     driver: bridge
-    name: temporal-network
