@@ -1,0 +1,52 @@
+# Copy this file to museum.yaml and replace every placeholder before first use.
+#
+# Suggested local secret generation:
+#   openssl rand -base64 32
+#   openssl rand -base64 64
+#   openssl rand -base64 32 | tr '+/' '-_'
+
+db:
+    host: postgres
+    port: 5432
+    name: ente_db
+    user: pguser
+    password: replace-with-the-same-value-as-POSTGRES_PASSWORD
+
+s3:
+    are_local_buckets: true
+    use_path_style_urls: true
+    b2-eu-cen:
+      key: replace-with-the-same-value-as-MINIO_ROOT_USER
+      secret: replace-with-the-same-value-as-MINIO_ROOT_PASSWORD
+      endpoint: localhost:3200
+      region: eu-central-2
+      bucket: b2-eu-cen
+    wasabi-eu-central-2-v3:
+      key: replace-with-the-same-value-as-MINIO_ROOT_USER
+      secret: replace-with-the-same-value-as-MINIO_ROOT_PASSWORD
+      endpoint: localhost:3200
+      region: eu-central-2
+      bucket: wasabi-eu-central-2-v3
+      compliance: false
+    scw-eu-fr-v3:
+      key: replace-with-the-same-value-as-MINIO_ROOT_USER
+      secret: replace-with-the-same-value-as-MINIO_ROOT_PASSWORD
+      endpoint: localhost:3200
+      region: eu-central-2
+      bucket: scw-eu-fr-v3
+
+apps:
+    public-albums: http://localhost:3002
+    embed-albums: http://localhost:3006
+    public-locker: http://localhost:3005
+    public-paste: http://localhost:3008
+    cast: http://localhost:3004
+    accounts: http://localhost:3001
+    public-memories: http://localhost:3010
+
+key:
+    encryption: replace-with-32-byte-base64-output
+    hash: replace-with-64-byte-base64-output
+
+jwt:
+    secret: replace-with-url-safe-base64-output

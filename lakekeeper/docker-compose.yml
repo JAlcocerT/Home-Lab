@@ -1,0 +1,55 @@
+services:
+  lakekeeper-db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -p 5432 -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - lakekeeper-db-data:/var/lib/postgresql/data
+
+  lakekeeper-migrate:
+    image: quay.io/lakekeeper/catalog:v0.13.3
+    command: ["migrate"]
+    restart: "no"
+    environment:
+      LAKEKEEPER__PG_ENCRYPTION_KEY: ${LAKEKEEPER_PG_ENCRYPTION_KEY:?Set LAKEKEEPER_PG_ENCRYPTION_KEY in .env}
+      LAKEKEEPER__PG_DATABASE_URL_READ: postgresql://postgres:${POSTGRES_PASSWORD}@lakekeeper-db:5432/postgres
+      LAKEKEEPER__PG_DATABASE_URL_WRITE: postgresql://postgres:${POSTGRES_PASSWORD}@lakekeeper-db:5432/postgres
+      LAKEKEEPER__AUTHZ_BACKEND: ${LAKEKEEPER_AUTHZ_BACKEND:-allowall}
+    depends_on:
+      lakekeeper-db:
+        condition: service_healthy
+
+  lakekeeper:
+    image: quay.io/lakekeeper/catalog:v0.13.3
+    command: ["serve"]
+    ports:
+      - "127.0.0.1:${LAKEKEEPER_PORT:-8181}:8181"
+    environment:
+      LAKEKEEPER__PG_ENCRYPTION_KEY: ${LAKEKEEPER_PG_ENCRYPTION_KEY:?Set LAKEKEEPER_PG_ENCRYPTION_KEY in .env}
+      LAKEKEEPER__PG_DATABASE_URL_READ: postgresql://postgres:${POSTGRES_PASSWORD}@lakekeeper-db:5432/postgres
+      LAKEKEEPER__PG_DATABASE_URL_WRITE: postgresql://postgres:${POSTGRES_PASSWORD}@lakekeeper-db:5432/postgres
+      LAKEKEEPER__AUTHZ_BACKEND: ${LAKEKEEPER_AUTHZ_BACKEND:-allowall}
+      LAKEKEEPER__BASE_URI: ${LAKEKEEPER_BASE_URI:-}
+      LAKEKEEPER__OPENID_PROVIDER_URI: ${LAKEKEEPER_OPENID_PROVIDER_URI:-}
+      LAKEKEEPER__OPENID_AUDIENCE: ${LAKEKEEPER_OPENID_AUDIENCE:-}
+      LAKEKEEPER__UI__OPENID_CLIENT_ID: ${LAKEKEEPER_UI_OPENID_CLIENT_ID:-}
+      LAKEKEEPER__UI__OPENID_SCOPE: ${LAKEKEEPER_UI_OPENID_SCOPE:-}
+    healthcheck:
+      test: ["CMD", "/home/nonroot/lakekeeper", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      lakekeeper-migrate:
+        condition: service_completed_successfully
+
+volumes:
+  lakekeeper-db-data:

@@ -1,0 +1,179 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:8.0.17
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?Set MONGO_INITDB_ROOT_USERNAME in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD in .env}
+    volumes:
+      - mongodb:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --username \"$${MONGO_INITDB_ROOT_USERNAME}\" --password \"$${MONGO_INITDB_ROOT_PASSWORD}\" --eval \"db.adminCommand('ping').ok\" | grep 1",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    image: ghcr.io/novuhq/novu/api:3.19.0
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:${API_PORT:-3000}"
+    environment:
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${API_PORT:-3000}
+      API_ROOT_URL: ${API_ROOT_URL:-http://localhost:3000}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:4000}
+      MONGO_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:?Set MONGO_INITDB_ROOT_USERNAME in .env}:${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD in .env}@mongodb:27017/novu-db?authSource=admin
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+      MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES:-true}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: redis
+      REDIS_CACHE_SERVICE_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:?Set STORE_ENCRYPTION_KEY in .env}
+      NOVU_SECRET_KEY: ${NOVU_SECRET_KEY:?Set NOVU_SECRET_KEY in .env}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-http://localhost:4566}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-novu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED:-false}
+      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED:-false}
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED:-true}
+      IS_V2_ENABLED: ${IS_V2_ENABLED:-true}
+      IS_SELF_HOSTED: ${IS_SELF_HOSTED:-true}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:$${PORT}/v1/health-check || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  worker:
+    image: ghcr.io/novuhq/novu/worker:3.19.0
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${WORKER_PORT:-3004}
+      API_ROOT_URL: http://api:${API_PORT:-3000}
+      MONGO_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:?Set MONGO_INITDB_ROOT_USERNAME in .env}:${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD in .env}@mongodb:27017/novu-db?authSource=admin
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: redis
+      REDIS_CACHE_SERVICE_PORT: 6379
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY:?Set STORE_ENCRYPTION_KEY in .env}
+      SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME:-15d}
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK:-http://localhost:4566}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-novu-local}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED:-false}
+      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED:-false}
+      BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE:-100}
+      MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE:-100}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:$${PORT}/v1/health-check || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ws:
+    image: ghcr.io/novuhq/novu/ws:3.19.0
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WS_PORT:-3002}:${WS_PORT:-3002}"
+    environment:
+      NODE_ENV: ${NODE_ENV:-local}
+      PORT: ${WS_PORT:-3002}
+      MONGO_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:?Set MONGO_INITDB_ROOT_USERNAME in .env}:${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD in .env}@mongodb:27017/novu-db?authSource=admin
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-5}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-10}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED:-false}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:$${PORT}/v1/health-check || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  dashboard:
+    image: ghcr.io/novuhq/novu/dashboard:3.19.0
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${DASHBOARD_PORT:-4000}:4000"
+    environment:
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME:-http://localhost:3000}
+      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME:-http://localhost:3002}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const http = require('http'); const req = http.get({hostname: 'localhost', port: 4000, path: '/', timeout: 5000}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.on('timeout', () => { req.destroy(); process.exit(1); });\"",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mongodb:

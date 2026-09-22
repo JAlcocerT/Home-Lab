@@ -1,0 +1,17 @@
+services:
+  vert:
+    image: vert-sh/vert:063383e
+    build:
+      context: https://github.com/VERT-sh/VERT.git#063383e685dee61531f71c77d41443c5a04bd872
+      args:
+        PUB_HOSTNAME: ${PUB_HOSTNAME:-localhost:3000}
+        PUB_PLAUSIBLE_URL: ${PUB_PLAUSIBLE_URL:-}
+        PUB_ENV: ${PUB_ENV:-production}
+        PUB_VERTD_URL: ${PUB_VERTD_URL:-}
+        PUB_DISABLE_ALL_EXTERNAL_REQUESTS: ${PUB_DISABLE_ALL_EXTERNAL_REQUESTS:-true}
+        PUB_DISABLE_FAILURE_BLOCKS: ${PUB_DISABLE_FAILURE_BLOCKS:-true}
+        PUB_DONATION_URL: ${PUB_DONATION_URL:-}
+        PUB_STRIPE_KEY: ${PUB_STRIPE_KEY:-}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${VERT_PORT:-3000}:80"

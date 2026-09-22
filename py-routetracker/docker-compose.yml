@@ -1,0 +1,12 @@
+services:
+  py-routetracker:
+    image: ghcr.io/jlleongarcia/py_routetracker:b7eb9d2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PY_ROUTETRACKER_PORT:-7000}:7000"
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport json, urllib.request\nwith urllib.request.urlopen('http://127.0.0.1:7000/api/health', timeout=5) as r:\n    raise SystemExit(0 if json.load(r).get('status') == 'ok' else 1)\nPY"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

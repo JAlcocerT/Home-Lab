@@ -1,35 +1,100 @@
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: ente
-      POSTGRES_PASSWORD: entepassword
-      POSTGRES_DB: ente
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  museum:
+    image: ghcr.io/ente/server:latest
     restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-
-  ente:
-    image: enteio/ente:latest
-    depends_on:
-      - postgres
-      - redis
     ports:
-      - "8080:80"
-    environment:
-      - DATABASE_URL=postgresql://ente:entepassword@postgres:5432/ente?sslmode=disable
-      - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=your-secure-encryption-key-here
-      - JWT_SECRET=your-jwt-secret-here
+      - "127.0.0.1:${ENTE_API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     volumes:
-      - ente_data:/data
+      - ./museum.yaml:/museum.yaml:ro
+      - ./data:/data:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  socat:
+    image: alpine/socat
     restart: unless-stopped
+    network_mode: service:museum
+    depends_on:
+      museum:
+        condition: service_healthy
+    command: "TCP-LISTEN:3200,fork,reuseaddr TCP:minio:3200"
+
+  ente-web:
+    image: ghcr.io/ente/web:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ENTE_PHOTOS_PORT:-3000}:3000"
+      - "127.0.0.1:${ENTE_ACCOUNTS_PORT:-3001}:3001"
+      - "127.0.0.1:${ENTE_ALBUMS_PORT:-3002}:3002"
+      - "127.0.0.1:${ENTE_AUTH_PORT:-3003}:3003"
+      - "127.0.0.1:${ENTE_CAST_PORT:-3004}:3004"
+      - "127.0.0.1:${ENTE_SHARE_PORT:-3005}:3005"
+      - "127.0.0.1:${ENTE_EMBED_PORT:-3006}:3006"
+      - "127.0.0.1:${ENTE_PASTE_PORT:-3008}:3008"
+      - "127.0.0.1:${ENTE_LOCKER_PORT:-3009}:3009"
+      - "127.0.0.1:${ENTE_MEMORIES_PORT:-3010}:3010"
+    environment:
+      ENTE_API_ORIGIN: ${ENTE_API_ORIGIN:-http://localhost:8080}
+    depends_on:
+      museum:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ente_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d ente_db -U pguser"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-3200}:3200"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-3201}:3201"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+    command: server /data --address ":3200" --console-address ":3201"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        until mc alias set h0 http://minio:3200 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          sleep 1
+        done
+        mc mb -p h0/b2-eu-cen || true
+        mc mb -p h0/wasabi-eu-central-2-v3 || true
+        mc mb -p h0/scw-eu-fr-v3 || true
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
 
 volumes:
-  postgres_data:
-  ente_data:
+  postgres-data:
+  minio-data:

@@ -1,0 +1,46 @@
+services:
+  coder-db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: coder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: coder
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coder -d coder"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - coder-db-data:/var/lib/postgresql/data
+
+  coder:
+    image: ghcr.io/coder/coder:v2.36.4
+    depends_on:
+      coder-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${CODER_PORT:-7080}:7080"
+    group_add:
+      - "${DOCKER_GROUP_ID:-998}"
+    environment:
+      CODER_HTTP_ADDRESS: 0.0.0.0:7080
+      CODER_ACCESS_URL: ${CODER_ACCESS_URL:?Set CODER_ACCESS_URL in .env}
+      CODER_WILDCARD_ACCESS_URL: ${CODER_WILDCARD_ACCESS_URL:-}
+      CODER_PG_CONNECTION_URL: postgresql://coder:${POSTGRES_PASSWORD}@coder-db:5432/coder?sslmode=disable
+      CODER_TELEMETRY_ENABLE: ${CODER_TELEMETRY_ENABLE:-false}
+      CODER_DISABLE_PASSWORD_AUTH: ${CODER_DISABLE_PASSWORD_AUTH:-false}
+    volumes:
+      - coder-home:/home/coder
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7080/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+volumes:
+  coder-db-data:
+  coder-home:
