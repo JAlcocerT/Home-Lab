@@ -1,0 +1,8 @@
+base-url: "https://ntfy.jalcocertech.com"
+listen-http: ":80"
+cache-file: "/var/cache/ntfy/cache.db"
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+auth-file: "/var/lib/ntfy/user.db"
+auth-default-access: "deny-all"
+behind-proxy: true
+upstream-base-url: "https://ntfy.sh"
