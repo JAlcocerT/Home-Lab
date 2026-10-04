@@ -1,0 +1,15 @@
+services:
+  velxio:
+    image: ghcr.io/davidmonterocrespo24/velxio:master
+    container_name: velxio
+    ports:
+      - "3080:80"
+    volumes:
+      - ./data:/app/data
+    environment:
+      SECRET_KEY: dev-key-change-in-production-this-is-only-for-testing
+      COOKIE_SECURE: "false"
+      FRONTEND_URL: http://localhost:3080
+      DATA_DIR: /app/data
+      DATABASE_URL: sqlite+aiosqlite:////app/data/velxio.db
+    restart: unless-stopped
