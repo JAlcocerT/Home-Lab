@@ -1,0 +1,33 @@
+services:
+  networking-toolbox:
+    image: docker.io/lissy93/networking-toolbox@sha256:c85cfbf1267e4d48ca6f5cfc4e019049c8a075ce0cd757fc01e22338e484e132
+    container_name: networking-toolbox
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    ports:
+      - "${NETWORKING_TOOLBOX_PORT:-6162}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      NTB_SITE_TITLE: "${NTB_SITE_TITLE:-Networking Toolbox}"
+      NTB_SITE_DESCRIPTION: "${NTB_SITE_DESCRIPTION:-Internal networking utilities}"
+      NTB_DEFAULT_THEME: "${NTB_DEFAULT_THEME:-ocean}"
+      NTB_HOMEPAGE_LAYOUT: "${NTB_HOMEPAGE_LAYOUT:-categories}"
+      NTB_DISABLE_SETTINGS: "${NTB_DISABLE_SETTINGS:-false}"
+      NTB_ANALYTICS_DOMAIN: "${NTB_ANALYTICS_DOMAIN:-false}"
+      NTB_ANALYTICS_DSN: "${NTB_ANALYTICS_DSN:-false}"
+      NTB_ALLOW_CUSTOM_DNS: "${NTB_ALLOW_CUSTOM_DNS:-false}"
+      NTB_BLOCK_PRIVATE_DNS_IPS: "${NTB_BLOCK_PRIVATE_DNS_IPS:-true}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

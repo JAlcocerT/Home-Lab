@@ -1,0 +1,37 @@
+services:
+  mailflare:
+    build:
+      context: https://github.com/hieunc229/mailflare.git#48da9fab26029c322b2deb2b8bdd7d4861cec1e8
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+    image: mailflare:48da9fa
+    container_name: mailflare
+    restart: unless-stopped
+    ports:
+      - "${MAILFLARE_HTTP_BIND:-127.0.0.1:3000}:3000"
+      - "${MAILFLARE_SMTP_BIND:-127.0.0.1:2525}:${SMTP_INBOUND_PORT:-2525}"
+    environment:
+      PORT: 3000
+      DATA_DIR: /data
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      SMTP_INBOUND_PORT: ${SMTP_INBOUND_PORT:-2525}
+      MAIL_HOSTNAME: ${MAIL_HOSTNAME:-mail.example.com}
+      SMTP_MAX_SIZE: ${SMTP_MAX_SIZE:-37748736}
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_TLS_REJECT_UNAUTHORIZED: ${SMTP_TLS_REJECT_UNAUTHORIZED:-true}
+      CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:-}
+      CF_TOKEN: ${CF_TOKEN:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-}
+      INBOUND_WEBHOOK_SECRET: ${INBOUND_WEBHOOK_SECRET:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+    volumes:
+      - mailflare-data:/data
+
+volumes:
+  mailflare-data:

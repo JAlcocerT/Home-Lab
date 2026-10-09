@@ -1,0 +1,32 @@
+services:
+  snapp:
+    image: uraniadev/snapp:latest
+    restart: unless-stopped
+    ports:
+      - "${SNAPP_PORT:-3800}:3000"
+    environment:
+      DATABASE_URL: "postgres://snapp:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/snapp"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}"
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: snapp
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      POSTGRES_DB: snapp
+    volumes:
+      - snapp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snapp -d snapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  snapp_postgres_data:

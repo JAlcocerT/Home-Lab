@@ -1,0 +1,36 @@
+services:
+  seeder:
+    image: ${SEEDER_IMAGE:-ghcr.io/danielsyauqi/seeder:latest}
+    container_name: seeder
+    restart: unless-stopped
+    environment:
+      - RUNTIME=node
+      - OWNER_EMAIL=${OWNER_EMAIL:?Set OWNER_EMAIL in .env}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3031}
+      - VCS_ENCRYPTION_KEY=${VCS_ENCRYPTION_KEY:?Set VCS_ENCRYPTION_KEY in .env}
+      - SQLITE_DB_PATH=/app/data/seeder.db
+      - UPLOADS_DIR=/app/data/uploads
+      - BETTER_AUTH_TRUSTED_ORIGINS
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - MCP_ALLOWED_ORIGINS
+    volumes:
+      - seeder-data:/app/data
+    ports:
+      - "${SEEDER_PORT:-3031}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 6
+
+volumes:
+  seeder-data:

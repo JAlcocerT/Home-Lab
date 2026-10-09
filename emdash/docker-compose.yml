@@ -1,0 +1,16 @@
+services:
+  emdash:
+    build:
+      context: https://github.com/emdash-cms/emdash.git#a17408fe6326999e2acf94949f657621291d54e5
+      dockerfile: Dockerfile
+    container_name: emdash
+    restart: unless-stopped
+    ports:
+      - "${EMDASH_PORT:-4321}:4321"
+    volumes:
+      - emdash-data:/app/data
+      - emdash-uploads:/app/uploads
+
+volumes:
+  emdash-data:
+  emdash-uploads:

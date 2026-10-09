@@ -1,0 +1,58 @@
+services:
+  nats:
+    image: nats:2.11-alpine
+    restart: unless-stopped
+    command:
+      - --config
+      - /etc/nats/nats-server.conf
+      - --auth=${NATS_TOKEN:?Set NATS_TOKEN in .env}
+    volumes:
+      - ./nats-server.conf:/etc/nats/nats-server.conf:ro
+      - nats_data:/data
+
+  livekit:
+    image: livekit/livekit-server:v1.9.2
+    restart: unless-stopped
+    command:
+      - --config
+      - /etc/livekit.yaml
+    ports:
+      - "${LIVEKIT_UDP_PORT:-7882}:7882/udp"
+      - "${LIVEKIT_TCP_PORT:-7881}:7881/tcp"
+      - "${LIVEKIT_TURN_UDP_PORT:-3478}:3478/udp"
+    expose:
+      - "7880"
+    volumes:
+      - ${LIVEKIT_CONFIG_FILE:-./livekit.yaml}:/etc/livekit.yaml:ro
+
+  chatto:
+    image: ${CHATTO_IMAGE:-ghcr.io/chattocorp/chatto:latest}
+    restart: unless-stopped
+    env_file: ${CHATTO_ENV_FILE:-.env}
+    environment:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+    depends_on:
+      - nats
+    expose:
+      - "4000"
+    volumes:
+      - ${CHATTO_BACKUP_DIR:-./backups}:/backups
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  nats_data:
+  caddy_data:
+  caddy_config:

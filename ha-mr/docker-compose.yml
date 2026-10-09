@@ -1,0 +1,8 @@
+services:
+  ha-mr:
+    build:
+      context: .
+    image: ha-mr:local
+    restart: unless-stopped
+    ports:
+      - "${HAMR_PORT:-8790}:80"

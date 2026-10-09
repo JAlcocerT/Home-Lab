@@ -1,0 +1,44 @@
+services:
+  domain-locker:
+    image: ghcr.io/lissy93/domain-locker:0.3.1
+    container_name: domain-locker
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${DL_APP_PORT:-6161}:3000"
+    environment:
+      DL_ENV_TYPE: "selfHosted"
+      DL_AUTH_PASSWORD: "${DL_AUTH_PASSWORD:?Set DL_AUTH_PASSWORD in .env}"
+      DL_AUTH_SECRET: "${DL_AUTH_SECRET:?Set DL_AUTH_SECRET in .env}"
+      DL_API_KEY: "${DL_API_KEY:-}"
+      DL_BASE_URL: "${DL_BASE_URL:-}"
+      DL_ALLOWED_ORIGINS: "${DL_ALLOWED_ORIGINS:-}"
+      DL_SQLITE_PATH: "/data/domain-locker.db"
+      DL_MONITOR_CONCURRENCY: "${DL_MONITOR_CONCURRENCY:-5}"
+      DL_WHOIS_CONCURRENCY: "${DL_WHOIS_CONCURRENCY:-3}"
+      DL_WHOIS_DELAY_MS: "${DL_WHOIS_DELAY_MS:-500}"
+      DL_MONITOR_INTERVAL_MINUTES: "${DL_MONITOR_INTERVAL_MINUTES:-15}"
+      DL_UPDATER_INTERVAL_MINUTES: "${DL_UPDATER_INTERVAL_MINUTES:-1440}"
+      DL_REMINDERS_INTERVAL_MINUTES: "${DL_REMINDERS_INTERVAL_MINUTES:-1440}"
+      DL_CLEANUP_INTERVAL_MINUTES: "${DL_CLEANUP_INTERVAL_MINUTES:-10080}"
+      DL_WHO_DAT_URL: "${DL_WHO_DAT_URL:-}"
+      NOTIFY_WEBHOOK_BASE: "${NOTIFY_WEBHOOK_BASE:-}"
+      NOTIFY_WEBHOOK_TOPIC: "${NOTIFY_WEBHOOK_TOPIC:-}"
+      NOTIFY_WEBHOOK_TOKEN: "${NOTIFY_WEBHOOK_TOKEN:-}"
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL:-}"
+      APPRISE_API_URL: "${APPRISE_API_URL:-}"
+      APPRISE_KEY: "${APPRISE_KEY:-}"
+      APPRISE_URLS: "${APPRISE_URLS:-}"
+      APPRISE_TAG: "${APPRISE_TAG:-all}"
+    volumes:
+      - domain_locker_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  domain_locker_data:

@@ -1,5 +1,5 @@
 ---
-source_code: https://github.com/deluan/navidrome
+source_code: https://github.com/navidrome/navidrome
 oss_client: https://gitlab.com/ultrasonic/ultrasonic
 tags: ["Music Server","Media Server"]
 ---
@@ -17,16 +17,19 @@ For desktop: [Feishin](https://github.com/JAlcocerT/Home-Lab/tree/main/feishin).
 sudo docker compose down
 
 # Create host directories
-mkdir -p /home/jalcocert/Home-Lab/navidrome/data
-mkdir -p /home/jalcocert/Home-Lab/navidrome/music   # adjust if your music is elsewhere
+mkdir -p ./data ./backups
+mkdir -p /path/to/your/music
 
-# Ensure UID:GID 1000:1000 owns them
-sudo chown -R 1000:1000 /home/jalcocert/Home-Lab/navidrome/data
-sudo chown -R 1000:1000 /home/jalcocert/Home-Lab/navidrome/music
+# Create local config
+cp .env.sample .env
+# Edit NAVIDROME_MUSIC_PATH before first boot.
+
+# Ensure UID:GID 1000:1000 can write data/backups and read music
+sudo chown -R 1000:1000 ./data ./backups
 
 # (Optional) permissions
-chmod -R u+rwX,go-rwx /home/jalcocert/Home-Lab/navidrome/data
-chmod -R u+rX,go-rwx /home/jalcocert/Home-Lab/navidrome/music
+chmod -R u+rwX,go-rwx ./data ./backups
+chmod -R u+rX,go-rwx /path/to/your/music
 
 # Start again
 sudo docker compose up -d

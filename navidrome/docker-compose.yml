@@ -1,19 +1,28 @@
-#version: '3'
-
 services:
   navidrome:
-    image: deluan/navidrome:latest
+    image: deluan/navidrome:0.64.0
     container_name: navidrome
-    user: "1000:1000" # You can adjust this to your user's UID and GID for permissions
-    ports:
-      - "4533:4533"
-    environment:
-      # Optional: set timezone to your local one. Example: "Europe/Warsaw"
-      - TZ=Europe/Warsaw
-      - ND_SCANINTERVAL=1h # Scan for new music every hour
-    volumes:
-      # This is the directory where Navidrome will store its database and settings
-      - /home/jalcocert/Home-Lab/navidrome/data:/data
-      # This is the directory where your music files are located
-      - /home/jalcocert/Home-Lab/navidrome/music:/music:ro
+    user: "${NAVIDROME_UID:-1000}:${NAVIDROME_GID:-1000}"
     restart: unless-stopped
+    ports:
+      - "${NAVIDROME_BIND_ADDRESS:-127.0.0.1}:${NAVIDROME_PORT:-4533}:4533"
+    environment:
+      TZ: ${TZ:-Europe/Warsaw}
+      ND_LOGLEVEL: ${ND_LOGLEVEL:-info}
+      ND_BASEURL: ${ND_BASEURL:-}
+      ND_ENABLEINSIGHTSCOLLECTOR: ${ND_ENABLEINSIGHTSCOLLECTOR:-false}
+      ND_SCANNER_SCHEDULE: ${ND_SCANNER_SCHEDULE:-@every 1h}
+      ND_SESSIONTIMEOUT: ${ND_SESSIONTIMEOUT:-48h}
+      ND_BACKUP_PATH: /backups
+      ND_BACKUP_SCHEDULE: ${ND_BACKUP_SCHEDULE:-@every 24h}
+      ND_BACKUP_COUNT: ${ND_BACKUP_COUNT:-7}
+    volumes:
+      - "${NAVIDROME_DATA_PATH:-./data}:/data"
+      - "${NAVIDROME_BACKUP_PATH:-./backups}:/backups"
+      - "${NAVIDROME_MUSIC_PATH:?Set NAVIDROME_MUSIC_PATH in .env}:/music:ro"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4533/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

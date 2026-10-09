@@ -1,0 +1,59 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:${RUSTFS_VERSION:-1.0.1}
+    container_name: rustfs
+    depends_on:
+      volume-permission-helper:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    ports:
+      - "${RUSTFS_API_PORT:-9000}:9000"
+      - "${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs{0...3}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: "${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY in .env}"
+      RUSTFS_SECRET_KEY: "${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY in .env}"
+      RUSTFS_OBS_LOGGER_LEVEL: "${RUSTFS_OBS_LOGGER_LEVEL:-info}"
+      RUSTFS_OBS_LOG_DIRECTORY: /app/logs
+      RUSTFS_UNSAFE_BYPASS_DISK_CHECK: "${RUSTFS_UNSAFE_BYPASS_DISK_CHECK:-false}"
+    volumes:
+      - rustfs-data-0:/data/rustfs0
+      - rustfs-data-1:/data/rustfs1
+      - rustfs-data-2:/data/rustfs2
+      - rustfs-data-3:/data/rustfs3
+      - rustfs-logs:/app/logs
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - sh
+        - -c
+        - "wget -qO- http://127.0.0.1:9000/health >/dev/null && wget -qO- http://127.0.0.1:9001/rustfs/console/health >/dev/null"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  volume-permission-helper:
+    image: alpine:3.20
+    container_name: rustfs-volume-permission-helper
+    command: >
+      sh -c "chown -R 10001:10001 /data/rustfs0 /data/rustfs1 /data/rustfs2 /data/rustfs3 /app/logs"
+    volumes:
+      - rustfs-data-0:/data/rustfs0
+      - rustfs-data-1:/data/rustfs1
+      - rustfs-data-2:/data/rustfs2
+      - rustfs-data-3:/data/rustfs3
+      - rustfs-logs:/app/logs
+    restart: "no"
+
+volumes:
+  rustfs-data-0:
+  rustfs-data-1:
+  rustfs-data-2:
+  rustfs-data-3:
+  rustfs-logs:

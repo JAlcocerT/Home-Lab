@@ -1,52 +1,64 @@
-version: "3"
-
 services:
   kutt:
     image: kutt/kutt:latest
-    container_name: kutt
-    restart: always
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - NODE_ENV=production
-      - DEFAULT_DOMAIN=192.168.1.11:8788 #example.com # your public domain, no protocol
-      - SITE_NAME=Kutt
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=kutt
-      - DB_USER=kutt
-      - DB_PASSWORD=change_me # change this
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JWT_SECRET=please_change_me # change this
-      # Optional email configuration (for password reset, verification, etc.)
-      # - MAIL_HOST=smtp.example.com
-      # - MAIL_PORT=587
-      # - MAIL_SECURE=false
-      # - MAIL_USER=smtp_user
-      # - MAIL_PASSWORD=smtp_password
-      # - MAIL_FROM=Kutt <kutt@example.com>
-      # Optional admin emails (comma separated)
-      # - ADMIN_EMAILS=you@example.com
+    restart: unless-stopped
     ports:
-      - "8788:3000" # change host port if needed
+      - "${KUTT_PORT:-8788}:3000"
+    environment:
+      NODE_ENV: production
+      SITE_NAME: "${SITE_NAME:-Kutt}"
+      DEFAULT_DOMAIN: "${DEFAULT_DOMAIN:-localhost:8788}"
+      JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET in .env}"
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: kutt
+      DB_USER: kutt
+      DB_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      REDIS_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DISALLOW_REGISTRATION: "${DISALLOW_REGISTRATION:-true}"
+      DISALLOW_ANONYMOUS_LINKS: "${DISALLOW_ANONYMOUS_LINKS:-true}"
+      TRUST_PROXY: "${TRUST_PROXY:-true}"
+      MAIL_ENABLED: "${MAIL_ENABLED:-false}"
+      MAIL_HOST: "${MAIL_HOST:-}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_SECURE: "${MAIL_SECURE:-false}"
+      MAIL_USER: "${MAIL_USER:-}"
+      MAIL_FROM: "${MAIL_FROM:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+    volumes:
+      - kutt_custom:/kutt/custom
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   postgres:
-    image: postgres:15
-    container_name: kutt-postgres
-    restart: always
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=kutt
-      - POSTGRES_USER=kutt
-      - POSTGRES_PASSWORD=change_me # change this
+      POSTGRES_DB: kutt
+      POSTGRES_USER: kutt
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
     volumes:
-      - /home/docker/kutt/postgres:/var/lib/postgresql/data
+      - kutt_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kutt -d kutt"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: kutt-redis
-    restart: always
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - /home/docker/kutt/redis:/data
+      - kutt_redis_data:/data
+
+volumes:
+  kutt_postgres_data:
+  kutt_redis_data:
+  kutt_custom:

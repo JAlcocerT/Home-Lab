@@ -1,12 +1,23 @@
 services:
-##Web Info
   webcheck:
-    container_name: Web-Check
-    image: lissy93/web-check
-    mem_limit: 4g
-    cpu_shares: 768
+    image: ghcr.io/lissy93/web-check:2.3.2
+    container_name: webcheck
+    restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
     ports:
-      - 6160:3000
+      - "${WEB_CHECK_PORT:-6160}:3000"
+    environment:
+      PORT: "3000"
+      API_ENABLE_RATE_LIMIT: "${API_ENABLE_RATE_LIMIT:-true}"
+      PUBLIC_API_TIMEOUT_LIMIT: "${PUBLIC_API_TIMEOUT_LIMIT:-30000}"
+      API_CORS_ORIGIN: "${API_CORS_ORIGIN:-*}"
+      API_BLOCKED_HOSTS: "${API_BLOCKED_HOSTS:-localhost,127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,100.64.0.0/10}"
+      TRUST_PROXY: "${TRUST_PROXY:-false}"
+      GOOGLE_CLOUD_API_KEY: "${GOOGLE_CLOUD_API_KEY:-}"
+      SHODAN_API_KEY: "${SHODAN_API_KEY:-}"
+      CLOUDMERSIVE_API_KEY: "${CLOUDMERSIVE_API_KEY:-}"
+      TRANCO_USERNAME: "${TRANCO_USERNAME:-}"
+      TRANCO_API_KEY: "${TRANCO_API_KEY:-}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      CERTSPOTTER_TOKEN: "${CERTSPOTTER_TOKEN:-}"

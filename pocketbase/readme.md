@@ -13,7 +13,15 @@ docker compose -f docker-compose.yml up -d
 #docker inspect pocketbase --format '{{range $k,$v := .NetworkSettings.Networks}}{{println $k}}{{end}}'
 ```
 
-Login to admin via: `http://192.168.1.11:8080/_/?installer#`
+Admin UI: `http://192.168.1.11:8080/_/`
+
+Create or rotate a superuser from the container:
+
+```sh
+docker compose exec pocketbase /pb/pocketbase superuser upsert admin@example.com 'replace-with-a-long-password'
+```
+
+Before upgrading an existing `pb_data` volume, create a backup from the admin UI or copy/export the Docker volume. PocketBase is still pre-1.0 and older deployments may require migration testing.
 
 ---
 

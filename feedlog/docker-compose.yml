@@ -1,0 +1,72 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: feedlog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: feedlog
+      POSTGRES_USER: feedlog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - feedlog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U feedlog -d feedlog"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - feedlog
+
+  app:
+    image: ${FEEDLOG_IMAGE:-ghcr.io/linkcraftstudio/feedlog:v0.5.0}
+    container_name: feedlog
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://feedlog:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/feedlog
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      - SYSTEM_ADMIN_EMAILS=${SYSTEM_ADMIN_EMAILS:?Set SYSTEM_ADMIN_EMAILS in .env}
+      - AUTH_EMAIL_ENABLED=${AUTH_EMAIL_ENABLED:-true}
+      - UPLOAD_PREFIX=${UPLOAD_PREFIX:-uploads}
+      - BETTER_AUTH_URL
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - GITHUB_CLIENT_ID
+      - GITHUB_CLIENT_SECRET
+      - AUTH_EMAIL_VERIFY
+      - OPENAI_API_KEY
+      - OPENAI_BASE_URL
+      - OPENAI_TEXT_MODEL
+      - EMAIL_PROVIDER
+      - RESEND_API_KEY
+      - EMAIL_FROM
+      - S3_ACCESS_KEY_ID
+      - S3_SECRET_ACCESS_KEY
+      - S3_BUCKET
+      - S3_ENDPOINT
+      - S3_REGION
+    volumes:
+      - feedlog-app-data:/app/.data
+    ports:
+      - "${FEEDLOG_PORT:-3030}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - feedlog
+
+volumes:
+  feedlog-db-data:
+  feedlog-app-data:
+
+networks:
+  feedlog:

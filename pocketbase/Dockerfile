@@ -1,13 +1,13 @@
-FROM alpine:latest
+FROM alpine:3.20
 #https://pocketbase.io/docs/going-to-production/#using-docker
 
 #https://github.com/pocketbase/pocketbase/releases
-ARG PB_VERSION=0.18.1
-#0.30.0
+ARG PB_VERSION=0.40.4
 
 RUN apk add --no-cache \
     unzip \
-    ca-certificates
+    ca-certificates \
+    wget
 
 # download and unzip PocketBase
 ADD https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip /tmp/pb.zip

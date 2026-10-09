@@ -1,19 +1,11 @@
 services:
   linkchecker:
-    image: ghcr.io/linkchecker/linkchecker:latest
+    image: ghcr.io/linkchecker/linkchecker:10.6.0
     container_name: linkchecker
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /work
     volumes:
-      - ./reports:/reports  # Directory to save the reports
-    # Example command (override when running)
-    # command: --verbose https://example.com > /reports/report.txt
-    # To run: docker-compose run --rm linkchecker --verbose https://example.com > reports/report.txt
-    # Or for interactive use: docker-compose run --rm -it linkchecker --help
-    stdin_open: true  # Keep STDIN open for interactive use
-    tty: true         # Allocate a pseudo-TTY
-    restart: 'no'      # Don't restart automatically
-    networks:
-      - linkchecker_net
-
-networks:
-  linkchecker_net:
-    driver: bridge
+      - ./:/work
+    stdin_open: true
+    tty: true
+    restart: "no"
