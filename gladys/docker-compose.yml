@@ -1,0 +1,39 @@
+services:
+  app:
+    image: ${GLADYS_IMAGE:-gladysassistant/gladys@sha256:4ce2b8bd8beee6db0bd126e8c3110a61728fd55c076ec1adc86c820687401d1c}
+    container_name: gladys
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    cgroup: host
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    environment:
+      NODE_ENV: production
+      SERVER_PORT: ${GLADYS_HTTP_PORT:-3823}
+      TZ: ${TZ:-Europe/Warsaw}
+      SQLITE_FILE_PATH: /var/lib/gladysassistant/gladys-production.db
+      BACKUP_FOLDER: /var/lib/gladysassistant/backups
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      DUCKDB_MEMORY_LIMIT: ${DUCKDB_MEMORY_LIMIT:-512MB}
+      DUCKDB_BACKUP_MEMORY_LIMIT: ${DUCKDB_BACKUP_MEMORY_LIMIT:-512MB}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/var/lib/gladysassistant
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+      - /run/dbus:/run/dbus:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const http=require('http');const port=process.env.SERVER_PORT||3823;const req=http.get({host:'127.0.0.1',port,path:'/api/v1/ping',timeout:5000},res=>process.exit(res.statusCode===200?0:1));req.on('error',()=>process.exit(1));req.on('timeout',()=>{req.destroy();process.exit(1);});",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 5

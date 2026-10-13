@@ -1,0 +1,108 @@
+services:
+  migrate:
+    image: ${PPP_REGISTRY:-ghcr.io/danileau}/ppp-migrate:${PPP_TAG:-fcadf1c}
+    container_name: ppp-migrate
+    restart: "no"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://ppp:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/ppp?schema=public
+      BETTER_AUTH_URL: ${APP_URL:?Set APP_URL in .env}
+    volumes:
+      - ./data/uploads:/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - prettypleaseprint
+
+  app:
+    image: ${PPP_REGISTRY:-ghcr.io/danileau}/ppp-app:${PPP_TAG:-fcadf1c}
+    container_name: ppp-app
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://ppp:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/ppp?schema=public
+      MODELS_ROOT: /uploads
+      BETTER_AUTH_URL: ${APP_URL:?Set APP_URL in .env}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+    volumes:
+      - ./data/uploads:/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    networks:
+      - prettypleaseprint
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: ppp-caddy
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${PPP_BIND:-0.0.0.0}:${PPP_PORT:-3819}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - prettypleaseprint
+
+  db:
+    image: postgres:17-alpine
+    container_name: ppp-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ppp
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: ppp
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ppp -d ppp"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - prettypleaseprint
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ppp-mailpit
+    restart: unless-stopped
+    profiles:
+      - mailcatcher
+    ports:
+      - "${MAILPIT_BIND:-127.0.0.1}:${MAILPIT_UI_PORT:-3821}:8025"
+    networks:
+      - prettypleaseprint
+
+networks:
+  prettypleaseprint:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${PPP_SUBNET:-10.89.19.0/24}
+
+volumes:
+  caddy-data:
+  caddy-config:

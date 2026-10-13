@@ -1,0 +1,33 @@
+name: odm
+
+services:
+  odm:
+    image: opendronemap/odm:${ODM_IMAGE_TAG:-3.6.2}
+    container_name: odm
+    working_dir: /code
+    volumes:
+      - ./datasets:/datasets
+    command:
+      - --project-path
+      - /datasets
+      - ${ODM_PROJECT:-project}
+    restart: "no"
+    shm_size: ${ODM_SHM_SIZE:-2gb}
+
+  odm-gpu:
+    image: opendronemap/odm:${ODM_GPU_IMAGE_TAG:-3.6.2-gpu}
+    container_name: odm-gpu
+    working_dir: /code
+    profiles:
+      - gpu
+    gpus: all
+    volumes:
+      - ./datasets:/datasets
+    command:
+      - --project-path
+      - /datasets
+      - ${ODM_PROJECT:-project}
+      - --feature-type
+      - sift
+    restart: "no"
+    shm_size: ${ODM_SHM_SIZE:-2gb}

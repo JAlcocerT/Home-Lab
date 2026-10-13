@@ -1,51 +1,66 @@
 services:
   reitti:
-    image: dedicatedcode/reitti:latest
+    image: docker.io/dedicatedcode/reitti:${REITTI_VERSION:-5}
+    container_name: reitti
+    restart: unless-stopped
     ports:
-      - 8089:8080
+      - ${REITTI_BIND:-0.0.0.0}:${REITTI_PORT:-3814}:8080
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       postgis:
         condition: service_healthy
-        restart: true
       redis:
         condition: service_healthy
+      tile-cache:
+        condition: service_started
     volumes:
-     - reitti-data:/data/
+      - reitti-data:/data/
     environment:
-      PHOTON_BASE_URL: http://photon:2322
-      POSTGIS_USER: reitti
-      POSTGIS_PASSWORD: reitti
-      POSTGIS_DB: reittidb
+      POSTGIS_USER: ${POSTGIS_USER:-reitti}
+      POSTGIS_PASSWORD: ${POSTGIS_PASSWORD:?Set POSTGIS_PASSWORD in .env}
+      POSTGIS_DB: ${POSTGIS_DB:-reittidb}
       POSTGIS_HOST: postgis
+      REDIS_HOST: redis
+      TILES_CACHE: ${TILES_CACHE:-http://tile-cache}
+      BASE_PATH: ${BASE_PATH:-/}
+      ADVERTISE_URI: ${ADVERTISE_URI:-http://192.168.1.2:3814}
+      OIDC_ENABLED: ${OIDC_ENABLED:-false}
+      OIDC_ISSUER_URI: ${OIDC_ISSUER_URI:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      DANGEROUS_LIFE: ${DANGEROUS_LIFE:-false}
+      SPATIAL_COVERAGE: ${SPATIAL_COVERAGE:-false}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx768m -Xms256m}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    networks:
+      - reitti
+
   postgis:
-    image: postgis/postgis:17-3.5-alpine
+    image: ${POSTGIS_IMAGE:-postgis/postgis:17-3.5-alpine}
+    container_name: reitti-postgis
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: reitti
-      POSTGRES_PASSWORD: reitti
-      POSTGRES_DB: reittidb
+      POSTGRES_USER: ${POSTGIS_USER:-reitti}
+      POSTGRES_PASSWORD: ${POSTGIS_PASSWORD:?Set POSTGIS_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGIS_DB:-reittidb}
     volumes:
       - postgis-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reitti -d reittidb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGIS_USER:-reitti} -d ${POSTGIS_DB:-reittidb}"]
       interval: 10s
       timeout: 5s
       retries: 5
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    environment:
-      RABBITMQ_DEFAULT_USER: reitti
-      RABBITMQ_DEFAULT_PASS: reitti
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    networks:
+      - reitti
+
   redis:
     image: redis:7-alpine
+    container_name: reitti-redis
+    restart: unless-stopped
     volumes:
       - redis-data:/data
     healthcheck:
@@ -53,16 +68,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  photon:
-    image: rtuszik/photon-docker:1.2.1
-    environment:
-      - UPDATE_STRATEGY=PARALLEL
-      - REGION=de #set your main country code here to save space or drop this line to fetch the whole index.
+    networks:
+      - reitti
+
+  tile-cache:
+    image: docker.io/dedicatedcode/reitti-tile-cache:${REITTI_VERSION:-5}
+    container_name: reitti-tile-cache
+    restart: unless-stopped
     volumes:
-      - photon-data:/photon/data
+      - tile-cache-data:/var/cache/nginx
+    networks:
+      - reitti
+
 volumes:
   postgis-data:
-  rabbitmq-data:
   redis-data:
-  photon-data:
   reitti-data:
+  tile-cache-data:
+
+networks:
+  reitti:
+    ipam:
+      config:
+        - subnet: ${REITTI_SUBNET:-10.89.14.0/24}

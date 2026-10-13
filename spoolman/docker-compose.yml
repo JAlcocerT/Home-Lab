@@ -1,0 +1,65 @@
+services:
+  init-permissions:
+    image: alpine:3.22
+    container_name: spoolman-init-permissions
+    restart: "no"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+    command:
+      - /bin/sh
+      - -c
+      - chown -R "$${PUID:-1000}:$${PGID:-1000}" /data
+    volumes:
+      - ./data:/data
+    networks:
+      - spoolman
+
+  app:
+    image: ${SPOOLMAN_IMAGE:-ghcr.io/donkie/spoolman@sha256:7aba565eff774c6dda212d4204de8fa30bf68d513127ef875cc7ef3197a4664e}
+    container_name: spoolman
+    restart: unless-stopped
+    ports:
+      - "${SPOOLMAN_BIND:-0.0.0.0}:${SPOOLMAN_HTTP_PORT:-3822}:8000"
+    environment:
+      SPOOLMAN_HOST: 0.0.0.0
+      SPOOLMAN_PORT: 8000
+      SPOOLMAN_DIR_DATA: /home/app/.local/share/spoolman
+      SPOOLMAN_LOGGING_LEVEL: ${SPOOLMAN_LOGGING_LEVEL:-INFO}
+      SPOOLMAN_AUTOMATIC_BACKUP: ${SPOOLMAN_AUTOMATIC_BACKUP:-TRUE}
+      SPOOLMAN_UPDATE_CHECK: ${SPOOLMAN_UPDATE_CHECK:-FALSE}
+      SPOOLMAN_METRICS_ENABLED: ${SPOOLMAN_METRICS_ENABLED:-FALSE}
+      SPOOLMAN_LEGACY_CLIENT: ${SPOOLMAN_LEGACY_CLIENT:-FALSE}
+      EXTERNAL_DB_URL: ${EXTERNAL_DB_URL:-https://donkie.github.io/SpoolmanDB/}
+      EXTERNAL_DB_SYNC_INTERVAL: ${EXTERNAL_DB_SYNC_INTERVAL:-3600}
+      EXTERNAL_DB_NAME: ${EXTERNAL_DB_NAME:-SpoolmanDB}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+    volumes:
+      - ./data:/home/app/.local/share/spoolman
+    depends_on:
+      init-permissions:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=5).status == 200 else 1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - spoolman
+
+networks:
+  spoolman:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SPOOLMAN_SUBNET:-10.89.22.0/24}

@@ -1,33 +1,25 @@
-version: '3.8'
-
 services:
   beszel:
-    image: henrygd/beszel:latest
+    image: docker.io/henrygd/beszel:${BESZEL_VERSION:-0.21.0}
     container_name: beszel
     restart: unless-stopped
-    extra_hosts:
-      - host.docker.internal:host-gateway
+    environment:
+      APP_URL: ${BESZEL_APP_URL:-http://192.168.1.2:3813}
     ports:
-      - "8090:8090"
+      - ${BESZEL_BIND:-0.0.0.0}:${BESZEL_PORT:-3813}:8090
     volumes:
       - ./beszel_data:/beszel_data
+    healthcheck:
+      test: ["CMD", "/beszel", "health", "--url", "http://localhost:8090"]
+      interval: 120s
+      start_period: 10s
+      timeout: 5s
+      retries: 3
     networks:
-      - beszel_net
-
-  beszel-agent:
-    image: henrygd/beszel-agent:latest
-    container_name: beszel-agent
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      PORT: 45876
-      # Do not remove quotes around the key
-      KEY: 'UPDATE WITH YOUR PUBLIC KEY (copy from "Add system" dialog)'
-    depends_on:
       - beszel
 
 networks:
-  beszel_net:
-    driver: bridge
+  beszel:
+    ipam:
+      config:
+        - subnet: ${BESZEL_SUBNET:-10.89.13.0/24}

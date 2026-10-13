@@ -1,0 +1,16 @@
+services:
+  beszel-agent:
+    image: docker.io/henrygd/beszel-agent:${BESZEL_VERSION:-0.21.0}
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./beszel_agent_data:/var/lib/beszel-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount extra disks or partitions by placing a marker folder on the host:
+      # - /mnt/disk1/.beszel:/extra-filesystems/disk1:ro
+    environment:
+      LISTEN: ${BESZEL_AGENT_LISTEN:-45876}
+      HUB_URL: ${BESZEL_AGENT_HUB_URL:?Set BESZEL_AGENT_HUB_URL from the Beszel Add system dialog}
+      TOKEN: ${BESZEL_AGENT_TOKEN:?Set BESZEL_AGENT_TOKEN from the Beszel Add system dialog}
+      KEY: ${BESZEL_AGENT_KEY:?Set BESZEL_AGENT_KEY from the Beszel Add system dialog}

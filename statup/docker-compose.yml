@@ -1,0 +1,50 @@
+services:
+  statup:
+    image: ${STATUP_IMAGE:-ghcr.io/karl-cta/statup:0.4.0}
+    container_name: statup
+    restart: unless-stopped
+    ports:
+      - "${STATUP_BIND:-0.0.0.0}:${STATUP_PORT:-3811}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: /data/statup.db
+      UPLOAD_DIR: /data/uploads
+      HOST: 0.0.0.0
+      PORT: 3000
+      TZ: ${TZ:-Europe/Warsaw}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+      PUBLIC_MODE: ${PUBLIC_MODE:-false}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      UPDATE_CHECK: ${UPDATE_CHECK:-false}
+      MONITORING: ${MONITORING:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_SECURITY: ${SMTP_SECURITY:-starttls}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - statup-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  statup-data:

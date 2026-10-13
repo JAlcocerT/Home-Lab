@@ -1,0 +1,18 @@
+services:
+  sketchforge:
+    image: ghcr.io/formsmith746/sketchforge-3d:latest
+    container_name: sketchforge
+    restart: unless-stopped
+    ports:
+      - "${SKETCHFORGE_PORT:-3816}:3000"
+    environment:
+      SKETCHFORGE_SHARED_PROJECTS_DIR: /data/projects
+      SKETCHFORGE_UPDATE_TRIGGER_URL: "${SKETCHFORGE_UPDATE_TRIGGER_URL:-}"
+      SKETCHFORGE_UPDATE_ADMIN_KEY: "${SKETCHFORGE_UPDATE_ADMIN_KEY:-}"
+      SKETCHFORGE_UPDATE_TRIGGER_TOKEN: "${SKETCHFORGE_UPDATE_TRIGGER_TOKEN:-}"
+    volumes:
+      - sketchforge-shared-projects:/data/projects
+
+volumes:
+  sketchforge-shared-projects:
+

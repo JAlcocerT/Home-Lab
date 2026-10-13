@@ -1,0 +1,28 @@
+services:
+  octoprint:
+    image: octoprint/octoprint:${OCTOPRINT_VERSION:-1.11.8}
+    container_name: octoprint
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "${OCTOPRINT_BIND:-0.0.0.0}:${OCTOPRINT_PORT:-3818}:80"
+    environment:
+      ENABLE_MJPG_STREAMER: "${ENABLE_MJPG_STREAMER:-false}"
+      CAMERA_DEV: "${CAMERA_DEV:-/dev/video0}"
+      TZ: "${TZ:-Europe/Warsaw}"
+    volumes:
+      - octoprint-data:/octoprint
+    # Uncomment and adapt these when the host has a printer or webcam attached.
+    # Prefer stable /dev/serial/by-id/... paths over /dev/ttyUSB0 when possible.
+    # devices:
+    #   - "${PRINTER_DEVICE:-/dev/ttyACM0}:${PRINTER_DEVICE:-/dev/ttyACM0}"
+    #   - "${CAMERA_DEV:-/dev/video0}:${CAMERA_DEV:-/dev/video0}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  octoprint-data:

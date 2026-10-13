@@ -1,0 +1,64 @@
+services:
+  init-permissions:
+    image: alpine:3.22
+    container_name: manyfold-init-permissions
+    restart: "no"
+    env_file:
+      - path: .env
+        required: false
+    command:
+      - /bin/sh
+      - -c
+      - chown -R "$${PUID:-1000}:$${PGID:-1000}" /config /models
+    volumes:
+      - ./config:/config
+      - ./models:/models
+    networks:
+      - manyfold
+
+  app:
+    image: ${MANYFOLD_IMAGE:-ghcr.io/manyfold3d/manyfold-solo@sha256:772bcb18f0cb69d4fd0630d4676516f34fb37e42c3ac9d65eea5f173728e818e}
+    container_name: manyfold
+    restart: unless-stopped
+    ports:
+      - "${MANYFOLD_BIND:-0.0.0.0}:${MANYFOLD_PORT:-3820}:3214"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in .env}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      # Leave PUBLIC_HOSTNAME empty for a LAN HTTP trial. Set it behind a real
+      # HTTPS reverse proxy, for example models.example.org.
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:-}
+    volumes:
+      - ./config:/config
+      - ./models:/models
+    depends_on:
+      init-permissions:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3214/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
+    networks:
+      - manyfold
+
+networks:
+  manyfold:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MANYFOLD_SUBNET:-10.89.20.0/24}

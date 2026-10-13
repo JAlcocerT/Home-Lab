@@ -1,0 +1,20 @@
+services:
+  house-planner:
+    build:
+      context: https://github.com/egmalt/house-planner.git#5c91280da6c5cc84c1a534ef80ddafb64a6b5baa
+      dockerfile: Dockerfile
+    image: house-planner:5c91280
+    container_name: house-planner
+    restart: unless-stopped
+    ports:
+      - "${HOUSE_PORT:-3817}:8080"
+    environment:
+      HOUSE_PASSWORD: "${HOUSE_PASSWORD:-}"
+      HOUSE_SETUP_KEY: "${HOUSE_SETUP_KEY:-}"
+      HOUSE_DEMO: "${HOUSE_DEMO:-}"
+    volumes:
+      - house-data:/var/lib/house-planner
+
+volumes:
+  house-data:
+

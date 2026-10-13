@@ -1,0 +1,23 @@
+services:
+  dbackup:
+    image: skyfay/dbackup:v4.0.0
+    container_name: dbackup
+    restart: unless-stopped
+    ports:
+      - "${DBACKUP_PORT:-3802}:3000"
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set BETTER_AUTH_URL in .env}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      DISABLE_HTTPS: ${DISABLE_HTTPS:-true}
+      TZ: ${TZ:-Europe/Warsaw}
+      PUID: ${PUID:-1001}
+      PGID: ${PGID:-1001}
+      TMPDIR: /tmp
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+      - ./tmp:/tmp
+      # Optional: enable only if you use the Docker Volumes source.
+      # - /var/run/docker.sock:/var/run/docker.sock:ro

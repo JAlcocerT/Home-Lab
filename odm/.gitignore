@@ -1,0 +1,11 @@
+/datasets/*/images/
+/datasets/*/opensfm/
+/datasets/*/odm_*/
+/datasets/*/submodels/
+/datasets/*/entwine_pointcloud/
+/datasets/*/entwine_model/
+/datasets/*/cameras.json
+/datasets/*/options.json
+/datasets/*/images.json
+/datasets/*/log.json
+/.env
