@@ -1,0 +1,20 @@
+services:
+  dns-server:
+    container_name: technitium
+    hostname: technitium
+    image: technitium/dns-server:latest
+    environment:
+      DNS_SERVER_DOMAIN: dns-server
+    ports:
+      # Keep the web console local until remote access is explicitly needed.
+      - "127.0.0.1:5380:5380/tcp"
+      # Bind DNS to the LAN address so it does not conflict with systemd-resolved.
+      # Override TECHNITIUM_BIND_IP if this machine's LAN address changes.
+      - "${TECHNITIUM_BIND_IP:-192.168.1.15}:53:53/udp"
+      - "${TECHNITIUM_BIND_IP:-192.168.1.15}:53:53/tcp"
+    volumes:
+      - config:/etc/dns
+    restart: unless-stopped
+
+volumes:
+  config:
