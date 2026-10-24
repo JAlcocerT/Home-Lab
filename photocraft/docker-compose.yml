@@ -1,0 +1,14 @@
+services:
+  photocraft:
+    # PhotoCraft does not publish a server image. Build the static WASM site
+    # from the reviewed commit; the runtime is an unprivileged nginx container.
+    build:
+      context: https://github.com/storytold/photocraft.git#b07b7fa
+      dockerfile: Dockerfile
+      args:
+        PHOTOCRAFT_BUILD_SHA: b07b7fa
+    image: photocraft-web:b07b7fa
+    container_name: homelab-photocraft
+    ports:
+      - "3860:8080"
+    restart: unless-stopped
