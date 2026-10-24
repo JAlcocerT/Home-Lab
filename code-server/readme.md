@@ -1,7 +1,7 @@
 ---
 source_code: https://github.com/linuxserver/code-server
 official_docs: https://docs.linuxserver.io/images/docker-code-server/
-tags: "
+tags: ["Development", "Remote Desktop"]
 ---
 
 # code --list-extensions
