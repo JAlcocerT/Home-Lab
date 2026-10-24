@@ -1,0 +1,21 @@
+services:
+  warpgate:
+    image: ${WARPGATE_IMAGE:-ghcr.io/warp-tech/warpgate@sha256:8d0899c48c7dae1833d0ff1af4f47417bd7324fa7dad15aa4a727cb83d598ec6}
+    container_name: homelab-warpgate
+    ports:
+      - "${WARPGATE_SSH_PORT:-3222}:2222"
+      - "${WARPGATE_HTTP_PORT:-3888}:8888"
+      - "${WARPGATE_KUBERNETES_PORT:-38443}:8443"
+      - "${WARPGATE_MYSQL_PORT:-36306}:33306"
+      - "${WARPGATE_POSTGRES_PORT:-35432}:55432"
+      - "${WARPGATE_RDP_PORT:-33389}:3389"
+      - "${WARPGATE_VNC_PORT:-35900}:5900"
+    volumes:
+      - warpgate_data:/data
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  warpgate_data:
+    name: homelab_warpgate_data
