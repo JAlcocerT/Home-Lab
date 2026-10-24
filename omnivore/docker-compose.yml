@@ -1,0 +1,34 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: homelab-omnivore-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  omnivore:
+    image: homelab-omnivore:local
+    build:
+      context: ./source
+      dockerfile: self-hosting/docker/Dockerfile
+      network: host
+    container_name: homelab-omnivore
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      START_SINGLE: "true"
+      PORT: "8080"
+      REDIS_URL: redis://redis:6379/0
+      MQ_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+    ports:
+      - "3010:8090"
+      - "4010:8080"
+    volumes:
+      - omnivore-data:/var/lib/postgresql/data
+
+volumes:
+  omnivore-data:
+  redis-data:

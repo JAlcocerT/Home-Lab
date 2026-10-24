@@ -1,0 +1,132 @@
+services:
+  init:
+    image: ${OBICO_WEB_IMAGE:-ghcr.io/thespaghettidetective/obico-web:release}
+    container_name: obico-init
+    restart: "no"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment: &obico-env
+      DEBUG: "False"
+      WEBPACK_LOADER_ENABLED: "False"
+      SITE_USES_HTTPS: ${SITE_USES_HTTPS:-False}
+      SITE_IS_PUBLIC: ${SITE_IS_PUBLIC:-False}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-[]}
+      ACCOUNT_ALLOW_SIGN_UP: ${ACCOUNT_ALLOW_SIGN_UP:-False}
+      ADMIN_IP_WHITELIST: ${ADMIN_IP_WHITELIST:-[]}
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/db.sqlite3}
+      INTERNAL_MEDIA_HOST: http://web:3334
+      ML_API_HOST: http://ml_api:3333
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-obico@example.local}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      PUSHOVER_APP_TOKEN: ${PUSHOVER_APP_TOKEN:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gpt-4o}
+      VLM_API_KEY: ${VLM_API_KEY:-}
+      VLM_BASE_URL: ${VLM_BASE_URL:-https://api.openai.com/v1}
+      VLM_MODEL_NAME: ${VLM_MODEL_NAME:-gpt-4o}
+    command: >
+      sh -c "python manage.py collectstatic -v 2 --noinput &&
+             python manage.py migrate --noinput"
+    volumes:
+      - ./data:/data
+      - ./static:/app/static_build
+      - ./media:/app/static_build/media
+
+  web:
+    image: ${OBICO_WEB_IMAGE:-ghcr.io/thespaghettidetective/obico-web:release}
+    container_name: obico-web
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      ml_api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${OBICO_HTTP_PORT:-3334}:3334"
+    environment:
+      <<: *obico-env
+    command: daphne -b 0.0.0.0 -p 3334 config.routing:application
+    volumes:
+      - ./data:/data
+      - ./static:/app/static_build
+      - ./media:/app/static_build/media
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',3334,timeout=5); c.request('GET','/hc/'); r=c.getresponse(); sys.exit(0 if 200 <= r.status < 500 else 1)",
+        ]
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  tasks:
+    image: ${OBICO_WEB_IMAGE:-ghcr.io/thespaghettidetective/obico-web:release}
+    container_name: obico-tasks
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *obico-env
+    command: celery -A config worker --beat --schedule /data/celerybeat-schedule -l info -c 2 -Q realtime,celery
+    volumes:
+      - ./data:/data
+      - ./media:/app/static_build/media
+
+  ml_api:
+    image: ${OBICO_ML_IMAGE:-ghcr.io/thespaghettidetective/obico-ml-api-cpu:release}
+    container_name: obico-ml-api
+    restart: unless-stopped
+    environment:
+      FLASK_APP: server.py
+    command: gunicorn --bind 0.0.0.0:3333 --workers 1 --timeout 120 --access-logfile - wsgi
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import http.client,sys; c=http.client.HTTPConnection('127.0.0.1',3333,timeout=5); c.request('GET','/hc/'); r=c.getresponse(); sys.exit(0 if 200 <= r.status < 500 else 1)",
+        ]
+      start_period: 140s
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: obico-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - ./redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      start_period: 15s
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+networks:
+  default:
+    name: obico-net
+    ipam:
+      config:
+        - subnet: 10.89.34.0/24

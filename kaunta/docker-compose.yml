@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: homelab-kaunta-postgres
+    environment:
+      POSTGRES_DB: kaunta
+      POSTGRES_USER: kaunta
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+    volumes:
+      - kaunta_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kaunta -d kaunta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  kaunta:
+    image: ${KAUNTA_IMAGE:-ghcr.io/seuros/kaunta:0.122.1}
+    container_name: homelab-kaunta
+    environment:
+      DATABASE_URL: "postgresql://kaunta:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/kaunta?sslmode=disable"
+      PORT: "3100"
+      DATA_DIR: /var/lib/kaunta
+      SECURE_COOKIES: "false"
+      TRUSTED_ORIGINS: "${TRUSTED_ORIGINS:-http://192.168.1.2:3823}"
+      PROXY_MODE: "none"
+      MCP_ENABLED: "${MCP_ENABLED:-false}"
+    volumes:
+      - kaunta_data:/var/lib/kaunta
+    ports:
+      - "${KAUNTA_PORT:-3823}:3100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kaunta", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  kaunta_postgres:
+  kaunta_data:

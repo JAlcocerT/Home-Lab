@@ -1,0 +1,38 @@
+services:
+  loki:
+    image: grafana/loki:1.5.0
+    container_name: homelab-dashflare-loki
+    ports:
+      - "${LOKI_PORT:-3110}:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - dashflare_loki:/loki
+    networks:
+      - dashflare
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:9.5.21
+    container_name: homelab-dashflare-grafana
+    environment:
+      GF_INSTALL_PLUGINS: grafana-worldmap-panel
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/dashboards:ro
+      - dashflare_grafana:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3822}:3000"
+    networks:
+      - dashflare
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+volumes:
+  dashflare_loki:
+  dashflare_grafana:
+
+networks:
+  dashflare:

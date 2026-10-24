@@ -1,0 +1,30 @@
+services:
+  haven:
+    image: ${HAVEN_IMAGE:-ghcr.io/ancsemi/haven:4.26.4}
+    container_name: homelab-haven
+    ports:
+      - "${HOST_PORT:-3820}:3000"
+      - "${REDIRECT_HOST_PORT:-3821}:3001"
+      # Enable these when Haven's built-in voice relay is enabled.
+      # - "${VOICE_RELAY_PORT:-40000}:${VOICE_RELAY_PORT:-40000}/udp"
+      # - "${VOICE_RELAY_PORT:-40000}:${VOICE_RELAY_PORT:-40000}/tcp"
+    env_file:
+      - .env
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET in .env}"
+      FORCE_HTTP: "${FORCE_HTTP:-true}"
+    volumes:
+      - haven_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "PROTO=http; [ \"$${FORCE_HTTP}\" = \"true\" ] || PROTO=https; wget -qO- --no-check-certificate \"$${PROTO}://127.0.0.1:$${PORT:-3000}/api/health\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  haven_data:
+    name: homelab_haven_data

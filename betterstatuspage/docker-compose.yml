@@ -1,0 +1,28 @@
+services:
+  app:
+    image: ${BSP_IMAGE:-ghcr.io/belluu/better-status-page:0.6.0}
+    container_name: homelab-betterstatuspage
+    ports:
+      - "${BSP_BIND_ADDRESS:-0.0.0.0}:${PORT:-3819}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_PATH: /app/data/db.sqlite
+      UPLOAD_DIR: /app/data/uploads
+      BACKUP_DIR: /app/backups
+    volumes:
+      - bsp_data:/app/data
+      - bsp_backups:/app/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  bsp_data:
+  bsp_backups:
