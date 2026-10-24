@@ -1,3 +1,8 @@
+---
+source_code: https://codeberg.org/forgejo/forgejo
+tags: ["Git", "DevOps", "Self-Hosting"]
+---
+
 # Forgejo
 
 Self-hosted Git service — a fork of Gitea. Compatible with the Gitea API.

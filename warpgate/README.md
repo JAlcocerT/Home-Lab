@@ -1,3 +1,9 @@
+---
+source_code: https://github.com/warp-tech/warpgate
+post: https://fossengineer.com/selfhosting-warpgate-bastion-host/
+tags: ["Security", "Networking", "SSH"]
+---
+
 # Warpgate
 
 Self-hosted Rust bastion and transparent proxy for SSH, HTTPS, Kubernetes, MySQL, PostgreSQL, RDP, and VNC. It includes a browser admin UI, native-client support, TOTP, OpenID Connect, brute-force protection, access assignments, and optional session recording. The profile uses the verified image digest whose binary reports Warpgate v0.30.0; the registry does not publish a matching `v0.30.0` tag.
