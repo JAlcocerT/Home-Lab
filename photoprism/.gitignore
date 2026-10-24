@@ -1,0 +1,5 @@
+.env
+database/
+import/
+originals/
+storage/
