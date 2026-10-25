@@ -1,0 +1,11 @@
+services:
+  figcraft-server:
+    build:
+      context: https://github.com/storytold/figcraft.git#d4a303d4708602a9df1738960852d18b185a616b
+      dockerfile: packaging/server/Dockerfile
+    container_name: figcraft-server
+    ports:
+      - "${FIGCRAFT_PORT:-47900}:47900"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
