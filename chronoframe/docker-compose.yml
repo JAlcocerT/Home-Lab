@@ -1,0 +1,12 @@
+services:
+  chronoframe:
+    image: ghcr.io/hoshinosuzumi/chronoframe@sha256:7e8bfd834f6526d8fee3d16f0af27ab805466fcf812f57d1051d488c61868582
+    container_name: chronoframe
+    restart: unless-stopped
+    ports:
+      - "${CHRONOFRAME_HTTP_PORT:-3802}:3000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - path: .env
+        required: false
